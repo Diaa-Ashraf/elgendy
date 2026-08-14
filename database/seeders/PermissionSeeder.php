@@ -185,10 +185,14 @@ class PermissionSeeder extends Seeder
             'create_material_deliveries',
         ]);
 
-        // Assign Admin role to admin user
-        $user = User::where('email', 'admin@admin.com')->first();
-        if ($user) {
-            $user->assignRole($adminRole);
-        }
+        // Create or get Admin user
+        $user = User::firstOrCreate(
+            ['email' => 'admin@admin.com'],
+            [
+                'name' => 'الأستاذ محمد الغندي',
+                'password' => \Illuminate\Support\Facades\Hash::make('123456789'),
+            ]
+        );
+        $user->assignRole($adminRole);
     }
 }
