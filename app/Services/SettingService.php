@@ -12,6 +12,14 @@ class SettingService
      */
     public function get(string $key, mixed $default = null): mixed
     {
+        try {
+            if (! \Illuminate\Support\Facades\Schema::hasTable('settings')) {
+                return $default;
+            }
+        } catch (\Throwable $e) {
+            return $default;
+        }
+
         return Cache::remember("settings:{$key}", 86400, function () use ($key, $default) {
             $setting = Setting::where('key', $key)->first();
             return $setting ? $setting->value : $default;
