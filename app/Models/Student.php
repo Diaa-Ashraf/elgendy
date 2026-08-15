@@ -38,17 +38,7 @@ class Student extends Model
         return $this->belongsToMany(Group::class, 'group_student')
             ->withPivot('joined_at', 'left_at', 'status')
             ->withTimestamps()
-            ->using(new class extends \Illuminate\Database\Eloquent\Relations\Pivot {
-                protected static function boot()
-                {
-                    parent::boot();
-                    static::creating(function ($pivot) {
-                        if (empty($pivot->joined_at)) {
-                            $pivot->joined_at = now()->toDateString();
-                        }
-                    });
-                }
-            });
+            ->using(GroupStudentPivot::class);
     }
 
     public function payments()

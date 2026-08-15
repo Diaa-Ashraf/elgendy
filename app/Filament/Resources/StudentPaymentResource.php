@@ -62,13 +62,21 @@ class StudentPaymentResource extends Resource
                                 $type = $get('type');
                                 if ($state && $type) {
                                     $group = Group::find($state);
+                                    $student = Student::with('discount')->find($get('student_id'));
                                     if ($group) {
-                                        if ($type === 'month') {
-                                            $set('amount', $group->price_per_month);
-                                        } elseif ($type === 'session') {
-                                            $sessions = $get('sessions_count') ?? 1;
-                                            $set('amount', $group->price_per_session * $sessions);
+                                        $basePrice = ($type === 'month') 
+                                            ? $group->price_per_month 
+                                            : ($group->price_per_session * ($get('sessions_count') ?? 1));
+
+                                        if ($student && $student->discount) {
+                                            $discount = $student->discount;
+                                            $discountAmount = $discount->type === 'percentage' 
+                                                ? ($basePrice * ($discount->value / 100))
+                                                : $discount->value;
+                                            $basePrice = max(0, $basePrice - $discountAmount);
                                         }
+
+                                        $set('amount', $basePrice);
                                     }
                                 }
                             }),
@@ -124,10 +132,36 @@ class StudentPaymentResource extends Resource
                             ->displayFormat('Y-m'),
 
                         Forms\Components\TextInput::make('amount')
-                            ->label('المبلغ المدفوع')
+                            ->label('المبلغ المطلوب سداده (بعد الخصم إن وجد)')
                             ->numeric()
                             ->prefix('ج.م')
-                            ->required(),
+                            ->required()
+                            ->helperText(function (callable $get) {
+                                $studentId = $get('student_id');
+                                $groupId = $get('group_id');
+                                if (! $studentId || ! $groupId) return null;
+
+                                $student = Student::with('discount')->find($studentId);
+                                $group = Group::find($groupId);
+                                if (! $student || ! $group) return null;
+
+                                $type = $get('type');
+                                $basePrice = $type === 'session' 
+                                    ? ($group->price_per_session * ($get('sessions_count') ?? 1))
+                                    : $group->price_per_month;
+
+                                if ($student->discount) {
+                                    $discount = $student->discount;
+                                    $discountAmount = $discount->type === 'percentage' 
+                                        ? ($basePrice * ($discount->value / 100))
+                                        : $discount->value;
+
+                                    $finalPrice = max(0, $basePrice - $discountAmount);
+                                    return "💡 المبلغ الأصلي: {$basePrice} ج.م | الخصم المطبق: {$discount->title} ({$discount->value}" . ($discount->type === 'percentage' ? '%' : ' ج.م') . ") = خصم {$discountAmount} ج.م";
+                                }
+
+                                return "💡 السعر الساسي للمجموعة: {$basePrice} ج.م (لا يوجد خصم لهذا الطالب)";
+                            }),
 
                         Forms\Components\DatePicker::make('paid_at')
                             ->label('تاريخ السداد')

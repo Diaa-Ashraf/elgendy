@@ -72,6 +72,7 @@ class StudentResource extends Resource
                             ->multiple()
                             ->preload()
                             ->searchable(),
+
                     ])
                     ->columns(2),
 
