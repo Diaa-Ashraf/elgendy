@@ -10,8 +10,8 @@
         @php
             $faviconUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($settings['site_favicon']);
         @endphp
-        <link rel="icon" href="{{ $faviconUrl }}">
-        <link rel="shortcut icon" href="{{ $faviconUrl }}">
+        <link rel="icon" type="image/png" href="{{ $faviconUrl }}">
+        <link rel="shortcut icon" type="image/x-icon" href="{{ $faviconUrl }}">
         <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
     @endif
 
