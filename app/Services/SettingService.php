@@ -40,6 +40,23 @@ class SettingService
     }
 
     /**
+     * Get image full URL for settings like logo & favicon.
+     */
+    public function url(string $key, ?string $default = null): ?string
+    {
+        $path = $this->get($key);
+        if (! $path) {
+            return $default;
+        }
+
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            return $path;
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk('public')->url($path);
+    }
+
+    /**
      * Set multiple settings at once.
      */
     public function setMany(array $settings): void

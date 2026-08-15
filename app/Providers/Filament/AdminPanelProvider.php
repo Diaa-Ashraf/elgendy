@@ -26,8 +26,8 @@ class AdminPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         $settingService = app(\App\Services\SettingService::class);
-        $logo = $settingService->get('center_logo');
-        $favicon = $settingService->get('site_favicon');
+        $logo = $settingService->url('center_logo');
+        $favicon = $settingService->url('site_favicon');
 
         return $panel
             ->default()
@@ -35,8 +35,8 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->brandName('نظام الأستاذ محمد الغندي التعليمي')
-            ->brandLogo($logo ? asset('storage/' . $logo) : null)
-            ->favicon($favicon ? asset('storage/' . $favicon) : null)
+            ->brandLogo($logo)
+            ->favicon($favicon)
             ->colors([
                 'primary' => Color::Amber,
             ])

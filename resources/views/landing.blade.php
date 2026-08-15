@@ -72,7 +72,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <a href="#" class="flex items-center gap-3.5 group">
                 @if(!empty($settings['center_logo']))
-                    <img src="{{ asset('storage/' . $settings['center_logo']) }}" alt="{{ $settings['center_name'] }}" class="w-11 h-11 object-contain rounded-2xl shadow-xl shadow-indigo-500/20 border border-slate-800 group-hover:scale-105 transition">
+                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($settings['center_logo']) }}" alt="{{ $settings['center_name'] }}" class="w-11 h-11 object-contain rounded-2xl shadow-xl shadow-indigo-500/20 border border-slate-800 group-hover:scale-105 transition">
                 @else
                     <div class="w-11 h-11 bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 rounded-2xl flex items-center justify-center font-black text-xl shadow-xl shadow-indigo-500/30 group-hover:rotate-6 transition">
                         🎓
