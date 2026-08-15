@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>بوابة ولي الأمر — تسجيل الدخول</title>
     @php
-        $favicon = app(\App\Services\SettingService::class)->get('site_favicon');
+        $faviconUrl = app(\App\Services\SettingService::class)->url('site_favicon');
     @endphp
-    @if($favicon)
-        <link rel="icon" href="{{ asset('storage/' . $favicon) }}">
-        <link rel="shortcut icon" type="image/x-icon" href="{{ asset('storage/' . $favicon) }}">
-        <link rel="apple-touch-icon" href="{{ asset('storage/' . $favicon) }}">
+    @if($faviconUrl)
+        <link rel="icon" href="{{ $faviconUrl }}">
+        <link rel="shortcut icon" href="{{ $faviconUrl }}">
+        <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
     @endif
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">

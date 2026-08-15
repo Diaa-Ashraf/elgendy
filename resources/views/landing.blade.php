@@ -7,9 +7,12 @@
     <title>{{ $settings['center_name'] }} — المنصة التعليمية الرسمية</title>
     
     @if(!empty($settings['site_favicon']))
-        <link rel="icon" href="{{ asset('storage/' . $settings['site_favicon']) }}">
-        <link rel="shortcut icon" type="image/x-icon" href="{{ asset('storage/' . $settings['site_favicon']) }}">
-        <link rel="apple-touch-icon" href="{{ asset('storage/' . $settings['site_favicon']) }}">
+        @php
+            $faviconUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($settings['site_favicon']);
+        @endphp
+        <link rel="icon" href="{{ $faviconUrl }}">
+        <link rel="shortcut icon" href="{{ $faviconUrl }}">
+        <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
     @endif
 
     <script src="https://cdn.tailwindcss.com"></script>
