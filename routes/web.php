@@ -23,10 +23,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/students/{record}/card/print', [StudentPdfController::class, 'printCard'])->name('student.card.print');
 });
 
-// 🖼️ مسار قراءة ملفات الميديا والصور احتياطياً لاستضافات cPanel المشتركة
+// 🖼️ مسار قراءة ملفات الميديا والصور احتياطياً لاستضافات cPanel و Hostinger
 Route::get('/storage/{path}', function ($path) {
-    $fullPath = storage_path('app/public/' . $path);
-    if (! file_exists($fullPath)) {
+    $path1 = storage_path('app/public/' . $path);
+    $path2 = storage_path('public/' . $path);
+    
+    $fullPath = file_exists($path1) ? $path1 : (file_exists($path2) ? $path2 : null);
+
+    if (! $fullPath) {
         abort(404);
     }
     return response()->file($fullPath);
