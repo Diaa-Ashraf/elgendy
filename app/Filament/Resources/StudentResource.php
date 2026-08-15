@@ -65,6 +65,13 @@ class StudentResource extends Resource
                             ->searchable()
                             ->preload()
                             ->nullable(),
+
+                        Forms\Components\Select::make('groups')
+                            ->label('المجموعات الدراسية التي ينتمي إليها الطالب')
+                            ->relationship('groups', 'name')
+                            ->multiple()
+                            ->preload()
+                            ->searchable(),
                     ])
                     ->columns(2),
 
@@ -146,10 +153,11 @@ class StudentResource extends Resource
                         default => $state,
                     }),
 
-                Tables\Columns\TextColumn::make('groups_count')
-                    ->label('عدد المجموعات')
-                    ->counts('groups')
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('groups.name')
+                    ->label('المجموعات الدراسية')
+                    ->badge()
+                    ->color('success')
+                    ->searchable(),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('تاريخ التسجيل')
@@ -161,6 +169,10 @@ class StudentResource extends Resource
                 Tables\Filters\SelectFilter::make('stage_id')
                     ->label('المرحلة الدراسية')
                     ->relationship('educationalStage', 'name'),
+
+                Tables\Filters\SelectFilter::make('groups')
+                    ->label('المجموعة الدراسية')
+                    ->relationship('groups', 'name'),
 
                 Tables\Filters\SelectFilter::make('gender')
                     ->label('النوع')
