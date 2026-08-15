@@ -357,34 +357,34 @@
     </section>
 
     {{-- ─── ENROLLMENT FORM SECTION ─── --}}
-    <section id="enroll" class="py-24 relative">
+    <section id="enroll" class="py-12 sm:py-24 relative">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="glass-card p-8 sm:p-14 rounded-3xl shadow-2xl relative" data-aos="zoom-in">
-                <div class="text-center max-w-xl mx-auto mb-12">
-                    <span class="px-4 py-1.5 bg-emerald-950 border border-emerald-800 text-emerald-400 rounded-full text-xs font-black uppercase tracking-wider mb-3 inline-block">التقديم أونلاين</span>
-                    <h2 class="text-3xl sm:text-4xl font-black text-white mb-3">استمارة التقديم والالتحاق للطلاب الجدد</h2>
-                    <p class="text-slate-400 text-sm font-semibold">قم بملء البيانات وسنقوم بالتواصل معك لترتيب بدء الحضور وموعد الاختبار.</p>
+            <div class="glass-card p-5 sm:p-14 rounded-3xl shadow-2xl relative" data-aos="zoom-in">
+                <div class="text-center max-w-xl mx-auto mb-8 sm:mb-12">
+                    <span class="px-3 py-1 sm:px-4 sm:py-1.5 bg-emerald-950 border border-emerald-800 text-emerald-400 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider mb-3 inline-block">التقديم أونلاين</span>
+                    <h2 class="text-2xl sm:text-4xl font-black text-white mb-2 sm:mb-3">استمارة التقديم والالتحاق للطلاب الجدد</h2>
+                    <p class="text-slate-400 text-xs sm:text-sm font-semibold leading-relaxed px-2">قم بملء البيانات وسنقوم بالتواصل معك لترتيب بدء الحضور وموعد الاختبار.</p>
                 </div>
 
-                <form id="enrollmentForm" class="space-y-6">
+                <form id="enrollmentForm" class="space-y-4 sm:space-y-6">
                     @csrf
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 mb-2">اسم الطالب ثلاثي / رباعي *</label>
-                            <input type="text" name="name" required placeholder="أحمد محمد علي" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
+                            <label class="block text-xs font-bold text-slate-300 mb-1.5">اسم الطالب ثلاثي / رباعي *</label>
+                            <input type="text" name="name" required placeholder="أحمد محمد علي" class="w-full px-4 py-3 sm:py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 mb-2">النوع *</label>
-                            <select name="gender" required class="w-full px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
+                            <label class="block text-xs font-bold text-slate-300 mb-1.5">النوع *</label>
+                            <select name="gender" required class="w-full px-4 py-3 sm:py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
                                 <option value="male">ذكر</option>
                                 <option value="female">أنثى</option>
                             </select>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 mb-2">المرحلة الدراسية *</label>
-                            <select id="stageSelect" name="stage_id" required class="w-full px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
+                            <label class="block text-xs font-bold text-slate-300 mb-1.5">المرحلة الدراسية *</label>
+                            <select id="stageSelect" name="stage_id" required class="w-full px-4 py-3 sm:py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
                                 <option value="">-- اختر المرحلة --</option>
                                 @foreach($stages as $stage)
                                     <option value="{{ $stage->id }}">{{ $stage->name }}</option>
@@ -393,36 +393,36 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 mb-2">المجموعة المرغوبة (اختياري)</label>
-                            <select id="groupSelect" name="group_id" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
+                            <label class="block text-xs font-bold text-slate-300 mb-1.5">المجموعة المرغوبة (اختياري)</label>
+                            <select id="groupSelect" name="group_id" class="w-full px-4 py-3 sm:py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
                                 <option value="">-- اختر المجموعة بعد تحديد المرحلة --</option>
                             </select>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 mb-2">رقم هاتف ولي الأمر *</label>
-                            <input type="tel" name="parent_phone" required placeholder="01xxxxxxxxx" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
+                            <label class="block text-xs font-bold text-slate-300 mb-1.5">رقم هاتف ولي الأمر *</label>
+                            <input type="tel" name="parent_phone" required placeholder="01xxxxxxxxx" class="w-full px-4 py-3 sm:py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 mb-2">رقم هاتف الطالب (إن وجد)</label>
-                            <input type="tel" name="phone" placeholder="01xxxxxxxxx" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
+                            <label class="block text-xs font-bold text-slate-300 mb-1.5">رقم هاتف الطالب (إن وجد)</label>
+                            <input type="tel" name="phone" placeholder="01xxxxxxxxx" class="w-full px-4 py-3 sm:py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-2">العنوان السكني</label>
-                        <input type="text" name="address" placeholder="المدينة / المنطقة..." class="w-full px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
+                        <label class="block text-xs font-bold text-slate-300 mb-1.5">العنوان السكني</label>
+                        <input type="text" name="address" placeholder="المدينة / المنطقة..." class="w-full px-4 py-3 sm:py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-2">ملاحظات إضافية</label>
-                        <textarea name="notes" rows="2" placeholder="أي ملاحظات أو استفسارات إضافية..." class="w-full px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition"></textarea>
+                        <label class="block text-xs font-bold text-slate-300 mb-1.5">ملاحظات إضافية</label>
+                        <textarea name="notes" rows="2" placeholder="أي ملاحظات أو استفسارات إضافية..." class="w-full px-4 py-3 sm:py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition"></textarea>
                     </div>
 
                     <div id="formResponse" class="hidden p-4 rounded-xl text-xs font-bold"></div>
 
-                    <button type="submit" class="w-full py-4.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black rounded-2xl text-base shadow-xl shadow-emerald-600/30 transition transform hover:-translate-y-0.5">
+                    <button type="submit" class="w-full py-3.5 sm:py-4.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black rounded-2xl text-sm sm:text-base shadow-xl shadow-emerald-600/30 transition transform hover:-translate-y-0.5">
                         تأكيد إرسال طلب التقديم 🚀
                     </button>
                 </form>

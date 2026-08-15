@@ -24,19 +24,45 @@ class ParentPortalController extends Controller
         ], [
             'parent_phone.required' => 'يرجى إدخال رقم هاتف ولي الأمر',
             'student_id.required' => 'يرجى إدخال كود الطالب الخاص',
+            'student_id.numeric' => 'كود الطالب يجب أن يكون أرقاماً فقط',
         ]);
 
-        $student = Student::where('id', $request->student_id)
-            ->where(function ($q) use ($request) {
-                $q->where('parent_phone', $request->parent_phone)
-                  ->orWhere('parent_phone', '0' . ltrim($request->parent_phone, '0'))
-                  ->orWhere('parent_phone', 'like', '%' . substr($request->parent_phone, -9));
-            })
-            ->first();
+        $inputPhone = preg_replace('/[^0-9]/', '', $request->parent_phone);
+        $studentId = (int) $request->student_id;
 
-        if (! $student) {
-            return back()->withErrors(['parent_phone' => 'بيانات الدخول غير صحيحة، يرجى التأكد من الكود ورقم الهاتف']);
+        // 1. البحث بالرقم للتحقق هل الهاتف مسجل بالنظام أم لا
+        $studentsByPhone = Student::where(function ($q) use ($inputPhone, $request) {
+            $q->where('parent_phone', $request->parent_phone)
+              ->orWhere('parent_phone', $inputPhone)
+              ->orWhere('parent_phone', 'like', '%' . substr($inputPhone, -9));
+        })->get();
+
+        // 2. البحث بالكود للتحقق هل الطالب موجود بالنظام أم لا
+        $studentById = Student::find($studentId);
+
+        // سيناريو 1: كود الطالب غير موجود إطلاقاً بالسنتر
+        if (! $studentById && $studentsByPhone->isEmpty()) {
+            return back()->withInput()->withErrors([
+                'error' => '❌ بيانات الدخول غير مسجلة لدينا. يرجى التثبت من رقم الهاتف وكود الطالب أو التواصل مع إدارة السنتر.'
+            ]);
         }
+
+        // سيناريو 2: رقم الهاتف صح ومسجل بالسنتر، لكن كود الطالب خطأ أو غير مرتبط بهذا الرقم
+        if ($studentsByPhone->isNotEmpty() && (! $studentById || ! $studentsByPhone->contains('id', $studentId))) {
+            return back()->withInput()->withErrors([
+                'error' => '⚠️ رقم هاتف ولي الأمر صحيح ومسجل، ولكن كود الطالب غير صحيح أو لا ينتمي لهذا الرقم.'
+            ]);
+        }
+
+        // سيناريو 3: كود الطالب صح وموجود بالسنتر، ولكن رقم الهاتف المدخل غير مطابق للرقم المسجل للطالب
+        if ($studentById && $studentsByPhone->isEmpty()) {
+            return back()->withInput()->withErrors([
+                'error' => "⚠️ كود الطالب صحيح للـ ({$studentById->name})، ولكن رقم هاتف ولي الأمر المدخل غير مطابق للرقم المسجل بملف الطالب."
+            ]);
+        }
+
+        // إذا وصل هنا، فالبيانات صحيحة ومطباقة بالكامل
+        $student = $studentById;
 
         session(['parent_student_id' => $student->id]);
 
