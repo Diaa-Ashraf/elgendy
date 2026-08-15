@@ -22,3 +22,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/students/{record}/ledger/pdf', [StudentPdfController::class, 'printLedger'])->name('student.ledger.pdf');
     Route::get('/admin/students/{record}/card/print', [StudentPdfController::class, 'printCard'])->name('student.card.print');
 });
+
+// 🖼️ مسار قراءة ملفات الميديا والصور احتياطياً لاستضافات cPanel المشتركة
+Route::get('/storage/{path}', function ($path) {
+    $fullPath = storage_path('app/public/' . $path);
+    if (! file_exists($fullPath)) {
+        abort(404);
+    }
+    return response()->file($fullPath);
+})->where('path', '.*')->name('storage.local');
