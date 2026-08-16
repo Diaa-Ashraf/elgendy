@@ -26,7 +26,8 @@ class TodayDashboardTablesWidget extends Widget
         $currentDay = $dayMap[$dayKey] ?? 'sat';
 
         // جدول حصص اليوم
-        $todaySchedules = GroupSchedule::with(['group.subject', 'group.educationalStage', 'group.students'])
+        $todaySchedules = GroupSchedule::whereHas('group')
+            ->with(['group.subject', 'group.educationalStage', 'group.students'])
             ->where('day_of_week', $currentDay)
             ->get();
 

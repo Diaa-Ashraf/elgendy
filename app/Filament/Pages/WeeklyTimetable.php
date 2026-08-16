@@ -41,13 +41,11 @@ class WeeklyTimetable extends Page
             'fri' => 'الجمعة',
         ];
 
-        $query = GroupSchedule::with(['group.subject', 'group.educationalStage']);
-
-        if ($this->selected_stage_id) {
-            $query->whereHas('group', function ($q) {
+        $query = GroupSchedule::whereHas('group', function ($q) {
+            if ($this->selected_stage_id) {
                 $q->where('stage_id', $this->selected_stage_id);
-            });
-        }
+            }
+        })->with(['group.subject', 'group.educationalStage']);
 
         $schedules = $query->get()->groupBy('day_of_week');
 

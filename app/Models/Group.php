@@ -11,6 +11,13 @@ class Group extends Model
 
     protected $guarded = [];
 
+    protected static function booted()
+    {
+        static::deleted(function (Group $group) {
+            $group->schedules()->delete();
+        });
+    }
+
     public function educationalStage()
     {
         return $this->belongsTo(EducationalStage::class, 'stage_id');
