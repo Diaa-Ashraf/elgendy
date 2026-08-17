@@ -20,6 +20,11 @@
                     <span class="gandy-shortcut-text">تسجيل طالب</span>
                 </a>
 
+                <a href="{{ url('/admin/student-imports') }}" class="gandy-shortcut-card">
+                    <x-heroicon-o-arrow-up-tray style="width: 28px; height: 28px; color: #10b981;" />
+                    <span class="gandy-shortcut-text">استيراد Excel</span>
+                </a>
+
                 <a href="{{ url('/admin/students') }}" class="gandy-shortcut-card">
                     <x-heroicon-o-users style="width: 28px; height: 28px; color: #2563eb;" />
                     <span class="gandy-shortcut-text">قائمة الطلاب</span>

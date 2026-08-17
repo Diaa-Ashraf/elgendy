@@ -22,4 +22,17 @@ class Exam extends Model
     {
         return $this->hasMany(ExamResult::class);
     }
+
+    public function questions()
+    {
+        return $this->belongsToMany(Question::class, 'exam_questions')
+            ->withPivot('marks', 'order')
+            ->orderBy('exam_questions.order')
+            ->withTimestamps();
+    }
+
+    public function onlineAttempts()
+    {
+        return $this->hasMany(OnlineExamAttempt::class);
+    }
 }

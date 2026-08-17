@@ -32,6 +32,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'create_students', 'display_name' => 'إضافة طالب جديد'],
             ['name' => 'edit_students', 'display_name' => 'تعديل بيانات طالب'],
             ['name' => 'delete_students', 'display_name' => 'حذف طالب'],
+            ['name' => 'import_students', 'display_name' => 'استيراد الطلاب من ملفات Excel'],
 
             ['name' => 'view_student_applications', 'display_name' => 'عرض طلبات التقديم أونلاين'],
             ['name' => 'edit_student_applications', 'display_name' => 'مراجعة وتعديل طلبات التقديم'],
@@ -51,11 +52,17 @@ class PermissionSeeder extends Seeder
             ['name' => 'use_qr_scanner', 'display_name' => 'استخدام ماسح QR للحضور السريع'],
             ['name' => 'view_weekly_timetable', 'display_name' => 'عرض الجدول الأسبوعي'],
 
-            // الامتحانات والنتائج
+            // الامتحانات والنتائج وبنك الأسئلة
             ['name' => 'view_exams', 'display_name' => 'عرض الامتحانات والنتائج'],
             ['name' => 'create_exams', 'display_name' => 'إضافة امتحان جديد'],
             ['name' => 'edit_exams', 'display_name' => 'تعديل بيانات امتحان ونتائجه'],
             ['name' => 'delete_exams', 'display_name' => 'حذف امتحان'],
+            ['name' => 'view_exam_analytics', 'display_name' => 'عرض تحليل نقاط الضعف للاختبارات'],
+
+            ['name' => 'view_questions', 'display_name' => 'عرض بنك الأسئلة'],
+            ['name' => 'create_questions', 'display_name' => 'إضافة سؤال لبنك الأسئلة'],
+            ['name' => 'edit_questions', 'display_name' => 'تعديل سؤال في بنك الأسئلة'],
+            ['name' => 'delete_questions', 'display_name' => 'حذف سؤال من بنك الأسئلة'],
 
             // الملازم والكتب وتسليم الملازم
             ['name' => 'view_study_materials', 'display_name' => 'عرض الملازم والمطبوعات'],
@@ -68,11 +75,15 @@ class PermissionSeeder extends Seeder
             ['name' => 'edit_material_deliveries', 'display_name' => 'تعديل تسليم ملزمة'],
             ['name' => 'delete_material_deliveries', 'display_name' => 'حذف عملية تسليم ملزمة'],
 
-            // الإدارة المالية (سداد الطلاب، الرواتب، المصروفات، التصنيفات، الخصومات)
+            // الإدارة المالية (سداد الطلاب، طلبات الدفع الإلكتروني، الرواتب، المصروفات، التصنيفات، الخصومات)
             ['name' => 'view_student_payments', 'display_name' => 'عرض مدفوعات الطلاب'],
             ['name' => 'create_student_payments', 'display_name' => 'تسجيل سداد طالب'],
             ['name' => 'edit_student_payments', 'display_name' => 'تعديل دفعة مالية لطالب'],
             ['name' => 'delete_student_payments', 'display_name' => 'حذف دفعة مالية'],
+
+            ['name' => 'view_online_payment_requests', 'display_name' => 'عرض طلبات الدفع الإلكتروني (InstaPay & Vodafone Cash)'],
+            ['name' => 'approve_online_payment_requests', 'display_name' => 'اعتماد وتأكيد الدفع الإلكتروني'],
+            ['name' => 'reject_online_payment_requests', 'display_name' => 'رفض طلبات الدفع الإلكتروني'],
 
             ['name' => 'view_salaries', 'display_name' => 'عرض رواتب ومستحقات الموظفين'],
             ['name' => 'create_salaries', 'display_name' => 'صرف راتب / مستحق لموظف'],
@@ -135,6 +146,9 @@ class PermissionSeeder extends Seeder
             'view_student_payments',
             'create_student_payments',
             'edit_student_payments',
+            'view_online_payment_requests',
+            'approve_online_payment_requests',
+            'reject_online_payment_requests',
             'view_salaries',
             'create_salaries',
             'edit_salaries',
@@ -155,6 +169,8 @@ class PermissionSeeder extends Seeder
             'view_educational_stages',
             'view_subjects',
             'view_students',
+            'create_students',
+            'import_students',
             'view_groups',
             'view_group_sessions',
             'create_group_sessions',
@@ -164,6 +180,10 @@ class PermissionSeeder extends Seeder
             'view_exams',
             'create_exams',
             'edit_exams',
+            'view_exam_analytics',
+            'view_questions',
+            'create_questions',
+            'edit_questions',
             'view_study_materials',
             'view_material_deliveries',
             'create_material_deliveries',
@@ -173,6 +193,7 @@ class PermissionSeeder extends Seeder
             'view_students',
             'create_students',
             'edit_students',
+            'import_students',
             'view_student_applications',
             'edit_student_applications',
             'view_groups',

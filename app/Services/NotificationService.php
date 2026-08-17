@@ -122,10 +122,42 @@ class NotificationService
         }
 
         self::sendSystemNotification(
-            'تنبيه مدفوعات ⚠️',
-            "يوجد عدد {$lateCount} طلاب لم يسددوا اشتراك الشهر الحالي حتى الآن.",
+            'تأخر سداد ⚠️',
+            "يوجد عدد {$lateCount} طالب متأخر في سداد الرسوم المطلوبة.",
+            'warning'
+        );
+    }
+
+    /**
+     * إشعار بطلب سداد إلكتروني جديد (InstaPay / Vodafone Cash) 💳
+     */
+    public static function notifyNewOnlinePaymentRequest(string $studentName, float $amount, string $method, int $requestId): void
+    {
+        $methodText = $method === 'instapay' ? 'انستاباي ⚡' : 'فودافون كاش 📱';
+        $url = url('/admin/online-payment-requests');
+
+        self::sendSystemNotification(
+            "💳 طلب سداد جديد ({$amount} ج.م)",
+            "قام ولي أمر الطالب ({$studentName}) برفع إيصال سداد عبر ({$methodText}).",
             'warning',
-            url('/admin/students')
+            $url
+        );
+    }
+
+    /**
+     * إشعار بأداء طالب لاختبار إلكتروني وحصوله على نتيجة فورية 📝
+     */
+    public static function notifyStudentCompletedOnlineExam(string $studentName, string $examTitle, float $score, float $maxScore, float $percentage, int $examId): void
+    {
+        $passedText = $percentage >= 50 ? 'ناجح ✅' : 'راسب ⚠️';
+        $url = \App\Filament\Resources\ExamResource::getUrl('analytics', ['record' => $examId]);
+
+        self::sendSystemNotification(
+            "📝 إتمام اختبار أونلاين ({$studentName})",
+            "أتم الطالب ({$studentName}) اختبار ({$examTitle}) وحصل على ({$score}/{$maxScore}) بنسبة {$percentage}% ({$passedText}).",
+            $percentage >= 50 ? 'success' : 'warning',
+            $url
         );
     }
 }
+

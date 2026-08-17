@@ -19,9 +19,10 @@ class WhatsAppNotificationService
             $cleanPhone = '2' . $cleanPhone;
         }
 
-        $apiUrl = Setting::get('whatsapp_api_url');
-        $apiKey = Setting::get('whatsapp_api_key');
-        $instanceId = Setting::get('whatsapp_instance_id');
+        $settingService = app(\App\Services\SettingService::class);
+        $apiUrl = $settingService->get('whatsapp_api_url');
+        $apiKey = $settingService->get('whatsapp_api_key');
+        $instanceId = $settingService->get('whatsapp_instance_id');
 
         if (! $apiUrl || ! $apiKey) {
             Log::info("WhatsApp API non configured. Message to {$cleanPhone}: {$message}");
@@ -92,4 +93,37 @@ class WhatsAppNotificationService
 
         return $this->sendMessage($parentPhone, $msg);
     }
+
+    /**
+     * إشعار تأكيد واعتماد الدفع الإلكتروني
+     */
+    public function notifyOnlinePaymentApproved(string $parentPhone, string $studentName, float $amount, string $methodName, ?string $groupName = null): bool
+    {
+        $msg = "إشعار سداد إلكتروني ناجح ✅\n\n";
+        $msg .= "المكرم ولي أمر الطالب/ة: {$studentName}\n";
+        $msg .= "نحيطكم علماً بأنه تم استلام وتأكيد سداد مبلغ ({$amount} ج.م) بنجاح عبر ({$methodName}).\n";
+        if ($groupName) {
+            $msg .= "المجموعة: {$groupName}\n";
+        }
+        $msg .= "تم تسجيل الدفعة وتحديث كشف حساب الطالب في النظام فوراً.\n\n";
+        $msg .= "شاكرين لكم حسن تعاونكم وحرصكم الدائم.";
+
+        return $this->sendMessage($parentPhone, $msg);
+    }
+
+    /**
+     * إشعار رفض إيصال الدفع الإلكتروني
+     */
+    public function notifyOnlinePaymentRejected(string $parentPhone, string $studentName, float $amount, string $reason): bool
+    {
+        $msg = "تنبيه بخصوص إيصال السداد الإلكتروني ⚠️\n\n";
+        $msg .= "المكرم ولي أمر الطالب/ة: {$studentName}\n";
+        $msg .= "نود إحاطتكم بأنه تعذر قبول إيصال السداد بقيمة ({$amount} ج.م) للأسباب التالية:\n";
+        $msg .= "❌ السبب: {$reason}\n\n";
+        $msg .= "يرجى مراجعة إدارة السنتر أو إعادة رفع إشعار التحويل الصحيح عبر بوابة ولي الأمر.\n";
+        $msg .= "شاكرين تفهمكم.";
+
+        return $this->sendMessage($parentPhone, $msg);
+    }
 }
+

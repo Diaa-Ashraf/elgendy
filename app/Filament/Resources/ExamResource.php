@@ -82,6 +82,46 @@ class ExamResource extends Resource
                             ->native(false),
                     ])
                     ->columns(2),
+
+                Forms\Components\Section::make('إعدادات الاختبار الإلكتروني (Online Quiz) ⚡')
+                    ->schema([
+                        Forms\Components\Toggle::make('is_online')
+                            ->label('تفعيل كاختبار إلكتروني أونلاين')
+                            ->helperText('عند التفعيل، سيتمكن الطلاب من حل الامتحان أونلاين وتصحيحه ذاتياً.')
+                            ->reactive()
+                            ->default(false),
+
+                        Forms\Components\TextInput::make('duration_minutes')
+                            ->label('مدة الامتحان (بالدقائق)')
+                            ->numeric()
+                            ->placeholder('مثال: 30')
+                            ->helperText('اتركه فارغاً إذا كان الاختبار مفتوح بدون وقت محدد.')
+                            ->visible(fn ($get) => (bool) $get('is_online')),
+
+                        Forms\Components\TextInput::make('pass_percentage')
+                            ->label('نسبة النجاح (%)')
+                            ->numeric()
+                            ->default(50)
+                            ->minValue(1)
+                            ->maxValue(100)
+                            ->visible(fn ($get) => (bool) $get('is_online')),
+
+                        Forms\Components\DateTimePicker::make('starts_at')
+                            ->label('تاريخ ووقت فتح الامتحان')
+                            ->visible(fn ($get) => (bool) $get('is_online'))
+                            ->native(false),
+
+                        Forms\Components\DateTimePicker::make('ends_at')
+                            ->label('تاريخ ووقت إغلاق الامتحان')
+                            ->visible(fn ($get) => (bool) $get('is_online'))
+                            ->native(false),
+
+                        Forms\Components\Toggle::make('show_correct_answers_after_submission')
+                            ->label('إظهار الإجابات النموذجية والشرح للطالب بعد التسليم فوراً')
+                            ->default(true)
+                            ->visible(fn ($get) => (bool) $get('is_online')),
+                    ])
+                    ->columns(2),
             ]);
     }
 
@@ -104,8 +144,14 @@ class ExamResource extends Resource
                     ->sortable()
                     ->searchable(),
 
+                Tables\Columns\TextColumn::make('is_online')
+                    ->label('النوع')
+                    ->badge()
+                    ->color(fn (bool $state): string => $state ? 'success' : 'gray')
+                    ->formatStateUsing(fn (bool $state): string => $state ? 'أونلاين ⚡' : 'ورقي 📄'),
+
                 Tables\Columns\TextColumn::make('exam_type')
-                    ->label('نوع الامتحان')
+                    ->label('التصنيف')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
                         'monthly' => 'info',
@@ -132,7 +178,7 @@ class ExamResource extends Resource
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('results_summary')
-                    ->label('المصححين')
+                    ->label('النتائج')
                     ->state(function (Exam $record): string {
                         $count = $record->examResults()->count();
                         return $count > 0 ? "تم رصد {$count} طالب" : 'لم تُرصد النتائج';
@@ -148,20 +194,21 @@ class ExamResource extends Resource
                     ->label('المادة الدراسية')
                     ->relationship('subject', 'name'),
 
-                Tables\Filters\SelectFilter::make('exam_type')
-                    ->label('نوع الامتحان')
-                    ->options([
-                        'monthly' => 'شهري',
-                        'quiz' => 'كويز',
-                        'midterm' => 'منتصف الترم',
-                        'final' => 'نهائي',
-                    ]),
+                Tables\Filters\TernaryFilter::make('is_online')
+                    ->label('اختبار أونلاين'),
             ])
             ->actions([
+                Tables\Actions\Action::make('analytics')
+                    ->label('تحليل نقاط الضعف 🎯')
+                    ->icon('heroicon-o-chart-pie')
+                    ->color('warning')
+                    ->visible(fn (Exam $record): bool => (bool) $record->is_online)
+                    ->url(fn (Exam $record): string => static::getUrl('analytics', ['record' => $record])),
+
                 Tables\Actions\Action::make('recordResults')
-                    ->label('رصد الدرجات')
+                    ->label('رصد يدوي')
                     ->icon('heroicon-o-pencil-square')
-                    ->color('success')
+                    ->color('info')
                     ->url(fn (Exam $record): string => static::getUrl('record-results', ['record' => $record])),
 
                 Tables\Actions\EditAction::make()->label('تعديل'),
@@ -177,7 +224,7 @@ class ExamResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            ExamResource\RelationManagers\QuestionsRelationManager::class,
         ];
     }
 
@@ -188,6 +235,7 @@ class ExamResource extends Resource
             'create' => Pages\CreateExam::route('/create'),
             'edit' => Pages\EditExam::route('/{record}/edit'),
             'record-results' => Pages\RecordResults::route('/{record}/record-results'),
+            'analytics' => Pages\ExamAnalytics::route('/{record}/analytics'),
         ];
     }
 }

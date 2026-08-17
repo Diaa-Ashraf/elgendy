@@ -15,7 +15,14 @@ Route::prefix('parent')->group(function () {
     Route::get('/login', [ParentPortalController::class, 'showLogin'])->name('parent.login');
     Route::post('/login', [ParentPortalController::class, 'login'])->name('parent.login.submit');
     Route::get('/dashboard', [ParentPortalController::class, 'dashboard'])->name('parent.dashboard');
+    Route::post('/payment', [ParentPortalController::class, 'submitPayment'])->name('parent.payment.submit');
     Route::get('/logout', [ParentPortalController::class, 'logout'])->name('parent.logout');
+
+    // 📝 الاختبارات الإلكترونية أونلاين
+    Route::get('/exams/{id}', [\App\Http\Controllers\OnlineExamController::class, 'show'])->name('parent.exams.show');
+    Route::get('/exams/{id}/start', [\App\Http\Controllers\OnlineExamController::class, 'start'])->name('parent.exams.start');
+    Route::post('/exams/{id}/submit', [\App\Http\Controllers\OnlineExamController::class, 'submit'])->name('parent.exams.submit');
+    Route::get('/exams/{id}/result', [\App\Http\Controllers\OnlineExamController::class, 'result'])->name('parent.exams.result');
 });
 
 Route::middleware(['auth'])->group(function () {

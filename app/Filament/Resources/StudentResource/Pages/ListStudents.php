@@ -13,6 +13,12 @@ class ListStudents extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('importStudents')
+                ->label('استيراد من Excel 📥')
+                ->icon('heroicon-o-arrow-up-tray')
+                ->color('success')
+                ->url(\App\Filament\Pages\StudentImports::getUrl()),
+
             Actions\CreateAction::make()
                 ->label('إضافة طالب جديد'),
         ];

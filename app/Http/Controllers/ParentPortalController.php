@@ -91,6 +91,15 @@ class ParentPortalController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
+        // الاختبارات الإلكترونية المتاحة للمرحلة
+        $onlineExams = \App\Models\Exam::where('stage_id', $student->stage_id)
+            ->where('is_online', true)
+            ->with(['subject', 'onlineAttempts' => function ($q) use ($student) {
+                $q->where('student_id', $student->id);
+            }])
+            ->orderBy('date', 'desc')
+            ->get();
+
         // الملازم والمطبوعات المستلمة
         $materials = \App\Models\StudentMaterialDelivery::where('student_id', $student->id)
             ->with('studyMaterial')
@@ -100,13 +109,91 @@ class ParentPortalController extends Controller
         // الحساب المالي كشف الحساب
         $ledger = $ledgerService->getFullLedger($student);
 
+        // طلبات السداد الإلكتروني السابقة
+        $onlinePaymentRequests = \App\Models\OnlinePaymentRequest::where('student_id', $student->id)
+            ->with('group')
+            ->orderBy('id', 'desc')
+            ->take(10)
+            ->get();
+
+        // إعدادات الدفع الإلكتروني من النظام
+        $settingService = app(\App\Services\SettingService::class);
+        $paymentSettings = [
+            'enabled' => (bool) $settingService->get('online_payment_enabled', true),
+            'vodafone_cash' => $settingService->get('vodafone_cash_number', ''),
+            'instapay_username' => $settingService->get('instapay_username', ''),
+            'instapay_qr' => $settingService->url('instapay_qr_code'),
+            'instructions' => $settingService->get('online_payment_instructions', 'يرجى إرسال المبلغ ثم إرفاق صورة إشعار التحويل لتأكيد السداد.'),
+        ];
+
         return view('parent-portal.dashboard', [
             'student' => $student,
             'attendances' => $attendances,
             'examResults' => $examResults,
+            'onlineExams' => $onlineExams,
             'ledger' => $ledger,
             'materials' => $materials,
+            'onlinePaymentRequests' => $onlinePaymentRequests,
+            'paymentSettings' => $paymentSettings,
         ]);
+    }
+
+    public function submitPayment(Request $request)
+    {
+        $studentId = session('parent_student_id');
+        if (! $studentId) {
+            return redirect()->route('parent.login');
+        }
+
+        $student = Student::findOrFail($studentId);
+
+        $request->validate([
+            'amount' => 'required|numeric|min:1',
+            'payment_method' => 'required|in:vodafone_cash,instapay,wallet',
+            'group_id' => 'nullable|exists:groups,id',
+            'sender_phone' => 'nullable|string|max:50',
+            'transaction_reference' => 'nullable|string|max:100',
+            'notes' => 'nullable|string|max:500',
+            'receipt' => 'required|image|mimes:jpeg,png,jpg,webp,heic|max:5120',
+        ], [
+            'amount.required' => 'يرجى إدخال المبلغ المحول بدقة.',
+            'amount.numeric' => 'المبلغ يجب أن يكون رقماً صحيحاً.',
+            'amount.min' => 'المبلغ المحول يجب ألا يقل عن 1 ج.م.',
+            'receipt.required' => 'صورة إيصال التحويل (Screenshot) مطلوبة لتأكيد الدفع.',
+            'receipt.image' => 'الملف المرفق يجب أن يكون صورة صالحة.',
+            'receipt.max' => 'حجم الصورة لا يجب أن يتعدى 5 ميجابايت.',
+        ]);
+
+        $receiptPath = $request->file('receipt')->store('payment-receipts', 'public');
+
+        $onlinePayment = \App\Models\OnlinePaymentRequest::create([
+            'student_id' => $student->id,
+            'group_id' => $request->group_id,
+            'amount' => $request->amount,
+            'payment_method' => $request->payment_method,
+            'sender_phone' => $request->sender_phone,
+            'transaction_reference' => $request->transaction_reference,
+            'receipt_image' => $receiptPath,
+            'type' => 'month',
+            'period_month' => now()->startOfMonth(),
+            'status' => 'pending',
+            'notes' => $request->notes,
+        ]);
+
+        // إرسال إشعار في جرس الإشعارات باللوحة للمديرين والمحاسبين
+        try {
+            \App\Services\NotificationService::notifyNewOnlinePaymentRequest(
+                $student->name,
+                (float) $request->amount,
+                $request->payment_method,
+                $onlinePayment->id
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Online Payment Bell Notification Error: ' . $e->getMessage());
+        }
+
+        return redirect()->route('parent.dashboard')
+            ->with('payment_success', 'تم إرسال إيصال التحويل بنجاح! سيتم مراجعة الإيصال من إدارة السنتر وتأكيد نزول المبلغ في حساب الطالب فوراً مع إرسال إشعار واتساب لكم 🚀');
     }
 
     public function logout()
