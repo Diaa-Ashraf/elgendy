@@ -8,6 +8,15 @@ class Exam extends Model
 {
     protected $guarded = [];
 
+    protected $casts = [
+        'date' => 'date',
+        'starts_at' => 'datetime',
+        'ends_at' => 'datetime',
+        'is_online' => 'boolean',
+        'show_correct_answers_after_submission' => 'boolean',
+        'shuffle_questions' => 'boolean',
+    ];
+
     public function subject()
     {
         return $this->belongsTo(Subject::class);
