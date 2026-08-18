@@ -28,6 +28,7 @@ Route::prefix('parent')->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/admin/students/{record}/ledger/pdf', [StudentPdfController::class, 'printLedger'])->name('student.ledger.pdf');
     Route::get('/admin/students/{record}/card/print', [StudentPdfController::class, 'printCard'])->name('student.card.print');
+    Route::get('/admin/exams/{record}/pdf', [StudentPdfController::class, 'printExam'])->name('exam.pdf.print');
 });
 
 // 🖼️ مسار قراءة ملفات الميديا والصور احتياطياً لاستضافات cPanel و Hostinger

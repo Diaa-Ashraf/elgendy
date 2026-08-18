@@ -205,6 +205,13 @@ class ExamResource extends Resource
                     ->label('اختبار أونلاين'),
             ])
             ->actions([
+                Tables\Actions\Action::make('printPdf')
+                    ->label('طباعة PDF 📄')
+                    ->icon('heroicon-o-printer')
+                    ->color('gray')
+                    ->url(fn (Exam $record): string => route('exam.pdf.print', ['record' => $record->id]))
+                    ->openUrlInNewTab(),
+
                 Tables\Actions\Action::make('analytics')
                     ->label('تحليل نقاط الضعف 🎯')
                     ->icon('heroicon-o-chart-pie')

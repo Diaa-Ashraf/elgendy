@@ -26,4 +26,13 @@ class StudentPdfController extends Controller
             'student' => $student,
         ]);
     }
+
+    public function printExam(int $examId)
+    {
+        $exam = \App\Models\Exam::with(['educationalStage', 'subject', 'questions'])->findOrFail($examId);
+
+        return view('pdf.exam-paper', [
+            'exam' => $exam,
+        ]);
+    }
 }
