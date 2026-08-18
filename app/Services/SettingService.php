@@ -53,7 +53,7 @@ class SettingService
             return $path;
         }
 
-        return \Illuminate\Support\Facades\Storage::disk('public')->url($path);
+        return asset('storage/' . ltrim($path, '/'));
     }
 
     /**
