@@ -78,6 +78,7 @@ class ExamResource extends Resource
                         Forms\Components\DatePicker::make('date')
                             ->label('تاريخ عقد الامتحان')
                             ->default(now())
+                            ->displayFormat('Y-m-d')
                             ->required()
                             ->native(false),
                     ])
@@ -108,11 +109,17 @@ class ExamResource extends Resource
 
                         Forms\Components\DateTimePicker::make('starts_at')
                             ->label('تاريخ ووقت فتح الامتحان')
+                            ->displayFormat('Y-m-d h:i A')
+                            ->seconds(false)
+                            ->placeholder('اختر تاريخ ووقت البدء (ص / م)')
                             ->visible(fn ($get) => (bool) $get('is_online'))
                             ->native(false),
 
                         Forms\Components\DateTimePicker::make('ends_at')
                             ->label('تاريخ ووقت إغلاق الامتحان')
+                            ->displayFormat('Y-m-d h:i A')
+                            ->seconds(false)
+                            ->placeholder('اختر تاريخ ووقت الانتهاء (ص / م)')
                             ->visible(fn ($get) => (bool) $get('is_online'))
                             ->native(false),
 
