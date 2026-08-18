@@ -290,11 +290,43 @@ class OnlinePaymentRequestResource extends Resource
                             }
                         });
 
-                        Notification::make()
+                        // تجهيز رابط الواتساب المباشر المجاني
+                        $student = $record->student;
+                        $waUrl = null;
+                        if ($student && $student->parent_phone) {
+                            $cleanPhone = preg_replace('/[^0-9]/', '', $student->parent_phone);
+                            if (str_starts_with($cleanPhone, '01')) {
+                                $cleanPhone = '2' . $cleanPhone;
+                            }
+                            $methodLabel = $record->payment_method === 'instapay' ? 'انستاباي (InstaPay)' : 'فودافون كاش والمحافظ الإلكترونية';
+                            $groupName = $record->group?->name ?? 'الاشتراك الشهري';
+                            
+                            $msg = "إشعار سداد إلكتروني ناجح ✅\n\n";
+                            $msg .= "المكرم ولي أمر الطالب/ة: {$student->name}\n";
+                            $msg .= "نحيطكم علماً بأنه تم استلام وتأكيد سداد مبلغ ({$record->amount} ج.م) بنجاح عبر ({$methodLabel}).\n";
+                            $msg .= "المجموعة: {$groupName}\n";
+                            $msg .= "تم تسجيل الدفعة وتحديث كشف حساب الطالب في النظام فوراً.\n\n";
+                            $msg .= "شاكرين لكم حسن تعاونكم وحرصكم الدائم.";
+
+                            $waUrl = "https://wa.me/{$cleanPhone}?text=" . urlencode($msg);
+                        }
+
+                        $notification = Notification::make()
                             ->title('تم اعتماد الدفعة بنجاح 🚀')
-                            ->body('تم تسجيل المبلغ بحساب الطالب وإرسال إشعار واتساب لولي الأمر.')
-                            ->success()
-                            ->send();
+                            ->body('تم تسجيل المبلغ بحساب الطالب وتحديث كشف الحساب.')
+                            ->success();
+
+                        if ($waUrl) {
+                            $notification->actions([
+                                \Filament\Notifications\Actions\Action::make('sendWhatsApp')
+                                    ->label('فتح محادثة واتساب ولي الأمر 💬')
+                                    ->url($waUrl, shouldOpenInNewTab: true)
+                                    ->button()
+                                    ->color('success'),
+                            ]);
+                        }
+
+                        $notification->send();
                     }),
 
                 // زر رفض الدفعة
@@ -310,7 +342,7 @@ class OnlinePaymentRequestResource extends Resource
                             ->required(),
                     ])
                     ->modalHeading('رفض إيصال السداد الإلكتروني')
-                    ->modalSubmitActionLabel('تأكيد الرفض وإشعار ولي الأمر')
+                    ->modalSubmitActionLabel('تأكيد الرفض')
                     ->action(function (OnlinePaymentRequest $record, array $data, WhatsAppNotificationService $waService) {
                         $user = Auth::user();
                         $userId = $user ? $user->id : 1;
@@ -322,7 +354,7 @@ class OnlinePaymentRequestResource extends Resource
                             'approved_at' => now(),
                         ]);
 
-                        // إرسال إشعار واتساب بالرفض وسببه
+                        // محاولة الإرسال عبر API إن وجد
                         $student = $record->student;
                         if ($student && $student->parent_phone) {
                             $waService->notifyOnlinePaymentRejected(
@@ -333,11 +365,39 @@ class OnlinePaymentRequestResource extends Resource
                             );
                         }
 
-                        Notification::make()
+                        // تجهيز رابط الواتساب المباشر المجاني برفض الطلب والسبب
+                        $waUrl = null;
+                        if ($student && $student->parent_phone) {
+                            $cleanPhone = preg_replace('/[^0-9]/', '', $student->parent_phone);
+                            if (str_starts_with($cleanPhone, '01')) {
+                                $cleanPhone = '2' . $cleanPhone;
+                            }
+                            $msg = "تنبيه بخصوص إيصال السداد الإلكتروني ⚠️\n\n";
+                            $msg .= "المكرم ولي أمر الطالب/ة: {$student->name}\n";
+                            $msg .= "نود إحاطتكم بأنه تعذر قبول إيصال السداد بقيمة ({$record->amount} ج.م) للأسباب التالية:\n";
+                            $msg .= "❌ السبب: {$data['rejection_reason']}\n\n";
+                            $msg .= "يرجى مراجعة إدارة السنتر أو إعادة رفع إشعار التحويل الصحيح عبر بوابة ولي الأمر.\n";
+                            $msg .= "شاكرين تفهمكم.";
+
+                            $waUrl = "https://wa.me/{$cleanPhone}?text=" . urlencode($msg);
+                        }
+
+                        $notification = Notification::make()
                             ->title('تم رفض الطلب')
-                            ->body('تم إخطار ولي الأمر بسبب الرفض عبر الواتساب.')
-                            ->warning()
-                            ->send();
+                            ->body('تم تسجيل سبب الرفض بنجاح.')
+                            ->warning();
+
+                        if ($waUrl) {
+                            $notification->actions([
+                                \Filament\Notifications\Actions\Action::make('sendWhatsApp')
+                                    ->label('إرسال سبب الرفض عبر واتساب ولي الأمر 💬')
+                                    ->url($waUrl, shouldOpenInNewTab: true)
+                                    ->button()
+                                    ->color('danger'),
+                            ]);
+                        }
+
+                        $notification->send();
                     }),
 
                 Tables\Actions\ViewAction::make()->label('تفاصيل'),
