@@ -8,6 +8,11 @@ class StudentPayment extends Model
 {
     protected $guarded = [];
 
+    protected $casts = [
+        'paid_at' => 'date',
+        'period_month' => 'date',
+    ];
+
     public function student()
     {
         return $this->belongsTo(Student::class);

@@ -146,9 +146,10 @@ class StudentPaymentResource extends Resource
                                 if (! $student || ! $group) return null;
 
                                 $type = $get('type');
+                                $sessions = is_numeric($get('sessions_count')) ? (int) $get('sessions_count') : 1;
                                 $basePrice = $type === 'session' 
-                                    ? ($group->price_per_session * ($get('sessions_count') ?? 1))
-                                    : $group->price_per_month;
+                                    ? (($group->price_per_session ?? 0) * max(1, $sessions))
+                                    : ($group->price_per_month ?? 0);
 
                                 if ($student->discount) {
                                     $discount = $student->discount;
@@ -160,7 +161,7 @@ class StudentPaymentResource extends Resource
                                     return "💡 المبلغ الأصلي: {$basePrice} ج.م | الخصم المطبق: {$discount->title} ({$discount->value}" . ($discount->type === 'percentage' ? '%' : ' ج.م') . ") = خصم {$discountAmount} ج.م";
                                 }
 
-                                return "💡 السعر الساسي للمجموعة: {$basePrice} ج.م (لا يوجد خصم لهذا الطالب)";
+                                return "💡 السعر الأساسي للمجموعة: {$basePrice} ج.م (لا يوجد خصم لهذا الطالب)";
                             }),
 
                         Forms\Components\DatePicker::make('paid_at')
