@@ -123,12 +123,29 @@ class ExamResource extends Resource
                             ->visible(fn ($get) => (bool) $get('is_online'))
                             ->native(false),
 
-                        Forms\Components\Toggle::make('show_correct_answers_after_submission')
-                            ->label('إظهار الإجابات النموذجية والشرح للطالب بعد التسليم فوراً')
-                            ->default(true)
-                            ->visible(fn ($get) => (bool) $get('is_online')),
                     ])
                     ->columns(2),
+
+                Forms\Components\Section::make('أسئلة الامتحان 📝')
+                    ->description('يمكنك اختيار الأسئلة مباشرة من بنك الأسئلة أو إضافة أسئلة جديدة للامتحان.')
+                    ->schema([
+                        Forms\Components\Select::make('questions')
+                            ->label('اختيار وإدراج أسئلة من بنك الأسئلة')
+                            ->relationship('questions', 'question_text', function (\Illuminate\Database\Eloquent\Builder $query, $get) {
+                                $stageId = $get('stage_id');
+                                $subjectId = $get('subject_id');
+
+                                return $query
+                                    ->when($stageId, fn ($q) => $q->where('stage_id', $stageId))
+                                    ->when($subjectId, fn ($q) => $q->where('subject_id', $subjectId))
+                                    ->orderBy('id', 'desc');
+                            })
+                            ->multiple()
+                            ->searchable()
+                            ->preload()
+                            ->helperText('يمكنك البحث عن السؤال بنصه واختيار عدة أسئلة لإضافتها للامتحان فوراً.'),
+                    ])
+                    ->collapsible(),
             ]);
     }
 

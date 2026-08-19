@@ -191,15 +191,22 @@ class QuestionsRelationManager extends RelationManager
                     ->modalHeading('اختيار أسئلة من بنك الأسئلة وإدراجها دفعة واحدة')
                     ->modalWidth('4xl')
                     ->form(function () use ($exam): array {
-                        // جلب الأسئلة غير المضافة للامتحان بعد لنفس المادة والمرحلة
+                        // جلب الأسئلة غير المضافة للامتحان بعد
                         $existingIds = $exam->questions()->pluck('questions.id')->toArray();
 
-                        $availableQuestions = Question::query()
-                            ->where('stage_id', $exam->stage_id)
+                        $query = Question::query()->whereNotIn('id', $existingIds);
+
+                        // محاولة مطابقة المرحلة والمادة أولاً إن وجدت أسئلة لهما
+                        $hasScoped = (clone $query)->where('stage_id', $exam->stage_id)
                             ->where('subject_id', $exam->subject_id)
-                            ->whereNotIn('id', $existingIds)
-                            ->orderBy('id', 'desc')
-                            ->get();
+                            ->exists();
+
+                        if ($hasScoped) {
+                            $query->where('stage_id', $exam->stage_id)
+                                  ->where('subject_id', $exam->subject_id);
+                        }
+
+                        $availableQuestions = $query->orderBy('id', 'desc')->get();
 
                         $options = [];
                         foreach ($availableQuestions as $q) {
@@ -208,8 +215,9 @@ class QuestionsRelationManager extends RelationManager
                                 'hard' => '🔴 صعب',
                                 default => '🟡 متوسط',
                             };
+                            $stageName = $q->educationalStage?->name ? " [{$q->educationalStage->name}]" : '';
                             $topic = $q->topic ? " [{$q->topic}]" : '';
-                            $options[$q->id] = "#{$q->id} - {$diff}{$topic}: " . mb_substr($q->question_text, 0, 90) . '...';
+                            $options[$q->id] = "#{$q->id}{$stageName} - {$diff}{$topic}: " . mb_substr($q->question_text, 0, 90) . '...';
                         }
 
                         return [

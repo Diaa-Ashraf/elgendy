@@ -182,7 +182,86 @@
             @endif
         </div>
 
-        {{-- ─── 3. سجل الحضور والغياب ─── --}}
+        {{-- ─── 3. جدول مواعيد الحصص الأسبوعي للطالب ─── --}}
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                <h2 class="font-black text-base text-white flex items-center gap-2">
+                    <span>🗓️</span> جدول الحصص والمجموعات الدراسية
+                </h2>
+                <span class="text-xs font-semibold text-indigo-400 bg-indigo-950/80 px-2.5 py-1 rounded-xl border border-indigo-900">
+                    {{ $student->groups->count() }} مجموعات مقيد بها
+                </span>
+            </div>
+
+            @php
+                $dayNames = [
+                    'sat' => 'السبت',
+                    'sun' => 'الأحد',
+                    'mon' => 'الإثنين',
+                    'tue' => 'الثلاثاء',
+                    'wed' => 'الأربعاء',
+                    'thu' => 'الخميس',
+                    'fri' => 'الجمعة',
+                ];
+            @endphp
+
+            @if($student->groups->isNotEmpty())
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    @foreach($student->groups as $grp)
+                        <div class="bg-slate-950 border border-slate-800/90 rounded-2xl p-4 flex flex-col justify-between hover:border-slate-700 transition space-y-3">
+                            <div>
+                                <div class="flex items-start justify-between gap-2 mb-2">
+                                    <div>
+                                        <h3 class="font-extrabold text-white text-sm leading-snug">{{ $grp->name }}</h3>
+                                        @if($grp->subject)
+                                            <span class="text-[11px] font-bold text-indigo-400 block mt-0.5">
+                                                المادة: {{ $grp->subject->name }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-indigo-950 text-indigo-300 border border-indigo-900 shrink-0">
+                                        {{ $grp->monthly_fee ? number_format($grp->monthly_fee) . ' ج.م / شهر' : 'اشتراك شهري' }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {{-- مواعيد الحصص الأسبوعية لهذه المجموعة --}}
+                            <div class="pt-2.5 border-t border-slate-800/80">
+                                <span class="text-[11px] font-bold text-slate-400 block mb-2">مواعيد الحصص الأسبوعية:</span>
+                                @if($grp->schedules && $grp->schedules->isNotEmpty())
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        @foreach($grp->schedules as $sch)
+                                            <div class="flex items-center justify-between bg-slate-900/90 border border-slate-800 px-3 py-2 rounded-xl text-xs">
+                                                <div class="flex items-center gap-1.5 font-extrabold text-white">
+                                                    <span class="text-indigo-400">📅</span>
+                                                    <span>{{ $dayNames[$sch->day_of_week] ?? $sch->day_of_week }}</span>
+                                                </div>
+                                                <div class="text-left font-mono font-bold text-emerald-400">
+                                                    ⏰ {{ \Carbon\Carbon::parse($sch->time)->format('g:i A') }}
+                                                    @if($sch->room)
+                                                        <span class="text-[10px] text-slate-400 font-normal block">({{ $sch->room }})</span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <p class="text-xs text-slate-500 italic bg-slate-900/50 p-2.5 rounded-xl text-center">
+                                        يتم تحديد وتأكيد مواعيد هذه المجموعة قريباً من الإدارة
+                                    </p>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="p-6 bg-slate-950 border border-slate-800/80 rounded-2xl text-center text-slate-400 text-xs font-bold">
+                    لم يتم تعيين الطالب في أي مجموعة دراسية بعد. يرجى مراجعة إدارة السنتر لتحديد المجموعة والجدول.
+                </div>
+            @endif
+        </div>
+
+        {{-- ─── 4. سجل الحضور والغياب ─── --}}
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl">
             <h2 class="font-black text-base text-white mb-4 flex items-center justify-between border-b border-slate-800 pb-3">
                 <span class="flex items-center gap-2">

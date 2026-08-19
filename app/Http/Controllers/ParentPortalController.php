@@ -76,7 +76,7 @@ class ParentPortalController extends Controller
             return redirect()->route('parent.login');
         }
 
-        $student = Student::with(['educationalStage', 'groups.subject'])->findOrFail($studentId);
+        $student = Student::with(['educationalStage', 'groups.subject', 'groups.schedules'])->findOrFail($studentId);
 
         // الحضور والغياب
         $attendances = Attendance::where('student_id', $student->id)
