@@ -143,6 +143,18 @@ class ExamResource extends Resource
                             ->multiple()
                             ->searchable()
                             ->preload()
+                            ->saveRelationshipsUsing(function (Exam $record, $state) {
+                                $state = array_filter((array) $state);
+                                $syncData = [];
+                                $order = 1;
+                                foreach ($state as $questionId) {
+                                    $syncData[$questionId] = [
+                                        'marks' => 1.0,
+                                        'order' => $order++,
+                                    ];
+                                }
+                                $record->questions()->sync($syncData);
+                            })
                             ->helperText('يمكنك البحث عن السؤال بنصه واختيار عدة أسئلة لإضافتها للامتحان فوراً.'),
                     ])
                     ->collapsible(),
