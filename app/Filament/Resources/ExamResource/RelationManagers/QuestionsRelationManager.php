@@ -172,15 +172,24 @@ class QuestionsRelationManager extends RelationManager
                         $data['subject_id'] = $this->getOwnerRecord()->subject_id;
                         return $data;
                     })
-                    ->after(function ($record) {
-                        // ربط السؤال بالامتحان الحالي وتحديد درجته وترتيبه
+                    ->after(function (Question $record) {
                         $exam = $this->getOwnerRecord();
                         $currentCount = $exam->questions()->count();
-                        
-                        $exam->questions()->updateExistingPivot($record->id, [
-                            'marks' => $record->default_marks ?? 1.0,
-                            'order' => $currentCount,
-                        ]);
+
+                        // التأكد من حفظ وإدراج الـ Pivot
+                        if (! $exam->questions()->where('questions.id', $record->id)->exists()) {
+                            $exam->questions()->attach($record->id, [
+                                'marks' => $record->default_marks ?? 1.0,
+                                'order' => $currentCount + 1,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                        } else {
+                            $exam->questions()->updateExistingPivot($record->id, [
+                                'marks' => $record->default_marks ?? 1.0,
+                                'order' => $currentCount,
+                            ]);
+                        }
                     }),
 
                 // 2. تحديد واختيار مجموعة أسئلة من بنك الأسئلة دفعة واحدة (Bulk Selector)

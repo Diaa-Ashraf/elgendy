@@ -127,36 +127,9 @@ class ExamResource extends Resource
                     ->columns(2),
 
                 Forms\Components\Section::make('أسئلة الامتحان 📝')
-                    ->description('يمكنك اختيار الأسئلة مباشرة من بنك الأسئلة أو إضافة أسئلة جديدة للامتحان.')
-                    ->schema([
-                        Forms\Components\Select::make('questions')
-                            ->label('اختيار وإدراج أسئلة من بنك الأسئلة')
-                            ->relationship('questions', 'question_text', function (\Illuminate\Database\Eloquent\Builder $query, $get) {
-                                $stageId = $get('stage_id');
-                                $subjectId = $get('subject_id');
-
-                                return $query
-                                    ->when($stageId, fn ($q) => $q->where('stage_id', $stageId))
-                                    ->when($subjectId, fn ($q) => $q->where('subject_id', $subjectId))
-                                    ->orderBy('id', 'desc');
-                            })
-                            ->multiple()
-                            ->searchable()
-                            ->preload()
-                            ->saveRelationshipsUsing(function (Exam $record, $state) {
-                                $state = array_filter((array) $state);
-                                $syncData = [];
-                                $order = 1;
-                                foreach ($state as $questionId) {
-                                    $syncData[$questionId] = [
-                                        'marks' => 1.0,
-                                        'order' => $order++,
-                                    ];
-                                }
-                                $record->questions()->sync($syncData);
-                            })
-                            ->helperText('يمكنك البحث عن السؤال بنصه واختيار عدة أسئلة لإضافتها للامتحان فوراً.'),
-                    ])
+                    ->description('تنبيه: يتم إدارة وإضافة أسئلة الامتحان مباشرة من جدول "أسئلة الامتحان الإلكتروني" بالأسفل عبر زر (تحديد أسئلة جماعية من بنك الأسئلة) أو (إنشاء سؤال جديد فوري).')
+                    ->schema([])
+                    ->collapsed()
                     ->collapsible(),
             ]);
     }
