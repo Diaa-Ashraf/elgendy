@@ -40,7 +40,7 @@ class SettingService
     }
 
     /**
-     * Get image full URL for settings like logo & favicon.
+     * Get image full URL for settings like logo, favicon & teacher portrait.
      */
     public function url(string $key, ?string $default = null): ?string
     {
@@ -53,7 +53,24 @@ class SettingService
             return $path;
         }
 
+        if (str_starts_with($path, 'images/') || str_starts_with($path, '/images/')) {
+            return asset(ltrim($path, '/'));
+        }
+
         return asset('storage/' . ltrim($path, '/'));
+    }
+
+    /**
+     * Get multiple settings with fallback defaults.
+     */
+    public function allWithDefaults(array $defaults): array
+    {
+        $result = [];
+        foreach ($defaults as $key => $default) {
+            $result[$key] = $this->get($key, $default);
+        }
+
+        return $result;
     }
 
     /**

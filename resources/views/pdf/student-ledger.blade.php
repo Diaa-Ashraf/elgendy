@@ -91,11 +91,13 @@
         .text-success { color: #16a34a; font-weight: bold; }
     </style>
 </head>
-<body>
+    @php
+        $centerName = app(\App\Services\SettingService::class)->get('center_name', 'المنظومة التعليمية الذكية');
+    @endphp
 
     <div class="header">
         <h1>كشف حساب طالب تفصيلي</h1>
-        <p>نظام الأستاذ محمد الغندي التعليمي</p>
+        <p>{{ $centerName }}</p>
     </div>
 
     <div class="info-box">

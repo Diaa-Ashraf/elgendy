@@ -264,11 +264,16 @@
         <button class="print-btn" onclick="window.print()">🖨️ طباعة الآن أو حفظ كـ PDF</button>
     </div>
 
+    @php
+        $teacherName = app(\App\Services\SettingService::class)->get('teacher_name', 'الأستاذ');
+        $centerName = app(\App\Services\SettingService::class)->get('center_name', 'المنظومة التعليمية');
+    @endphp
+
     <div class="paper-container">
         {{-- ترويسة الاختبار --}}
         <div class="exam-header">
             <div class="header-side" style="text-align: right;">
-                <div>نظام الأستاذ محمد الغندي</div>
+                <div>{{ $centerName }}</div>
                 <div>المادة: <strong>{{ $exam->subject?->name ?? 'عام' }}</strong></div>
                 <div>المرحلة: <strong>{{ $exam->educationalStage?->name ?? '-' }}</strong></div>
             </div>
@@ -371,7 +376,7 @@
         </div>
 
         <div class="exam-footer">
-            مع تمنياتنا لجميع أبنائنا الطلاب بدوام التفوق والنجاح ✨ — الأستاذ محمد الغندي
+            مع تمنياتنا لجميع أبنائنا الطلاب بدوام التفوق والنجاح ✨ — {{ $teacherName }}
         </div>
     </div>
 

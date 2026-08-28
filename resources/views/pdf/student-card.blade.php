@@ -94,9 +94,13 @@
         </button>
     </div>
 
+    @php
+        $centerName = app(\App\Services\SettingService::class)->get('center_name', 'المنظومة التعليمية الذكية');
+    @endphp
+
     <div class="card">
         <div class="card-header">
-            <h2>نظام الأستاذ محمد الغندي التعليمي</h2>
+            <h2>{{ $centerName }}</h2>
             <span style="font-size: 10px; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px;">بطاقة طالب</span>
         </div>
 

@@ -29,12 +29,14 @@ class AdminPanelProvider extends PanelProvider
         $logo = $settingService->url('center_logo');
         $favicon = $settingService->url('site_favicon');
 
+        $brandName = $settingService->get('center_name', 'المنظومة التعليمية الذكية');
+
         return $panel
             ->default()
             ->id('admin')
             ->path('admin')
             ->login()
-            ->brandName('نظام الأستاذ محمد الغندي التعليمي')
+            ->brandName($brandName)
             ->brandLogo($logo)
             ->favicon($favicon)
             ->colors([

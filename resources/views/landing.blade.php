@@ -4,12 +4,17 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $settings['center_name'] }} — المنظومة التعليمية الرسمية للأستاذ محمد الجندي</title>
+    <title>{{ $settings['center_name'] }} — {{ $settings['teacher_name'] }}</title>
     
-    @if(!empty($settings['site_favicon']))
-        @php
-            $faviconUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($settings['site_favicon']);
-        @endphp
+    @php
+        $settingService = app(\App\Services\SettingService::class);
+        $faviconUrl = $settingService->url('site_favicon');
+        $logoUrl = $settingService->url('center_logo');
+        $teacherImg = $settingService->url('teacher_image', asset('images/teacher_mohammed_elgandy.jpg'));
+        $waNumber = preg_replace('/[^0-9]/', '', $settings['center_whatsapp'] ?: $settings['center_phone']);
+    @endphp
+
+    @if($faviconUrl)
         <link rel="icon" type="image/png" href="{{ $faviconUrl }}">
         <link rel="shortcut icon" type="image/x-icon" href="{{ $faviconUrl }}">
         <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
@@ -130,8 +135,8 @@
             
             {{-- Brand / Logo --}}
             <a href="#" class="flex items-center gap-2.5 sm:gap-3.5 group">
-                @if(!empty($settings['center_logo']))
-                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($settings['center_logo']) }}" alt="{{ $settings['center_name'] }}" class="w-9 h-9 sm:w-11 sm:h-11 object-contain rounded-xl border border-slate-200 p-0.5 bg-white shadow-sm group-hover:scale-105 transition shrink-0">
+                @if($logoUrl)
+                    <img src="{{ $logoUrl }}" alt="{{ $settings['center_name'] }}" class="w-9 h-9 sm:w-11 sm:h-11 object-contain rounded-xl border border-slate-200 p-0.5 bg-white shadow-sm group-hover:scale-105 transition shrink-0">
                 @else
                     <div class="w-9 h-9 sm:w-11 sm:h-11 bg-slate-900 text-white rounded-xl flex items-center justify-center font-black text-base sm:text-lg shadow-sm border border-slate-800 group-hover:bg-sky-700 transition shrink-0">
                         📖
@@ -152,7 +157,7 @@
             <nav class="hidden lg:flex items-center gap-7 text-sm font-bold text-slate-600">
                 <a href="#about-teacher" class="hover:text-sky-700 transition py-1 text-slate-900 font-extrabold flex items-center gap-1.5">
                     <span>👨‍🏫</span>
-                    <span>عن الأستاذ</span>
+                    <span>عن المعلم</span>
                 </a>
                 <a href="#features" class="hover:text-sky-700 transition py-1">المميزات</a>
                 <a href="#stages" class="hover:text-sky-700 transition py-1">المراحل الدراسية</a>
@@ -187,7 +192,7 @@
         {{-- Mobile Drawer Menu --}}
         <div id="mobileMenu" class="hidden lg:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-5 space-y-2 shadow-xl transition-all">
             <a href="#about-teacher" onclick="closeMobileMenu()" class="block px-3 py-2.5 rounded-xl font-bold text-slate-800 hover:bg-slate-100 transition text-sm">
-                👨‍🏫 عن الأستاذ محمد الجندي
+                👨‍🏫 عن {{ $settings['teacher_name'] }}
             </a>
             <a href="#features" onclick="closeMobileMenu()" class="block px-3 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-100 transition text-sm">
                 ⭐ مميزات المنظومة التعليمية
@@ -225,16 +230,16 @@
                 <div class="lg:col-span-7 text-center lg:text-right">
                     <div data-aos="fade-down" class="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 sm:px-4 sm:py-1.5 bg-white/10 border border-white/15 rounded-full text-sky-200 font-bold text-[11px] sm:text-xs md:text-sm mb-4 sm:mb-6 backdrop-blur-sm">
                         <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
-                        <span>المنظومة التعليمية الرائدة للتميز والتفوق الأكاديمي</span>
+                        <span>{{ $settings['hero_badge_text'] }}</span>
                     </div>
 
                     <h1 data-aos="fade-up" data-aos-delay="100" class="font-heading text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-4 sm:mb-6">
-                        صناعة التفوق تبدأ مع <br>
+                        {{ $settings['hero_title_prefix'] }} <br>
                         <span class="text-sky-300">{{ $settings['teacher_name'] }}</span>
                     </h1>
 
                     <p data-aos="fade-up" data-aos-delay="200" class="text-slate-200 text-sm sm:text-base md:text-lg font-normal leading-relaxed max-w-2xl mx-auto lg:mx-0 mb-6 sm:mb-8">
-                        {{ $settings['teacher_title'] }}. منهجية تدريس مبسطة ترتكز على استيعاب المفاهيم، حل آلاف الأسئلة الامتحانية، ونظام متابعة ذكي ودقيق لكل طالب.
+                        {{ $settings['hero_description'] }}
                     </p>
 
                     <div data-aos="fade-up" data-aos-delay="300" class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 max-w-md mx-auto lg:mx-0">
@@ -243,7 +248,7 @@
                             <span>←</span>
                         </a>
                         <a href="#about-teacher" class="w-full sm:w-auto px-6 py-3.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold rounded-xl text-xs sm:text-sm transition backdrop-blur-sm flex items-center justify-center gap-2">
-                            <span>🎓 سيرة ومنهجية الأستاذ</span>
+                            <span>🎓 سيرة ومنهجية المعلم</span>
                         </a>
                     </div>
 
@@ -255,11 +260,11 @@
                         </div>
                         <div class="flex items-center gap-2 justify-center lg:justify-start">
                             <span class="text-sky-400 font-bold text-base">✓</span>
-                            <span>متابعة وتقييم أسبوعي</span>
+                            <span>{{ $settings['trust_stat_1'] }}</span>
                         </div>
                         <div class="flex items-center gap-2 justify-center lg:justify-start">
                             <span class="text-amber-400 font-bold text-base">✓</span>
-                            <span>بوابة رقمية لولي الأمر</span>
+                            <span>{{ $settings['trust_stat_2'] }}</span>
                         </div>
                     </div>
                 </div>
@@ -268,9 +273,6 @@
                 <div class="lg:col-span-5 mt-4 lg:mt-0" data-aos="fade-left" data-aos-delay="200">
                     <div class="relative max-w-sm sm:max-w-md mx-auto">
                         <div class="teacher-portrait-frame relative z-10 rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-900 border-2 border-white/20 shadow-2xl">
-                            @php
-                                $teacherImg = !empty($settings['teacher_image']) ? (str_starts_with($settings['teacher_image'], 'http') || str_starts_with($settings['teacher_image'], 'images/') ? asset($settings['teacher_image']) : asset('storage/' . $settings['teacher_image'])) : asset('images/teacher_mohammed_elgandy.jpg');
-                            @endphp
                             <img src="{{ $teacherImg }}" alt="{{ $settings['teacher_name'] }}" class="w-full h-[320px] sm:h-[390px] lg:h-[430px] object-cover object-top filter contrast-105">
                             
                             {{-- Overlay Card at Bottom of Portrait --}}
@@ -279,9 +281,11 @@
                                     {{ $settings['teacher_title'] }}
                                 </span>
                                 <h3 class="font-heading font-extrabold text-lg sm:text-2xl text-white">{{ $settings['teacher_name'] }}</h3>
-                                <p class="text-[11px] sm:text-xs text-slate-300 mt-1 font-medium italic line-clamp-2">
-                                    "{{ $settings['teacher_quote'] }}"
-                                </p>
+                                @if(!empty($settings['teacher_quote']))
+                                    <p class="text-[11px] sm:text-xs text-slate-300 mt-1 font-medium italic line-clamp-2">
+                                        "{{ $settings['teacher_quote'] }}"
+                                    </p>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -293,23 +297,23 @@
             <div data-aos="fade-up" data-aos-delay="400" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mt-12 sm:mt-16 max-w-5xl mx-auto">
                 <div class="bg-white/5 border border-white/10 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl text-center backdrop-blur-sm">
                     <div class="text-xl sm:text-2xl mb-1 sm:mb-2">🎯</div>
-                    <span class="block text-lg sm:text-2xl lg:text-3xl font-heading font-black text-white mb-0.5 sm:mb-1">تفوق مستمر</span>
-                    <span class="text-[11px] sm:text-xs text-slate-300 font-medium">خطط دراسية محكمة ونتائج ملموسة</span>
+                    <span class="block text-base sm:text-xl lg:text-2xl font-heading font-black text-white mb-0.5 sm:mb-1">{{ $settings['hero_pillar_1_title'] }}</span>
+                    <span class="text-[11px] sm:text-xs text-slate-300 font-medium">{{ $settings['hero_pillar_1_desc'] }}</span>
                 </div>
                 <div class="bg-white/5 border border-white/10 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl text-center backdrop-blur-sm">
                     <div class="text-xl sm:text-2xl mb-1 sm:mb-2">📲</div>
-                    <span class="block text-lg sm:text-2xl lg:text-3xl font-heading font-black text-emerald-300 mb-0.5 sm:mb-1">تقارير فورية</span>
-                    <span class="text-[11px] sm:text-xs text-slate-300 font-medium">إشعار ولي الأمر بعد كل حصة</span>
+                    <span class="block text-base sm:text-xl lg:text-2xl font-heading font-black text-emerald-300 mb-0.5 sm:mb-1">{{ $settings['hero_pillar_2_title'] }}</span>
+                    <span class="text-[11px] sm:text-xs text-slate-300 font-medium">{{ $settings['hero_pillar_2_desc'] }}</span>
                 </div>
                 <div class="bg-white/5 border border-white/10 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl text-center backdrop-blur-sm">
                     <div class="text-xl sm:text-2xl mb-1 sm:mb-2">🏷️</div>
-                    <span class="block text-lg sm:text-2xl lg:text-3xl font-heading font-black text-sky-300 mb-0.5 sm:mb-1">QR Code</span>
-                    <span class="text-[11px] sm:text-xs text-slate-300 font-medium">حضور وانصراف ذكي بدون تأخير</span>
+                    <span class="block text-base sm:text-xl lg:text-2xl font-heading font-black text-sky-300 mb-0.5 sm:mb-1">{{ $settings['hero_pillar_3_title'] }}</span>
+                    <span class="text-[11px] sm:text-xs text-slate-300 font-medium">{{ $settings['hero_pillar_3_desc'] }}</span>
                 </div>
                 <div class="bg-white/5 border border-white/10 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl text-center backdrop-blur-sm">
                     <div class="text-xl sm:text-2xl mb-1 sm:mb-2">📑</div>
-                    <span class="block text-lg sm:text-2xl lg:text-3xl font-heading font-black text-amber-300 mb-0.5 sm:mb-1">بنوك أسئلة</span>
-                    <span class="text-[11px] sm:text-xs text-slate-300 font-medium">تغطية لكافة أفكار امتحانات الوزارة</span>
+                    <span class="block text-base sm:text-xl lg:text-2xl font-heading font-black text-amber-300 mb-0.5 sm:mb-1">{{ $settings['hero_pillar_4_title'] }}</span>
+                    <span class="text-[11px] sm:text-xs text-slate-300 font-medium">{{ $settings['hero_pillar_4_desc'] }}</span>
                 </div>
             </div>
         </div>
@@ -325,7 +329,7 @@
                     عن {{ $settings['teacher_name'] }}
                 </h2>
                 <p class="text-slate-600 text-xs sm:text-sm md:text-base mt-1.5">
-                    {{ $settings['teacher_title'] }}
+                    {{ $settings['teacher_title'] }} — <span class="font-bold text-sky-700">{{ $settings['teacher_subject'] }}</span>
                 </p>
             </div>
 
@@ -345,7 +349,7 @@
                                 <span class="text-[10px] sm:text-xs text-slate-300">من الخبرة والتدريس المتخصص</span>
                             </div>
                             <div class="bg-slate-900 text-white p-3 sm:p-4 rounded-xl sm:rounded-2xl text-center">
-                                <span class="block font-heading font-black text-xl sm:text-2xl text-emerald-400">+10,000</span>
+                                <span class="block font-heading font-black text-xl sm:text-2xl text-emerald-400">{{ $settings['teacher_students_count'] }}</span>
                                 <span class="text-[10px] sm:text-xs text-slate-300">طالب تم تأهيلهم للتفوق</span>
                             </div>
                         </div>
@@ -356,7 +360,7 @@
                 <div class="lg:col-span-7 space-y-4 sm:space-y-6 text-right" data-aos="fade-left">
                     <div class="space-y-2 sm:space-y-3">
                         <h3 class="font-heading font-bold text-lg sm:text-2xl lg:text-3xl text-slate-900 leading-snug">
-                            رحلة أكاديمية هدفها الأول تحويل صعوبة المادة إلى شغف وتفوق دائم
+                            {{ $settings['teacher_bio_heading'] }}
                         </h3>
                         <p class="text-slate-600 text-xs sm:text-base leading-relaxed">
                             {{ $settings['teacher_bio'] }}
@@ -369,55 +373,59 @@
                             <div class="w-8 h-8 bg-sky-100 text-sky-800 rounded-lg flex items-center justify-center font-bold text-sm mb-2">
                                 1
                             </div>
-                            <h4 class="font-heading font-bold text-slate-900 text-xs sm:text-sm mb-1">الربط المنطقي والمفاهيمي</h4>
-                            <p class="text-[11px] sm:text-xs text-slate-500 leading-relaxed">شرح القوانين والقواعد من جذورها حتى يرسخ المفهوم في ذهن الطالب دون نسيان.</p>
+                            <h4 class="font-heading font-bold text-slate-900 text-xs sm:text-sm mb-1">{{ $settings['methodology_1_title'] }}</h4>
+                            <p class="text-[11px] sm:text-xs text-slate-500 leading-relaxed">{{ $settings['methodology_1_desc'] }}</p>
                         </div>
 
                         <div class="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 bg-slate-50">
                             <div class="w-8 h-8 bg-emerald-100 text-emerald-800 rounded-lg flex items-center justify-center font-bold text-sm mb-2">
                                 2
                             </div>
-                            <h4 class="font-heading font-bold text-slate-900 text-xs sm:text-sm mb-1">حل آلاف المسائل المتدرجة</h4>
-                            <p class="text-[11px] sm:text-xs text-slate-500 leading-relaxed">تدريب مستمر على مستويات التفكير العليا والأنماط الامتحانية الجديدة بدقة تامة.</p>
+                            <h4 class="font-heading font-bold text-slate-900 text-xs sm:text-sm mb-1">{{ $settings['methodology_2_title'] }}</h4>
+                            <p class="text-[11px] sm:text-xs text-slate-500 leading-relaxed">{{ $settings['methodology_2_desc'] }}</p>
                         </div>
 
                         <div class="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 bg-slate-50">
                             <div class="w-8 h-8 bg-amber-100 text-amber-800 rounded-lg flex items-center justify-center font-bold text-sm mb-2">
                                 3
                             </div>
-                            <h4 class="font-heading font-bold text-slate-900 text-xs sm:text-sm mb-1">متابعة فردية صارمة</h4>
-                            <p class="text-[11px] sm:text-xs text-slate-500 leading-relaxed">فريق مساعدين مؤهل يصحح الواجبات ويرصد الحضور والامتحانات لحظياً.</p>
+                            <h4 class="font-heading font-bold text-slate-900 text-xs sm:text-sm mb-1">{{ $settings['methodology_3_title'] }}</h4>
+                            <p class="text-[11px] sm:text-xs text-slate-500 leading-relaxed">{{ $settings['methodology_3_desc'] }}</p>
                         </div>
 
                         <div class="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 bg-slate-50">
                             <div class="w-8 h-8 bg-purple-100 text-purple-800 rounded-lg flex items-center justify-center font-bold text-sm mb-2">
                                 4
                             </div>
-                            <h4 class="font-heading font-bold text-slate-900 text-xs sm:text-sm mb-1">تقييمات أسبوعية ومحاكاة</h4>
-                            <p class="text-[11px] sm:text-xs text-slate-500 leading-relaxed">امتحانات محاكاة مطابقة لنظام الوزارة لكسر رهبة الامتحانات النهائية مبكراً.</p>
+                            <h4 class="font-heading font-bold text-slate-900 text-xs sm:text-sm mb-1">{{ $settings['methodology_4_title'] }}</h4>
+                            <p class="text-[11px] sm:text-xs text-slate-500 leading-relaxed">{{ $settings['methodology_4_desc'] }}</p>
                         </div>
                     </div>
 
                     {{-- Quote Banner --}}
-                    <div class="p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-slate-900 text-white border border-slate-800 flex items-start gap-3 sm:gap-4">
-                        <span class="text-2xl sm:text-3xl text-sky-400 font-serif leading-none">“</span>
-                        <div>
-                            <p class="text-xs sm:text-sm font-semibold text-slate-200 leading-relaxed">
-                                {{ $settings['teacher_quote'] }}
-                            </p>
-                            <span class="block text-[11px] sm:text-xs text-sky-400 font-bold mt-1.5">— {{ $settings['teacher_name'] }}</span>
+                    @if(!empty($settings['teacher_quote']))
+                        <div class="p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-slate-900 text-white border border-slate-800 flex items-start gap-3 sm:gap-4">
+                            <span class="text-2xl sm:text-3xl text-sky-400 font-serif leading-none">“</span>
+                            <div>
+                                <p class="text-xs sm:text-sm font-semibold text-slate-200 leading-relaxed">
+                                    {{ $settings['teacher_quote'] }}
+                                </p>
+                                <span class="block text-[11px] sm:text-xs text-sky-400 font-bold mt-1.5">— {{ $settings['teacher_name'] }}</span>
+                            </div>
                         </div>
-                    </div>
+                    @endif
 
                     {{-- Contact Triggers --}}
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
                         <a href="#enroll" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs sm:text-sm transition text-center shadow-sm">
                             انضم لطلاب الأستاذ الآن ➔
                         </a>
-                        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $settings['center_phone']) }}" target="_blank" class="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-bold rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-2">
-                            <span>💬</span>
-                            <span>استفسار مباشر عبر واتساب</span>
-                        </a>
+                        @if($waNumber)
+                            <a href="https://wa.me/{{ $waNumber }}" target="_blank" class="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-bold rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-2">
+                                <span>💬</span>
+                                <span>استفسار مباشر عبر واتساب</span>
+                            </a>
+                        @endif
                     </div>
 
                 </div>
@@ -446,13 +454,13 @@
                         <div class="w-11 h-11 sm:w-12 sm:h-12 bg-sky-50 text-sky-700 rounded-xl flex items-center justify-center text-xl sm:text-2xl mb-4 sm:mb-5 border border-sky-100 font-bold">
                             📖
                         </div>
-                        <h3 class="font-heading font-bold text-base sm:text-lg text-slate-900 mb-2">مذكرات شرح وتدريبات احترافية</h3>
+                        <h3 class="font-heading font-bold text-base sm:text-lg text-slate-900 mb-2">{{ $settings['feature_1_title'] }}</h3>
                         <p class="text-slate-600 text-xs sm:text-sm leading-relaxed">
-                            مذكرات مطبوعة بجودة عالية تشمل خرائط مفاهيمية، أمثلة محلولة بالتفصيل، وتدريبات متدرجة من الأساسيات حتى مستوى الامتحانات التنافسية.
+                            {{ $settings['feature_1_desc'] }}
                         </p>
                     </div>
                     <div class="mt-5 pt-3 border-t border-slate-100 flex items-center gap-2 text-xs font-bold text-sky-700">
-                        <span>تحديث دوري ومستمر للمناهج</span>
+                        <span>{{ $settings['feature_1_tag'] }}</span>
                     </div>
                 </div>
 
@@ -462,13 +470,13 @@
                         <div class="w-11 h-11 sm:w-12 sm:h-12 bg-emerald-50 text-emerald-700 rounded-xl flex items-center justify-center text-xl sm:text-2xl mb-4 sm:mb-5 border border-emerald-100 font-bold">
                             📊
                         </div>
-                        <h3 class="font-heading font-bold text-base sm:text-lg text-slate-900 mb-2">بوابة إلكترونية لولي الأمر</h3>
+                        <h3 class="font-heading font-bold text-base sm:text-lg text-slate-900 mb-2">{{ $settings['feature_2_title'] }}</h3>
                         <p class="text-slate-600 text-xs sm:text-sm leading-relaxed">
-                            تسجيل دخول سهل للاطلاع على نسبة حضور الطالب، درجات الامتحانات الشهرية والأسبوعية، ورصد الرصيد المالي وحالة تسليم المذكرات.
+                            {{ $settings['feature_2_desc'] }}
                         </p>
                     </div>
                     <div class="mt-5 pt-3 border-t border-slate-100 flex items-center gap-2 text-xs font-bold text-emerald-700">
-                        <span>شفافية كاملة ومتابعة مباشرة</span>
+                        <span>{{ $settings['feature_2_tag'] }}</span>
                     </div>
                 </div>
 
@@ -478,13 +486,13 @@
                         <div class="w-11 h-11 sm:w-12 sm:h-12 bg-amber-50 text-amber-700 rounded-xl flex items-center justify-center text-xl sm:text-2xl mb-4 sm:mb-5 border border-amber-100 font-bold">
                             🏆
                         </div>
-                        <h3 class="font-heading font-bold text-base sm:text-lg text-slate-900 mb-2">اختبارات دورية وتحفيز دائم</h3>
+                        <h3 class="font-heading font-bold text-base sm:text-lg text-slate-900 mb-2">{{ $settings['feature_3_title'] }}</h3>
                         <p class="text-slate-600 text-xs sm:text-sm leading-relaxed">
-                            امتحان أسبوعي بعد كل درس، مع لوحة شرف للمتميزين وخصومات تشجيعية للطلاب الحاصلين على الدرجات النهائية تحفيزاً للاستمرار.
+                            {{ $settings['feature_3_desc'] }}
                         </p>
                     </div>
                     <div class="mt-5 pt-3 border-t border-slate-100 flex items-center gap-2 text-xs font-bold text-amber-700">
-                        <span>نظام حوافز ومكافآت التميز</span>
+                        <span>{{ $settings['feature_3_tag'] }}</span>
                     </div>
                 </div>
             </div>
@@ -549,12 +557,12 @@
                                     {{ $group->educationalStage?->name }}
                                 </span>
                                 <span class="text-[11px] sm:text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 whitespace-nowrap">
-                                    {{ number_format($group->price_per_month) }} ج.م / شهرياً
+                                    {{ number_format($group->price_per_month) }} {{ $settings['currency_symbol'] }} / شهرياً
                                 </span>
                             </div>
 
                             <h3 class="font-heading font-bold text-base sm:text-lg text-slate-900 pt-1">{{ $group->name }}</h3>
-                            <p class="text-xs font-semibold text-slate-500">المادة: <span class="font-bold text-slate-800">{{ $group->subject?->name ?? 'العامة' }}</span></p>
+                            <p class="text-xs font-semibold text-slate-500">المادة: <span class="font-bold text-slate-800">{{ $group->subject?->name ?? $settings['teacher_subject'] }}</span></p>
 
                             <div class="space-y-2 pt-2 border-t border-slate-100">
                                 <span class="text-xs font-bold text-slate-600 block">📅 المواعيد الأسبوعية:</span>
@@ -663,7 +671,7 @@
                     <div id="formResponse" class="hidden p-3.5 rounded-xl text-xs font-bold"></div>
 
                     <button type="submit" class="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-2 mt-2">
-                        <span>إرسال طلب التسجيل للأستاذ</span>
+                        <span>إرسال طلب التسجيل</span>
                         <span>←</span>
                     </button>
                 </form>
@@ -676,16 +684,43 @@
     <footer class="bg-slate-900 border-t border-slate-800 py-10 sm:py-12 text-slate-400 text-xs">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-5 sm:gap-6 text-center md:text-right">
             <div class="flex items-center gap-3.5">
-                @if(!empty($settings['center_logo']))
-                    <img src="{{ asset('storage/' . $settings['center_logo']) }}" class="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-xl bg-white p-0.5 border border-slate-700 shrink-0">
+                @if($logoUrl)
+                    <img src="{{ $logoUrl }}" class="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-xl bg-white p-0.5 border border-slate-700 shrink-0">
                 @endif
                 <div>
                     <p class="text-white font-heading font-bold text-sm">{{ $settings['center_name'] }}</p>
                     <p class="text-slate-400 text-xs mt-0.5">{{ $settings['center_address'] }} — هاتف: <span class="font-mono text-sky-400" dir="ltr">{{ $settings['center_phone'] }}</span></p>
                 </div>
             </div>
+
+            {{-- Social Media Links --}}
+            @if(!empty($settings['facebook_url']) || !empty($settings['youtube_url']) || !empty($settings['telegram_url']) || !empty($waNumber))
+                <div class="flex items-center gap-3">
+                    @if(!empty($settings['facebook_url']))
+                        <a href="{{ $settings['facebook_url'] }}" target="_blank" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-blue-600 text-white flex items-center justify-center transition" title="فيسبوك">
+                            <span class="font-bold text-sm">f</span>
+                        </a>
+                    @endif
+                    @if(!empty($settings['youtube_url']))
+                        <a href="{{ $settings['youtube_url'] }}" target="_blank" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-red-600 text-white flex items-center justify-center transition" title="يوتيوب">
+                            <span class="font-bold text-sm">▶</span>
+                        </a>
+                    @endif
+                    @if(!empty($settings['telegram_url']))
+                        <a href="{{ $settings['telegram_url'] }}" target="_blank" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-sky-500 text-white flex items-center justify-center transition" title="تليجرام">
+                            <span class="font-bold text-sm">✈</span>
+                        </a>
+                    @endif
+                    @if($waNumber)
+                        <a href="https://wa.me/{{ $waNumber }}" target="_blank" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-emerald-600 text-white flex items-center justify-center transition" title="واتساب">
+                            <span class="font-bold text-sm">💬</span>
+                        </a>
+                    @endif
+                </div>
+            @endif
+
             <p class="font-medium text-center md:text-left text-slate-400">
-                جميع الحقوق محفوظة © {{ date('Y') }} — المنظومة التعليمية للأستاذ محمد الجندي.
+                {{ $settings['footer_copyright_text'] }} © {{ date('Y') }} — {{ $settings['center_name'] }}
             </p>
         </div>
     </footer>
@@ -752,7 +787,7 @@
                 .then(data => {
                     groupSelect.innerHTML = '<option value="">-- اختر المجموعة (اختياري) --</option>';
                     data.forEach(g => {
-                        groupSelect.innerHTML += `<option value="${g.id}">${g.name} (${g.price_per_month} ج.م/شهرياً)</option>`;
+                        groupSelect.innerHTML += `<option value="${g.id}">${g.name} (${g.price_per_month} {{ $settings['currency_symbol'] }}/شهرياً)</option>`;
                     });
                 })
                 .catch(() => {
