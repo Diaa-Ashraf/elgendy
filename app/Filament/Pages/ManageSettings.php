@@ -32,11 +32,17 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
         $settingService = app(SettingService::class);
 
         $this->form->fill([
-            'center_name' => $settingService->get('center_name', 'سنتر الأستاذ محمد الغندي التعليمي'),
+            'center_name' => $settingService->get('center_name', 'سنتر الأستاذ محمد الجندي التعليمي'),
             'center_phone' => $settingService->get('center_phone', '01000000000'),
             'center_address' => $settingService->get('center_address', 'القاهرة - مصر'),
             'center_logo' => $settingService->get('center_logo', ''),
             'site_favicon' => $settingService->get('site_favicon', ''),
+            'teacher_name' => $settingService->get('teacher_name', 'الأستاذ محمد الجندي'),
+            'teacher_title' => $settingService->get('teacher_title', 'كبير معلمي المادة والمستشار التربوي المعتمد'),
+            'teacher_bio' => $settingService->get('teacher_bio', 'صاحب مسيرة تعليمية ممتدة لأكثر من 14 عاماً خرّجت آلاف الطلاب المتفوقين وأوائل الجمهورية والمحافظات، معتمدين على أسلوب الفهم التحليلي والخرائط الذهنية وتدريبات الامتحانات الشاملة.'),
+            'teacher_quote' => $settingService->get('teacher_quote', 'الدرجة النهائية ليست وليدة الصدفة، بل هي نتيجة نظام محكم يربط الشرح الوافي بالمتابعة الحازمة والاختبارات الأسبوعية.'),
+            'teacher_experience_years' => $settingService->get('teacher_experience_years', '+14'),
+            'teacher_image' => $settingService->get('teacher_image', ''),
             'receipt_footer_notes' => $settingService->get('receipt_footer_notes', 'شكراً لتعاملكم معنا - يرجى الاحتفاظ بالوصل سارياً'),
             'currency_symbol' => $settingService->get('currency_symbol', 'ج.م'),
             'default_session_capacity' => $settingService->get('default_session_capacity', '25'),
@@ -109,6 +115,44 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
                             ->columnSpanFull(),
                     ])
                     ->columns(2),
+
+                Forms\Components\Section::make('ملف ونبذة المعلم والمشرف الأكاديمي (Teacher Profile)')
+                    ->description('تظهر هذه البيانات والصورة في الصفحة الرئيسية للموقع التعريفي')
+                    ->schema([
+                        Forms\Components\TextInput::make('teacher_name')
+                            ->label('اسم المعلم / الأستاذ')
+                            ->default('الأستاذ محمد الجندي')
+                            ->required(),
+
+                        Forms\Components\TextInput::make('teacher_title')
+                            ->label('المسمى الوظيفي / التخصص الأكاديمي')
+                            ->default('كبير معلمي المادة والمستشار التربوي المعتمد')
+                            ->required(),
+
+                        Forms\Components\TextInput::make('teacher_experience_years')
+                            ->label('سنوات الخبرة (مثال: +14)')
+                            ->default('+14')
+                            ->required(),
+
+                        Forms\Components\FileUpload::make('teacher_image')
+                            ->label('صورة المعلم الشخصية (Portrait Photo)')
+                            ->image()
+                            ->directory('settings')
+                            ->maxSize(4096)
+                            ->imageEditor()
+                            ->helperText('يفضل رفع صورة طولية أو مربعة عالية الدقة بخلفية احترافية'),
+
+                        Forms\Components\TextInput::make('teacher_quote')
+                            ->label('اقتباس أو رسالة المعلم للطلاب')
+                            ->default('الدرجة النهائية ليست وليدة الصدفة، بل هي نتيجة نظام محكم يربط الشرح الوافي بالمتابعة الحازمة والاختبارات الأسبوعية.')
+                            ->columnSpanFull(),
+
+                        Forms\Components\Textarea::make('teacher_bio')
+                            ->label('نبذة تفصيلية عن المعلم ومسيرته')
+                            ->rows(3)
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(3),
 
                 Forms\Components\Section::make('إعدادات الدفع الإلكتروني والمحافظ (InstaPay & Cash Wallets)')
                     ->description('تظهر هذه البيانات لأولياء الأمور في البوابة لسداد الرسوم والاشتراكات أونلاين')

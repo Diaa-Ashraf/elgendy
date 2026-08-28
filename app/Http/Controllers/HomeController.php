@@ -13,12 +13,18 @@ class HomeController extends Controller
     public function index(SettingService $settingService)
     {
         $settings = [
-            'center_name' => $settingService->get('center_name', 'سنتر الأستاذ محمد الغندي التعليمي'),
+            'center_name' => $settingService->get('center_name', 'سنتر الأستاذ محمد الجندي التعليمي'),
             'center_phone' => $settingService->get('center_phone', '01000000000'),
             'center_address' => $settingService->get('center_address', 'القاهرة - مصر'),
             'academic_year' => $settingService->get('academic_year', '2026/2027'),
             'center_logo' => $settingService->get('center_logo', ''),
             'site_favicon' => $settingService->get('site_favicon', ''),
+            'teacher_name' => $settingService->get('teacher_name', 'الأستاذ محمد الجندي'),
+            'teacher_title' => $settingService->get('teacher_title', 'كبير معلمي المادة والمستشار التربوي المعتمد'),
+            'teacher_bio' => $settingService->get('teacher_bio', 'صاحب مسيرة تعليمية ممتدة لأكثر من 14 عاماً خرّجت آلاف الطلاب المتفوقين وأوائل الجمهورية والمحافظات، معتمدين على أسلوب الفهم التحليلي والخرائط الذهنية وتدريبات الامتحانات الشاملة.'),
+            'teacher_quote' => $settingService->get('teacher_quote', 'الدرجة النهائية ليست وليدة الصدفة، بل هي نتيجة نظام محكم يربط الشرح الوافي بالمتابعة الحازمة والاختبارات الأسبوعية.'),
+            'teacher_experience_years' => $settingService->get('teacher_experience_years', '+14'),
+            'teacher_image' => $settingService->get('teacher_image', 'images/teacher_mohammed_elgandy.jpg'),
         ];
 
         $stages = EducationalStage::withCount('students')->get();

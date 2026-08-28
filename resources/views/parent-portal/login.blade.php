@@ -15,63 +15,71 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <style> body { font-family: 'Cairo', sans-serif; } </style>
+    <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+        h1, h2, h3, .font-heading { font-family: 'Alexandria', sans-serif; }
+        .academic-grid-pattern {
+            background-image: radial-gradient(rgba(15, 39, 68, 0.07) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+    </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between p-3 sm:p-6 selection:bg-indigo-500 selection:text-white relative overflow-x-hidden">
-
-    {{-- خلفية جمالية --}}
-    <div class="absolute -top-32 right-1/4 w-72 sm:w-96 h-72 sm:h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none"></div>
-    <div class="absolute bottom-10 left-10 w-60 sm:w-80 h-60 sm:h-80 bg-purple-600/20 rounded-full blur-3xl pointer-events-none"></div>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col justify-between p-4 sm:p-6 selection:bg-sky-600 selection:text-white academic-grid-pattern">
 
     {{-- زر العودة للرئيسية --}}
-    <div class="max-w-md mx-auto w-full pt-2 sm:pt-4 flex justify-between items-center relative z-10 mb-4 sm:mb-0">
-        <a href="{{ route('home') }}" class="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-400 hover:text-indigo-400 transition bg-slate-900/60 px-3 py-1.5 rounded-xl border border-slate-800">
-            ← العودة للموقع الرئيسي
+    <div class="max-w-md mx-auto w-full pt-2 sm:pt-4 flex justify-between items-center relative z-10">
+        <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-sm">
+            <span>←</span>
+            <span>العودة للموقع الرئيسي</span>
         </a>
+        <span class="text-xs text-slate-500 font-semibold">بوابة المتابعة الأكاديمية</span>
     </div>
 
-    {{-- كارت التسجيل --}}
-    <div class="w-full max-w-md mx-auto bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-8 shadow-2xl backdrop-blur-xl relative z-10 my-auto">
+    {{-- كارت تسجيل الدخول --}}
+    <div class="w-full max-w-md mx-auto bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm relative z-10 my-auto">
         <div class="text-center mb-6 sm:mb-8">
-            <div class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto text-2xl sm:text-3xl font-black text-white mb-3 sm:mb-4 shadow-lg shadow-indigo-600/30">
+            <div class="w-14 h-14 bg-slate-900 text-white rounded-2xl flex items-center justify-center mx-auto text-2xl mb-4 shadow-sm">
                 👨‍👩‍👧‍👦
             </div>
-            <h1 class="text-xl sm:text-2xl font-black text-white mb-1.5">بوابة متابعة ولي الأمر</h1>
-            <p class="text-xs sm:text-xs text-slate-400 font-semibold leading-relaxed px-2">متابعة دقيقة للحضور والامتحانات والحساب المالي لحظة بلحظة</p>
+            <h1 class="font-heading font-extrabold text-xl sm:text-2xl text-slate-900 mb-1.5">بوابة متابعة ولي الأمر</h1>
+            <p class="text-xs text-slate-500 font-medium leading-relaxed">
+                متابعة الحضور، تقارير الامتحانات الدورية، وسداد الرسوم الأكاديمية
+            </p>
         </div>
 
         @if($errors->any())
-            <div class="mb-5 p-3.5 bg-rose-950/80 border border-rose-800 text-rose-300 rounded-2xl text-xs font-bold leading-relaxed">
+            <div class="mb-5 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-bold leading-relaxed">
                 ⚠️ {{ $errors->first() }}
             </div>
         @endif
 
-        <form action="{{ route('parent.login.submit') }}" method="POST" class="space-y-4 sm:space-y-5">
+        <form action="{{ route('parent.login.submit') }}" method="POST" class="space-y-4">
             @csrf
             <div>
-                <label class="block text-xs font-bold text-slate-300 mb-1.5">رقم هاتف ولي الأمر المسجل بالسنتر</label>
-                <input type="tel" name="parent_phone" required placeholder="01xxxxxxxxx" class="w-full px-4 py-3 sm:py-3.5 bg-slate-950 border border-slate-800 rounded-2xl text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
+                <label class="block text-xs font-bold text-slate-700 mb-1.5">رقم هاتف ولي الأمر المسجل</label>
+                <input type="tel" name="parent_phone" required placeholder="01xxxxxxxxx" class="w-full px-3.5 py-3 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold text-slate-900 focus:outline-none focus:border-sky-600 focus:bg-white transition" dir="ltr">
             </div>
 
             <div>
-                <label class="block text-xs font-bold text-slate-300 mb-1.5">كود الطالب الخاص (#ID)</label>
-                <input type="number" name="student_id" required placeholder="مثال: 12" class="w-full px-4 py-3 sm:py-3.5 bg-slate-950 border border-slate-800 rounded-2xl text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
+                <label class="block text-xs font-bold text-slate-700 mb-1.5">كود الطالب الأكاديمي (#ID)</label>
+                <input type="number" name="student_id" required placeholder="مثال: 104" class="w-full px-3.5 py-3 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold text-slate-900 focus:outline-none focus:border-sky-600 focus:bg-white transition" dir="ltr">
             </div>
 
-            <button type="submit" class="w-full py-3.5 sm:py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-2xl font-black text-xs sm:text-sm transition shadow-xl shadow-indigo-600/30 transform hover:-translate-y-0.5">
-                دخول البوابة الإلكترونية 🚀
+            <button type="submit" class="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs sm:text-sm transition shadow-sm flex items-center justify-center gap-2 mt-2">
+                <span>دخول البوابة</span>
+                <span>➔</span>
             </button>
         </form>
 
-        <div class="mt-6 sm:mt-8 pt-5 border-t border-slate-800/80 text-center text-[10px] sm:text-[11px] font-bold text-slate-500 leading-normal">
-            💡 الكود موضح في كارنيه الطالب أو يمكن الاستعلام عنه من إدارة السنتر.
+        <div class="mt-6 pt-4 border-t border-slate-100 text-center text-[11px] text-slate-500 leading-normal">
+            💡 تجد كود الطالب مطبوعاً على كارنيه الطالب أو من خلال مسؤولي السنتر.
         </div>
     </div>
 
     {{-- التذييل --}}
-    <div class="text-center text-[10px] sm:text-[11px] font-bold text-slate-500 py-3 sm:py-4 relative z-10">
-        جميع الحقوق محفوظة © {{ date('Y') }}
+    <div class="text-center text-xs font-medium text-slate-500 py-3 relative z-10">
+        جميع الحقوق محفوظة © {{ date('Y') }} — منظومة التعليم والمتابعة
     </div>
 
 </body>

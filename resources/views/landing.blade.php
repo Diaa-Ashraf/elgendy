@@ -2,9 +2,9 @@
 <html dir="rtl" lang="ar" class="scroll-smooth">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $settings['center_name'] }} — المنصة التعليمية الرسمية</title>
+    <title>{{ $settings['center_name'] }} — المنظومة التعليمية الرسمية للأستاذ محمد الجندي</title>
     
     @if(!empty($settings['site_favicon']))
         @php
@@ -15,320 +15,552 @@
         <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
     @endif
 
+    {{-- Tailwind CSS & Google Fonts --}}
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     {{-- AOS Animation Library --}}
     <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"IBM Plex Sans Arabic"', 'sans-serif'],
+                        heading: ['"Alexandria"', 'sans-serif'],
+                    },
+                    colors: {
+                        navy: {
+                            800: '#112240',
+                            850: '#0c1a30',
+                            900: '#0a1526',
+                            950: '#060d19',
+                        },
+                        academic: {
+                            blue: '#0284c7',
+                            dark: '#0a192f',
+                            emerald: '#059669',
+                            amber: '#d97706',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        body { font-family: 'Cairo', sans-serif; }
-        .hero-gradient {
-            background: radial-gradient(circle at 50% -20%, #2e1065 0%, #0f172a 75%, #020617 100%);
+        body {
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
         }
-        .glass-card {
-            background: rgba(15, 23, 42, 0.65);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+        h1, h2, h3, h4, h5, h6, .font-heading {
+            font-family: 'Alexandria', sans-serif;
         }
-        .glass-card-hover {
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        .academic-grid-pattern {
+            background-image: radial-gradient(rgba(15, 39, 68, 0.08) 1px, transparent 1px);
+            background-size: 24px 24px;
         }
-        .glass-card-hover:hover {
-            transform: translateY(-6px) scale(1.01);
-            border-color: rgba(129, 140, 248, 0.35);
-            box-shadow: 0 20px 40px -15px rgba(99, 102, 241, 0.25);
+        .academic-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.3rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
         }
-        .glow-effect {
+        .clean-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .clean-card:hover {
+            transform: translateY(-3px);
+            border-color: #cbd5e1;
+            box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+        }
+        .hero-banner {
+            background: linear-gradient(140deg, #071322 0%, #0c2038 50%, #112c4e 100%);
+        }
+        .teacher-portrait-frame {
             position: relative;
         }
-        .glow-effect::before {
+        .teacher-portrait-frame::after {
             content: '';
             position: absolute;
-            top: -2px; left: -2px; right: -2px; bottom: -2px;
-            background: linear-gradient(45deg, #6366f1, #a855f7, #ec4899);
-            border-radius: inherit;
-            z-index: -1;
-            opacity: 0;
-            transition: opacity 0.4s ease;
+            inset: -6px;
+            border-radius: 1.5rem;
+            border: 2px solid rgba(2, 132, 199, 0.3);
+            pointer-events-none;
+            z-index: 0;
         }
-        .glow-effect:hover::before {
-            opacity: 0.6;
-            filter: blur(8px);
+        @media (min-width: 640px) {
+            .teacher-portrait-frame::after {
+                inset: -8px;
+                border-radius: 1.75rem;
+            }
         }
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-12px); }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 7px;
         }
-        .animate-float {
-            animation: float 4s ease-in-out infinite;
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
         }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 antialiased selection:bg-indigo-500 selection:text-white overflow-x-hidden">
+<body class="antialiased selection:bg-sky-600 selection:text-white overflow-x-hidden">
 
-    {{-- ─── NAVBAR ─── --}}
-    <header class="fixed top-0 inset-x-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/80 transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-            <a href="#" class="flex items-center gap-3.5 group">
+    {{-- ─── HEADER / NAVIGATION (Responsive Navbar with Mobile Drawer) ─── --}}
+    <header class="fixed top-0 inset-x-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/80 transition-all">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 sm:h-20 flex items-center justify-between">
+            
+            {{-- Brand / Logo --}}
+            <a href="#" class="flex items-center gap-2.5 sm:gap-3.5 group">
                 @if(!empty($settings['center_logo']))
-                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($settings['center_logo']) }}" alt="{{ $settings['center_name'] }}" class="w-11 h-11 object-contain rounded-2xl shadow-xl shadow-indigo-500/20 border border-slate-800 group-hover:scale-105 transition">
+                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($settings['center_logo']) }}" alt="{{ $settings['center_name'] }}" class="w-9 h-9 sm:w-11 sm:h-11 object-contain rounded-xl border border-slate-200 p-0.5 bg-white shadow-sm group-hover:scale-105 transition shrink-0">
                 @else
-                    <div class="w-11 h-11 bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 rounded-2xl flex items-center justify-center font-black text-xl shadow-xl shadow-indigo-500/30 group-hover:rotate-6 transition">
-                        🎓
+                    <div class="w-9 h-9 sm:w-11 sm:h-11 bg-slate-900 text-white rounded-xl flex items-center justify-center font-black text-base sm:text-lg shadow-sm border border-slate-800 group-hover:bg-sky-700 transition shrink-0">
+                        📖
                     </div>
                 @endif
                 <div>
-                    <span class="font-black text-lg sm:text-xl tracking-tight text-white block group-hover:text-indigo-400 transition">{{ $settings['center_name'] }}</span>
-                    <span class="text-xs text-indigo-400 font-bold flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping inline-block"></span>
-                        العام الدراسي {{ $settings['academic_year'] }}
+                    <span class="font-heading font-extrabold text-sm sm:text-base lg:text-lg text-slate-900 block group-hover:text-sky-700 transition leading-tight line-clamp-1">
+                        {{ $settings['center_name'] }}
+                    </span>
+                    <span class="text-[10px] sm:text-xs text-slate-500 font-semibold flex items-center gap-1 mt-0.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block shrink-0"></span>
+                        العام الأكاديمي {{ $settings['academic_year'] }}
                     </span>
                 </div>
             </a>
 
-            <nav class="hidden md:flex items-center gap-8 text-sm font-bold text-slate-300">
-                <a href="#about" class="hover:text-indigo-400 transition hover:scale-105">عن السنتر</a>
-                <a href="#features" class="hover:text-indigo-400 transition hover:scale-105">مميزاتنا</a>
-                <a href="#stages" class="hover:text-indigo-400 transition hover:scale-105">المراحل الدراسية</a>
-                <a href="#groups" class="hover:text-indigo-400 transition hover:scale-105">المجموعات المتاحة</a>
-                <a href="#enroll" class="hover:text-indigo-400 transition hover:scale-105">طلب التقديم</a>
+            {{-- Desktop Main Menu --}}
+            <nav class="hidden lg:flex items-center gap-7 text-sm font-bold text-slate-600">
+                <a href="#about-teacher" class="hover:text-sky-700 transition py-1 text-slate-900 font-extrabold flex items-center gap-1.5">
+                    <span>👨‍🏫</span>
+                    <span>عن الأستاذ</span>
+                </a>
+                <a href="#features" class="hover:text-sky-700 transition py-1">المميزات</a>
+                <a href="#stages" class="hover:text-sky-700 transition py-1">المراحل الدراسية</a>
+                <a href="#groups" class="hover:text-sky-700 transition py-1">المجموعات</a>
+                <a href="#enroll" class="hover:text-sky-700 transition py-1">استمارة التقديم</a>
             </nav>
 
-            <div class="flex items-center gap-3">
-                <a href="{{ route('parent.login') }}" class="px-4 py-2.5 bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 rounded-xl text-xs sm:text-sm font-bold text-slate-200 transition-all flex items-center gap-2 hover:border-indigo-500/50 shadow-md">
-                    🔑 <span>بوابة ولي الأمر</span>
+            {{-- Action Buttons & Mobile Hamburger --}}
+            <div class="flex items-center gap-2 sm:gap-2.5">
+                <a href="{{ route('parent.login') }}" class="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300/80 rounded-xl text-xs sm:text-sm font-bold text-slate-800 transition flex items-center gap-1.5">
+                    <span>👨‍👩‍👦</span>
+                    <span class="hidden xs:inline sm:inline">بوابة ولي الأمر</span>
+                    <span class="inline xs:hidden sm:hidden">البوابة</span>
                 </a>
-                <a href="/admin" class="px-5 py-2.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 rounded-xl text-xs sm:text-sm font-black text-white transition-all transform hover:-translate-y-0.5 shadow-xl shadow-indigo-600/30">
-                    دخول اللوحة ⚡
+                <a href="/admin" class="hidden sm:flex px-3.5 sm:px-4 py-1.5 sm:py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl text-xs sm:text-sm font-bold text-white transition items-center gap-1.5 shadow-sm">
+                    <span>لوحة التحكم</span>
+                    <span class="text-xs opacity-75">➔</span>
+                </a>
+
+                {{-- Hamburger Button for Mobile --}}
+                <button id="mobileMenuBtn" aria-label="القائمة الرئيسية" class="lg:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 border border-slate-200 focus:outline-none transition">
+                    <svg id="hamburgerIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                    <svg id="closeIcon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        {{-- Mobile Drawer Menu --}}
+        <div id="mobileMenu" class="hidden lg:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-5 space-y-2 shadow-xl transition-all">
+            <a href="#about-teacher" onclick="closeMobileMenu()" class="block px-3 py-2.5 rounded-xl font-bold text-slate-800 hover:bg-slate-100 transition text-sm">
+                👨‍🏫 عن الأستاذ محمد الجندي
+            </a>
+            <a href="#features" onclick="closeMobileMenu()" class="block px-3 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-100 transition text-sm">
+                ⭐ مميزات المنظومة التعليمية
+            </a>
+            <a href="#stages" onclick="closeMobileMenu()" class="block px-3 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-100 transition text-sm">
+                🏫 المراحل والصفوف الدراسية
+            </a>
+            <a href="#groups" onclick="closeMobileMenu()" class="block px-3 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-100 transition text-sm">
+                📅 جدول مواعيد المجموعات
+            </a>
+            <a href="#enroll" onclick="closeMobileMenu()" class="block px-3 py-2.5 rounded-xl font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 transition text-sm text-center">
+                📝 تقديم طلب وتسجيل جديد
+            </a>
+            <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                <a href="{{ route('parent.login') }}" class="flex-1 py-2 text-center bg-slate-100 rounded-xl text-xs font-bold text-slate-800">
+                    بوابة ولي الأمر
+                </a>
+                <a href="/admin" class="flex-1 py-2 text-center bg-slate-900 rounded-xl text-xs font-bold text-white">
+                    لوحة التحكم
                 </a>
             </div>
         </div>
     </header>
 
-    {{-- ─── HERO SECTION ─── --}}
-    <section class="relative pt-36 pb-24 md:pt-48 md:pb-36 hero-gradient overflow-hidden">
-        <div class="absolute -top-40 right-1/4 w-[500px] h-[500px] bg-indigo-600/25 rounded-full blur-[120px] pointer-events-none animate-pulse"></div>
-        <div class="absolute top-1/3 left-10 w-[400px] h-[400px] bg-purple-600/20 rounded-full blur-[100px] pointer-events-none"></div>
-        <div class="absolute bottom-10 right-10 w-[350px] h-[350px] bg-pink-600/15 rounded-full blur-[90px] pointer-events-none"></div>
+    {{-- ─── HERO SECTION (Fully Responsive Two-Column Layout) ─── --}}
+    <section class="relative pt-28 pb-14 sm:pt-36 sm:pb-20 md:pt-40 md:pb-24 hero-banner text-white overflow-hidden">
+        <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:20px_20px] sm:[background-size:24px_24px] pointer-events-none"></div>
+        <div class="absolute top-0 right-0 w-72 sm:w-96 h-72 sm:h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 w-72 sm:w-96 h-72 sm:h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-            <div data-aos="fade-down" class="inline-flex items-center gap-2.5 px-5 py-2 bg-indigo-950/80 border border-indigo-500/40 rounded-full text-indigo-300 font-extrabold text-xs sm:text-sm mb-8 shadow-xl backdrop-blur-md">
-                <span class="flex h-2 w-2 relative">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span>🌟 المنصة الأكاديمية الرائدة للتميز والتفوق الدراسية</span>
-            </div>
-
-            <h1 data-aos="fade-up" data-aos-delay="100" class="text-3xl sm:text-5xl lg:text-7xl font-black text-white leading-[1.25] tracking-tight mb-8 max-w-5xl mx-auto">
-                منظومة تعليمية متطورة تضمن <br>
-                <span class="bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent underline decoration-indigo-500/40 decoration-wavy underline-offset-8">التفوق والوصول لأعلى المراتب</span>
-            </h1>
-
-            <p data-aos="fade-up" data-aos-delay="200" class="text-slate-300 font-semibold text-base sm:text-xl max-w-3xl mx-auto mb-12 leading-relaxed">
-                مرحباً بكم في <strong class="text-white font-extrabold">{{ $settings['center_name'] }}</strong> — بيئة شمولية تفاعلية تعتمد على أحدث الأساليب الأكاديمية، متابعة الحضور بالـ QR Code، واختبارات قياس المستوى اللحظية.
-            </p>
-
-            <div data-aos="fade-up" data-aos-delay="300" class="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-lg mx-auto">
-                <a href="#enroll" class="w-full sm:w-auto px-9 py-4.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-black rounded-2xl text-base shadow-2xl shadow-indigo-600/40 transition-all transform hover:-translate-y-1 hover:scale-105 flex items-center justify-center gap-2 glow-effect">
-                    <span>📝 قدم الآن أونلاين</span>
-                    <span class="text-lg">←</span>
-                </a>
-                <a href="#groups" class="w-full sm:w-auto px-8 py-4.5 bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-200 font-extrabold rounded-2xl text-base transition-all hover:border-indigo-500/50 backdrop-blur-md shadow-lg">
-                    📅 استعرض المجموعات
-                </a>
-            </div>
-
-            {{-- 📊 STATS CARDS --}}
-            <div data-aos="fade-up" data-aos-delay="400" class="grid grid-cols-2 md:grid-cols-4 gap-5 mt-20 max-w-5xl mx-auto">
-                <div class="glass-card glass-card-hover p-6 rounded-3xl text-center">
-                    <div class="w-12 h-12 bg-indigo-500/10 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl font-black border border-indigo-500/20">👨‍🎓</div>
-                    <span class="block text-3xl sm:text-4xl font-black text-white mb-1">+1000</span>
-                    <span class="text-xs sm:text-sm font-bold text-slate-400">طالب وطالبة متفوقين</span>
-                </div>
-                <div class="glass-card glass-card-hover p-6 rounded-3xl text-center">
-                    <div class="w-12 h-12 bg-purple-500/10 text-purple-400 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl font-black border border-purple-500/20">📱</div>
-                    <span class="block text-3xl sm:text-4xl font-black text-purple-300 mb-1">100%</span>
-                    <span class="text-xs sm:text-sm font-bold text-slate-400">متابعة إلكترونية لولي الأمر</span>
-                </div>
-                <div class="glass-card glass-card-hover p-6 rounded-3xl text-center">
-                    <div class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl font-black border border-emerald-500/20">⚡</div>
-                    <span class="block text-3xl sm:text-4xl font-black text-emerald-400 mb-1">QR Code</span>
-                    <span class="text-xs sm:text-sm font-bold text-slate-400">حضور سريع وتأكيد آلي</span>
-                </div>
-                <div class="glass-card glass-card-hover p-6 rounded-3xl text-center">
-                    <div class="w-12 h-12 bg-pink-500/10 text-pink-400 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl font-black border border-pink-500/20">🏆</div>
-                    <span class="block text-3xl sm:text-4xl font-black text-pink-400 mb-1">دوري</span>
-                    <span class="text-xs sm:text-sm font-bold text-slate-400">امتحانات وتقييمات مستمرة</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    {{-- ─── FEATURES SECTION ─── --}}
-    <section id="features" class="py-24 bg-slate-950 relative">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center max-w-3xl mx-auto mb-16" data-aos="fade-up">
-                <span class="px-4 py-1.5 bg-indigo-950 border border-indigo-800 text-indigo-400 rounded-full text-xs font-black uppercase tracking-wider mb-3 inline-block">لماذا نتميز؟</span>
-                <h2 class="text-3xl sm:text-5xl font-black text-white leading-snug">رؤية تعليمية حديثة تلائم طموحك</h2>
-                <p class="text-slate-400 font-semibold text-base mt-4">نوفر أدوات أكاديمية وتكنولوجية متكاملة تساعد الطالب على تحصيل أعلى الدرجات بكل سهولة.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="glass-card glass-card-hover p-8 rounded-3xl space-y-4" data-aos="fade-up" data-aos-delay="100">
-                    <div class="w-14 h-14 bg-indigo-600/20 text-indigo-400 rounded-2xl flex items-center justify-center text-3xl font-black border border-indigo-500/30">
-                        📚
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 items-center">
+                
+                {{-- Text Content (Right) --}}
+                <div class="lg:col-span-7 text-center lg:text-right">
+                    <div data-aos="fade-down" class="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 sm:px-4 sm:py-1.5 bg-white/10 border border-white/15 rounded-full text-sky-200 font-bold text-[11px] sm:text-xs md:text-sm mb-4 sm:mb-6 backdrop-blur-sm">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+                        <span>المنظومة التعليمية الرائدة للتميز والتفوق الأكاديمي</span>
                     </div>
-                    <h3 class="text-xl font-black text-white">مناهج وملازم مطورة</h3>
-                    <p class="text-slate-400 text-sm font-semibold leading-relaxed">
-                        خرائط ذهنية ملونة، أسئلة متدرجة الصعوبة، وملازم مخصصة تدعم الفهم العميق وتمنع تشتت الطالب.
-                    </p>
-                </div>
 
-                <div class="glass-card glass-card-hover p-8 rounded-3xl space-y-4" data-aos="fade-up" data-aos-delay="200">
-                    <div class="w-14 h-14 bg-purple-600/20 text-purple-400 rounded-2xl flex items-center justify-center text-3xl font-black border border-purple-500/30">
-                        📊
-                    </div>
-                    <h3 class="text-xl font-black text-white">بوابة متابعة أولياء الأمور</h3>
-                    <p class="text-slate-400 text-sm font-semibold leading-relaxed">
-                        شفافية كاملة بتقرير مالي وأكاديمي مباشر يشمل نسبة الحضور، درجات الاختبارات، وكشف الحساب.
-                    </p>
-                </div>
+                    <h1 data-aos="fade-up" data-aos-delay="100" class="font-heading text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-4 sm:mb-6">
+                        صناعة التفوق تبدأ مع <br>
+                        <span class="text-sky-300">{{ $settings['teacher_name'] }}</span>
+                    </h1>
 
-                <div class="glass-card glass-card-hover p-8 rounded-3xl space-y-4" data-aos="fade-up" data-aos-delay="300">
-                    <div class="w-14 h-14 bg-emerald-600/20 text-emerald-400 rounded-2xl flex items-center justify-center text-3xl font-black border border-emerald-500/30">
-                        🎯
-                    </div>
-                    <h3 class="text-xl font-black text-white">تحفيز وتكريم المتفوقين</h3>
-                    <p class="text-slate-400 text-sm font-semibold leading-relaxed">
-                        نظام خصومات دراسية للمتفوقين، مكافآت دورية لأوائل الاختيارات، ومتابعة شخصية مستمرة.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    {{-- ─── TEACHER BIO & ABOUT SECTION ─── --}}
-    <section id="about" class="py-24 bg-slate-900/40 border-y border-slate-800/60 relative">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <div class="space-y-6" data-aos="fade-right">
-                    <div class="inline-block px-4 py-1.5 bg-indigo-950 border border-indigo-800 text-indigo-400 rounded-lg text-xs font-black">عن المعلم والمؤسس</div>
-                    <h2 class="text-3xl sm:text-5xl font-black text-white leading-snug">
-                        خبرة سنوات في تبسيط المناهج وإعداد الأوائل
-                    </h2>
-                    <p class="text-slate-300 leading-relaxed font-semibold text-base sm:text-lg">
-                        هدفنا ليس مجرد تحفيظ المناهج، بل بناء عقلية تفكر وتفهم. نعتمد على أحدث أساليب الشرح والتطبيقات المباشرة مع نظام متابعة إلكتروني شامل لكل طالب وولي أمر.
+                    <p data-aos="fade-up" data-aos-delay="200" class="text-slate-200 text-sm sm:text-base md:text-lg font-normal leading-relaxed max-w-2xl mx-auto lg:mx-0 mb-6 sm:mb-8">
+                        {{ $settings['teacher_title'] }}. منهجية تدريس مبسطة ترتكز على استيعاب المفاهيم، حل آلاف الأسئلة الامتحانية، ونظام متابعة ذكي ودقيق لكل طالب.
                     </p>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-                        <div class="p-5 bg-slate-950/80 rounded-2xl border border-slate-800 shadow-md">
-                            <div class="text-3xl mb-2">💡</div>
-                            <h3 class="font-extrabold text-white text-base mb-1">فهم وتأسيس متين</h3>
-                            <p class="text-xs text-slate-400 font-semibold">تفكيك عقد المواد والشرح بأسلوب تفاعلي يناسب كافة المستويات.</p>
-                        </div>
-                        <div class="p-5 bg-slate-950/80 rounded-2xl border border-slate-800 shadow-md">
-                            <div class="text-3xl mb-2">📈</div>
-                            <h3 class="font-extrabold text-white text-base mb-1">تقييمات دورية مستمرة</h3>
-                            <p class="text-xs text-slate-400 font-semibold">امتحانات بعد كل حصة مع تقارير أداء فورية تصل لولي الأمر.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="relative" data-aos="fade-left">
-                    <div class="bg-gradient-to-tr from-indigo-950 via-slate-900 to-purple-950 rounded-3xl border border-slate-800/80 p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden space-y-8 animate-float">
-                        <div class="absolute -bottom-10 -right-10 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl"></div>
-                        <div class="flex items-center gap-5">
-                            @if(!empty($settings['center_logo']))
-                                <img src="{{ asset('storage/' . $settings['center_logo']) }}" class="w-20 h-20 object-contain rounded-2xl border border-indigo-500/30 shadow-2xl">
-                            @else
-                                <div class="w-20 h-20 bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-600 rounded-2xl flex items-center justify-center font-black text-4xl text-white shadow-2xl shadow-indigo-600/40">
-                                    👨‍🏫
-                                </div>
-                            @endif
-                            <div>
-                                <h3 class="text-2xl font-black text-white">{{ $settings['center_name'] }}</h3>
-                                <p class="text-xs font-black text-indigo-400 mt-1">معلم خبير ومستشار أكاديمي</p>
-                            </div>
-                        </div>
-
-                        <blockquote class="text-slate-300 italic font-semibold text-sm leading-relaxed border-r-2 border-indigo-500 pr-4">
-                            "الطريق إلى التفوق والقمة يكمن في الالتزام والاستمرارية والمتابعة الدقيقة.. ونحن هنا لنأخذ بيدك خطوة بخطوة نحو النجاح."
-                        </blockquote>
-
-                        <div class="flex items-center justify-between pt-4 border-t border-slate-800/80 text-xs font-bold text-slate-400">
-                            <span>📞 التواصل الرسمي: {{ $settings['center_phone'] }}</span>
-                            <span class="text-emerald-400">متاح التسجيل الآن 🟢</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    {{-- ─── EDUCATIONAL STAGES SECTION ─── --}}
-    <section id="stages" class="py-24 relative">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center max-w-3xl mx-auto mb-16" data-aos="fade-up">
-                <span class="px-4 py-1.5 bg-purple-950 border border-purple-800 text-purple-400 rounded-full text-xs font-black uppercase tracking-wider mb-3 inline-block">المراحل التعليمية</span>
-                <h2 class="text-3xl sm:text-5xl font-black text-white">اختر مرحلتك الدراسية</h2>
-                <p class="text-slate-400 font-semibold text-base mt-4">نقدم برامج مخصصة ومجموعات منفصلة لكل صف دراسي لضمان تركيز أعلى.</p>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                @foreach($stages as $index => $stage)
-                    <div class="glass-card glass-card-hover p-8 rounded-3xl flex flex-col justify-between" data-aos="fade-up" data-aos-delay="{{ ($index + 1) * 100 }}">
-                        <div>
-                            <div class="w-12 h-12 bg-indigo-600/20 text-indigo-400 rounded-xl flex items-center justify-center font-black text-xl mb-6 border border-indigo-500/30">
-                                🏫
-                            </div>
-                            <h3 class="text-2xl font-black text-white mb-2">{{ $stage->name }}</h3>
-                            <p class="text-slate-400 text-xs font-bold mb-6">عدد الطلاب المقيدين بها: {{ $stage->students_count }} طالب وطالبة</p>
-                        </div>
-
-                        <a href="#enroll" onclick="selectStage('{{ $stage->id }}')" class="w-full py-3 bg-slate-900 hover:bg-indigo-600 border border-slate-700/80 hover:border-indigo-500 text-white font-extrabold rounded-xl text-xs transition-all text-center block">
-                            حجز موعد أو تقديم طلب ➔
+                    <div data-aos="fade-up" data-aos-delay="300" class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 max-w-md mx-auto lg:mx-0">
+                        <a href="#enroll" class="w-full sm:w-auto px-7 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                            <span>📝 حجز مقعد دراسي جديد</span>
+                            <span>←</span>
+                        </a>
+                        <a href="#about-teacher" class="w-full sm:w-auto px-6 py-3.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold rounded-xl text-xs sm:text-sm transition backdrop-blur-sm flex items-center justify-center gap-2">
+                            <span>🎓 سيرة ومنهجية الأستاذ</span>
                         </a>
                     </div>
-                @endforeach
+
+                    {{-- Quick Trust Signals --}}
+                    <div data-aos="fade-up" data-aos-delay="400" class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-8 pt-6 sm:pt-8 border-t border-white/10 text-xs sm:text-sm font-semibold text-slate-300 text-right">
+                        <div class="flex items-center gap-2 justify-center lg:justify-start">
+                            <span class="text-emerald-400 font-bold text-base">✓</span>
+                            <span>خبرة {{ $settings['teacher_experience_years'] }} عاماً</span>
+                        </div>
+                        <div class="flex items-center gap-2 justify-center lg:justify-start">
+                            <span class="text-sky-400 font-bold text-base">✓</span>
+                            <span>متابعة وتقييم أسبوعي</span>
+                        </div>
+                        <div class="flex items-center gap-2 justify-center lg:justify-start">
+                            <span class="text-amber-400 font-bold text-base">✓</span>
+                            <span>بوابة رقمية لولي الأمر</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Teacher Hero Card / Portrait (Left) --}}
+                <div class="lg:col-span-5 mt-4 lg:mt-0" data-aos="fade-left" data-aos-delay="200">
+                    <div class="relative max-w-sm sm:max-w-md mx-auto">
+                        <div class="teacher-portrait-frame relative z-10 rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-900 border-2 border-white/20 shadow-2xl">
+                            @php
+                                $teacherImg = !empty($settings['teacher_image']) ? (str_starts_with($settings['teacher_image'], 'http') || str_starts_with($settings['teacher_image'], 'images/') ? asset($settings['teacher_image']) : asset('storage/' . $settings['teacher_image'])) : asset('images/teacher_mohammed_elgandy.jpg');
+                            @endphp
+                            <img src="{{ $teacherImg }}" alt="{{ $settings['teacher_name'] }}" class="w-full h-[320px] sm:h-[390px] lg:h-[430px] object-cover object-top filter contrast-105">
+                            
+                            {{-- Overlay Card at Bottom of Portrait --}}
+                            <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent p-4 sm:p-6 text-right">
+                                <span class="inline-block px-2.5 py-0.5 bg-sky-600/90 text-white rounded-full text-[10px] sm:text-xs font-bold mb-1 sm:mb-2">
+                                    {{ $settings['teacher_title'] }}
+                                </span>
+                                <h3 class="font-heading font-extrabold text-lg sm:text-2xl text-white">{{ $settings['teacher_name'] }}</h3>
+                                <p class="text-[11px] sm:text-xs text-slate-300 mt-1 font-medium italic line-clamp-2">
+                                    "{{ $settings['teacher_quote'] }}"
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            {{-- 📊 ACADEMIC HIGHLIGHTS (4 Responsive Pillars) --}}
+            <div data-aos="fade-up" data-aos-delay="400" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mt-12 sm:mt-16 max-w-5xl mx-auto">
+                <div class="bg-white/5 border border-white/10 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl text-center backdrop-blur-sm">
+                    <div class="text-xl sm:text-2xl mb-1 sm:mb-2">🎯</div>
+                    <span class="block text-lg sm:text-2xl lg:text-3xl font-heading font-black text-white mb-0.5 sm:mb-1">تفوق مستمر</span>
+                    <span class="text-[11px] sm:text-xs text-slate-300 font-medium">خطط دراسية محكمة ونتائج ملموسة</span>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl text-center backdrop-blur-sm">
+                    <div class="text-xl sm:text-2xl mb-1 sm:mb-2">📲</div>
+                    <span class="block text-lg sm:text-2xl lg:text-3xl font-heading font-black text-emerald-300 mb-0.5 sm:mb-1">تقارير فورية</span>
+                    <span class="text-[11px] sm:text-xs text-slate-300 font-medium">إشعار ولي الأمر بعد كل حصة</span>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl text-center backdrop-blur-sm">
+                    <div class="text-xl sm:text-2xl mb-1 sm:mb-2">🏷️</div>
+                    <span class="block text-lg sm:text-2xl lg:text-3xl font-heading font-black text-sky-300 mb-0.5 sm:mb-1">QR Code</span>
+                    <span class="text-[11px] sm:text-xs text-slate-300 font-medium">حضور وانصراف ذكي بدون تأخير</span>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl text-center backdrop-blur-sm">
+                    <div class="text-xl sm:text-2xl mb-1 sm:mb-2">📑</div>
+                    <span class="block text-lg sm:text-2xl lg:text-3xl font-heading font-black text-amber-300 mb-0.5 sm:mb-1">بنوك أسئلة</span>
+                    <span class="text-[11px] sm:text-xs text-slate-300 font-medium">تغطية لكافة أفكار امتحانات الوزارة</span>
+                </div>
             </div>
         </div>
     </section>
 
-    {{-- ─── GROUPS & TIMETABLE SECTION ─── --}}
-    <section id="groups" class="py-24 bg-slate-900/40 border-y border-slate-800/60 relative">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center max-w-3xl mx-auto mb-16" data-aos="fade-up">
-                <span class="px-4 py-1.5 bg-emerald-950 border border-emerald-800 text-emerald-400 rounded-full text-xs font-black uppercase tracking-wider mb-3 inline-block">المجموعات المتاحة</span>
-                <h2 class="text-3xl sm:text-5xl font-black text-white">مواعيد المجموعات الدراسية</h2>
-                <p class="text-slate-400 font-semibold text-base mt-4">اختر المجموعة والجدول المناسب لك وانضم فوراً.</p>
+    {{-- ─── MASTER EDUCATOR SHOWCASE SECTION (Comprehensive Teacher Bio) ─── --}}
+    <section id="about-teacher" class="py-14 sm:py-20 lg:py-24 bg-white border-b border-slate-200 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            
+            <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-16" data-aos="fade-up">
+                <span class="academic-badge bg-sky-100 text-sky-800 border border-sky-200 mb-2 sm:mb-3">السيرة المهنية والأكاديمية</span>
+                <h2 class="font-heading text-xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 leading-tight">
+                    عن {{ $settings['teacher_name'] }}
+                </h2>
+                <p class="text-slate-600 text-xs sm:text-sm md:text-base mt-1.5">
+                    {{ $settings['teacher_title'] }}
+                </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                @foreach($groups as $index => $group)
-                    <div class="glass-card glass-card-hover p-8 rounded-3xl flex flex-col justify-between relative overflow-hidden" data-aos="fade-up" data-aos-delay="{{ ($index + 1) * 100 }}">
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between">
-                                <span class="px-3 py-1 bg-indigo-950 text-indigo-300 rounded-full text-xs font-black border border-indigo-800">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 items-center">
+                
+                {{-- Teacher Photo with Credentials --}}
+                <div class="lg:col-span-5 max-w-sm sm:max-w-md mx-auto w-full" data-aos="fade-right">
+                    <div class="relative">
+                        <div class="rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200 shadow-lg bg-slate-100">
+                            <img src="{{ $teacherImg }}" alt="{{ $settings['teacher_name'] }}" class="w-full h-[340px] sm:h-[420px] lg:h-[480px] object-cover object-top">
+                        </div>
+
+                        {{-- Stats Overhang --}}
+                        <div class="grid grid-cols-2 gap-2.5 sm:gap-3 mt-3 sm:mt-4">
+                            <div class="bg-slate-900 text-white p-3 sm:p-4 rounded-xl sm:rounded-2xl text-center">
+                                <span class="block font-heading font-black text-xl sm:text-2xl text-sky-400">{{ $settings['teacher_experience_years'] }} عاماً</span>
+                                <span class="text-[10px] sm:text-xs text-slate-300">من الخبرة والتدريس المتخصص</span>
+                            </div>
+                            <div class="bg-slate-900 text-white p-3 sm:p-4 rounded-xl sm:rounded-2xl text-center">
+                                <span class="block font-heading font-black text-xl sm:text-2xl text-emerald-400">+10,000</span>
+                                <span class="text-[10px] sm:text-xs text-slate-300">طالب تم تأهيلهم للتفوق</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Biography & Teaching Methodology --}}
+                <div class="lg:col-span-7 space-y-4 sm:space-y-6 text-right" data-aos="fade-left">
+                    <div class="space-y-2 sm:space-y-3">
+                        <h3 class="font-heading font-bold text-lg sm:text-2xl lg:text-3xl text-slate-900 leading-snug">
+                            رحلة أكاديمية هدفها الأول تحويل صعوبة المادة إلى شغف وتفوق دائم
+                        </h3>
+                        <p class="text-slate-600 text-xs sm:text-base leading-relaxed">
+                            {{ $settings['teacher_bio'] }}
+                        </p>
+                    </div>
+
+                    {{-- Methodology 4 Points --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-1">
+                        <div class="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 bg-slate-50">
+                            <div class="w-8 h-8 bg-sky-100 text-sky-800 rounded-lg flex items-center justify-center font-bold text-sm mb-2">
+                                1
+                            </div>
+                            <h4 class="font-heading font-bold text-slate-900 text-xs sm:text-sm mb-1">الربط المنطقي والمفاهيمي</h4>
+                            <p class="text-[11px] sm:text-xs text-slate-500 leading-relaxed">شرح القوانين والقواعد من جذورها حتى يرسخ المفهوم في ذهن الطالب دون نسيان.</p>
+                        </div>
+
+                        <div class="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 bg-slate-50">
+                            <div class="w-8 h-8 bg-emerald-100 text-emerald-800 rounded-lg flex items-center justify-center font-bold text-sm mb-2">
+                                2
+                            </div>
+                            <h4 class="font-heading font-bold text-slate-900 text-xs sm:text-sm mb-1">حل آلاف المسائل المتدرجة</h4>
+                            <p class="text-[11px] sm:text-xs text-slate-500 leading-relaxed">تدريب مستمر على مستويات التفكير العليا والأنماط الامتحانية الجديدة بدقة تامة.</p>
+                        </div>
+
+                        <div class="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 bg-slate-50">
+                            <div class="w-8 h-8 bg-amber-100 text-amber-800 rounded-lg flex items-center justify-center font-bold text-sm mb-2">
+                                3
+                            </div>
+                            <h4 class="font-heading font-bold text-slate-900 text-xs sm:text-sm mb-1">متابعة فردية صارمة</h4>
+                            <p class="text-[11px] sm:text-xs text-slate-500 leading-relaxed">فريق مساعدين مؤهل يصحح الواجبات ويرصد الحضور والامتحانات لحظياً.</p>
+                        </div>
+
+                        <div class="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 bg-slate-50">
+                            <div class="w-8 h-8 bg-purple-100 text-purple-800 rounded-lg flex items-center justify-center font-bold text-sm mb-2">
+                                4
+                            </div>
+                            <h4 class="font-heading font-bold text-slate-900 text-xs sm:text-sm mb-1">تقييمات أسبوعية ومحاكاة</h4>
+                            <p class="text-[11px] sm:text-xs text-slate-500 leading-relaxed">امتحانات محاكاة مطابقة لنظام الوزارة لكسر رهبة الامتحانات النهائية مبكراً.</p>
+                        </div>
+                    </div>
+
+                    {{-- Quote Banner --}}
+                    <div class="p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-slate-900 text-white border border-slate-800 flex items-start gap-3 sm:gap-4">
+                        <span class="text-2xl sm:text-3xl text-sky-400 font-serif leading-none">“</span>
+                        <div>
+                            <p class="text-xs sm:text-sm font-semibold text-slate-200 leading-relaxed">
+                                {{ $settings['teacher_quote'] }}
+                            </p>
+                            <span class="block text-[11px] sm:text-xs text-sky-400 font-bold mt-1.5">— {{ $settings['teacher_name'] }}</span>
+                        </div>
+                    </div>
+
+                    {{-- Contact Triggers --}}
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+                        <a href="#enroll" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs sm:text-sm transition text-center shadow-sm">
+                            انضم لطلاب الأستاذ الآن ➔
+                        </a>
+                        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $settings['center_phone']) }}" target="_blank" class="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-bold rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-2">
+                            <span>💬</span>
+                            <span>استفسار مباشر عبر واتساب</span>
+                        </a>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    {{-- ─── PILLARS & FEATURES ─── --}}
+    <section id="features" class="py-14 sm:py-20 academic-grid-pattern border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-14" data-aos="fade-up">
+                <span class="academic-badge bg-sky-100 text-sky-800 border border-sky-200 mb-2 sm:mb-3">ركائز المنظومة</span>
+                <h2 class="font-heading text-xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 leading-tight">
+                    لماذا يثق بنا مئات الطلاب وأولياء الأمور؟
+                </h2>
+                <p class="text-slate-600 text-xs sm:text-sm md:text-base mt-2">
+                    نهتم ببناء الأساس العلمي والتطبيقي للطالب مع معايير متابعة صارمة تضمن الالتزام والتفوق.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+                {{-- Feature 1 --}}
+                <div class="clean-card p-6 sm:p-8 rounded-2xl flex flex-col justify-between" data-aos="fade-up" data-aos-delay="100">
+                    <div>
+                        <div class="w-11 h-11 sm:w-12 sm:h-12 bg-sky-50 text-sky-700 rounded-xl flex items-center justify-center text-xl sm:text-2xl mb-4 sm:mb-5 border border-sky-100 font-bold">
+                            📖
+                        </div>
+                        <h3 class="font-heading font-bold text-base sm:text-lg text-slate-900 mb-2">مذكرات شرح وتدريبات احترافية</h3>
+                        <p class="text-slate-600 text-xs sm:text-sm leading-relaxed">
+                            مذكرات مطبوعة بجودة عالية تشمل خرائط مفاهيمية، أمثلة محلولة بالتفصيل، وتدريبات متدرجة من الأساسيات حتى مستوى الامتحانات التنافسية.
+                        </p>
+                    </div>
+                    <div class="mt-5 pt-3 border-t border-slate-100 flex items-center gap-2 text-xs font-bold text-sky-700">
+                        <span>تحديث دوري ومستمر للمناهج</span>
+                    </div>
+                </div>
+
+                {{-- Feature 2 --}}
+                <div class="clean-card p-6 sm:p-8 rounded-2xl flex flex-col justify-between" data-aos="fade-up" data-aos-delay="200">
+                    <div>
+                        <div class="w-11 h-11 sm:w-12 sm:h-12 bg-emerald-50 text-emerald-700 rounded-xl flex items-center justify-center text-xl sm:text-2xl mb-4 sm:mb-5 border border-emerald-100 font-bold">
+                            📊
+                        </div>
+                        <h3 class="font-heading font-bold text-base sm:text-lg text-slate-900 mb-2">بوابة إلكترونية لولي الأمر</h3>
+                        <p class="text-slate-600 text-xs sm:text-sm leading-relaxed">
+                            تسجيل دخول سهل للاطلاع على نسبة حضور الطالب، درجات الامتحانات الشهرية والأسبوعية، ورصد الرصيد المالي وحالة تسليم المذكرات.
+                        </p>
+                    </div>
+                    <div class="mt-5 pt-3 border-t border-slate-100 flex items-center gap-2 text-xs font-bold text-emerald-700">
+                        <span>شفافية كاملة ومتابعة مباشرة</span>
+                    </div>
+                </div>
+
+                {{-- Feature 3 --}}
+                <div class="clean-card p-6 sm:p-8 rounded-2xl flex flex-col justify-between md:col-span-2 lg:col-span-1" data-aos="fade-up" data-aos-delay="300">
+                    <div>
+                        <div class="w-11 h-11 sm:w-12 sm:h-12 bg-amber-50 text-amber-700 rounded-xl flex items-center justify-center text-xl sm:text-2xl mb-4 sm:mb-5 border border-amber-100 font-bold">
+                            🏆
+                        </div>
+                        <h3 class="font-heading font-bold text-base sm:text-lg text-slate-900 mb-2">اختبارات دورية وتحفيز دائم</h3>
+                        <p class="text-slate-600 text-xs sm:text-sm leading-relaxed">
+                            امتحان أسبوعي بعد كل درس، مع لوحة شرف للمتميزين وخصومات تشجيعية للطلاب الحاصلين على الدرجات النهائية تحفيزاً للاستمرار.
+                        </p>
+                    </div>
+                    <div class="mt-5 pt-3 border-t border-slate-100 flex items-center gap-2 text-xs font-bold text-amber-700">
+                        <span>نظام حوافز ومكافآت التميز</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- ─── EDUCATIONAL STAGES ─── --}}
+    <section id="stages" class="py-14 sm:py-20 bg-white border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-14" data-aos="fade-up">
+                <span class="academic-badge bg-slate-200 text-slate-800 border border-slate-300 mb-2 sm:mb-3">الصفوف والمراحل</span>
+                <h2 class="font-heading text-xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900">المراحل الدراسية المتاحة</h2>
+                <p class="text-slate-600 text-xs sm:text-sm md:text-base mt-2">اختر المرحلة الدراسية المناسبة للاطلاع على المجموعات وحجز المقعد.</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                @forelse($stages as $index => $stage)
+                    <div class="clean-card p-5 sm:p-6 rounded-2xl flex flex-col justify-between" data-aos="fade-up" data-aos-delay="{{ ($index + 1) * 100 }}">
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-10 h-10 bg-slate-100 text-slate-700 rounded-xl flex items-center justify-center font-bold text-lg border border-slate-200">
+                                    🏫
+                                </div>
+                                <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-200">
+                                    {{ $stage->students_count }} طالب مقيد
+                                </span>
+                            </div>
+                            <h3 class="font-heading font-bold text-lg sm:text-xl text-slate-900 mb-2">{{ $stage->name }}</h3>
+                            <p class="text-slate-500 text-xs leading-relaxed mb-6">
+                                برنامج دراسي شامل يتضمن شرح المنهج، حل الواجبات، واختبارات أسبوعية لقياس التقدم.
+                            </p>
+                        </div>
+
+                        <a href="#enroll" onclick="selectStage('{{ $stage->id }}')" class="w-full py-2.5 bg-slate-100 hover:bg-slate-900 text-slate-800 hover:text-white font-bold rounded-xl text-xs transition text-center block border border-slate-300">
+                            تسجيل طلب في هذه المرحلة ➔
+                        </a>
+                    </div>
+                @empty
+                    <div class="col-span-3 text-center py-10 text-slate-400 text-sm">
+                        لا توجد مراحل مسجلة حالياً
+                    </div>
+                @endforelse
+            </div>
+        </div>
+    </section>
+
+    {{-- ─── GROUPS TIMETABLE ─── --}}
+    <section id="groups" class="py-14 sm:py-20 academic-grid-pattern border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-14" data-aos="fade-up">
+                <span class="academic-badge bg-emerald-100 text-emerald-800 border border-emerald-200 mb-2 sm:mb-3">الجداول والمواعيد</span>
+                <h2 class="font-heading text-xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900">مواعيد المجموعات الدراسية</h2>
+                <p class="text-slate-600 text-xs sm:text-sm md:text-base mt-2">مواعيد منظمة بأعداد محددة في القاعة لضمان راحة وتركيز كل طالب.</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                @forelse($groups as $index => $group)
+                    <div class="clean-card p-5 sm:p-6 rounded-2xl flex flex-col justify-between" data-aos="fade-up" data-aos-delay="{{ ($index + 1) * 100 }}">
+                        <div class="space-y-3 sm:space-y-4">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-[11px] sm:text-xs font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
                                     {{ $group->educationalStage?->name }}
                                 </span>
-                                <span class="text-xs font-black text-emerald-400 bg-emerald-950 px-2.5 py-1 rounded-full border border-emerald-800">
+                                <span class="text-[11px] sm:text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 whitespace-nowrap">
                                     {{ number_format($group->price_per_month) }} ج.م / شهرياً
                                 </span>
                             </div>
 
-                            <h3 class="text-2xl font-black text-white pt-2">{{ $group->name }}</h3>
-                            <p class="text-xs font-extrabold text-slate-400">المادة: <span class="text-white">{{ $group->subject?->name }}</span></p>
+                            <h3 class="font-heading font-bold text-base sm:text-lg text-slate-900 pt-1">{{ $group->name }}</h3>
+                            <p class="text-xs font-semibold text-slate-500">المادة: <span class="font-bold text-slate-800">{{ $group->subject?->name ?? 'العامة' }}</span></p>
 
-                            <div class="space-y-2 pt-2 border-t border-slate-800/80">
-                                <span class="text-xs font-black text-slate-400 block">📅 المواعيد الأسبوعية:</span>
+                            <div class="space-y-2 pt-2 border-t border-slate-100">
+                                <span class="text-xs font-bold text-slate-600 block">📅 المواعيد الأسبوعية:</span>
                                 @forelse($group->schedules as $sched)
-                                    <div class="flex items-center justify-between text-xs font-bold text-slate-300 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
-                                        <span>
+                                    <div class="flex items-center justify-between text-xs font-medium text-slate-700 bg-slate-50 p-2 rounded-lg border border-slate-200">
+                                        <span class="font-bold">
                                             @switch($sched->day_of_week)
                                                 @case('sat') السبت @break
                                                 @case('sun') الأحد @break
@@ -340,55 +572,60 @@
                                                 @default {{ $sched->day_of_week }}
                                             @endswitch
                                         </span>
-                                        <span class="font-mono text-indigo-400">{{ \Carbon\Carbon::parse($sched->start_time)->format('h:i A') }}</span>
+                                        <span class="font-mono text-sky-800 font-bold" dir="ltr">{{ \Carbon\Carbon::parse($sched->start_time)->format('h:i A') }}</span>
                                     </div>
                                 @empty
-                                    <span class="text-xs text-slate-500 italic block">يتم تحديث المواعيد قريباً</span>
+                                    <span class="text-xs text-slate-400 italic block">يتم الإعلان عن المواعيد قريباً</span>
                                 @endforelse
                             </div>
                         </div>
 
-                        <div class="pt-6">
-                            <a href="#enroll" onclick="selectGroup('{{ $group->stage_id }}', '{{ $group->id }}')" class="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-black rounded-xl text-xs transition-all text-center block shadow-lg shadow-indigo-600/30">
-                                اختيار هذه المجموعة للانضمام 🚀
+                        <div class="pt-5">
+                            <a href="#enroll" onclick="selectGroup('{{ $group->stage_id }}', '{{ $group->id }}')" class="w-full py-2.5 bg-slate-900 hover:bg-sky-800 text-white font-bold rounded-xl text-xs transition text-center block shadow-sm">
+                                اختيار هذه المجموعة للتسجيل ➔
                             </a>
                         </div>
                     </div>
-                @endforeach
+                @empty
+                    <div class="col-span-3 text-center py-10 text-slate-400 text-sm">
+                        لا توجد مجموعات نشطة حالياً
+                    </div>
+                @endforelse
             </div>
         </div>
     </section>
 
-    {{-- ─── ENROLLMENT FORM SECTION ─── --}}
-    <section id="enroll" class="py-12 sm:py-24 relative">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="glass-card p-5 sm:p-14 rounded-3xl shadow-2xl relative" data-aos="zoom-in">
-                <div class="text-center max-w-xl mx-auto mb-8 sm:mb-12">
-                    <span class="px-3 py-1 sm:px-4 sm:py-1.5 bg-emerald-950 border border-emerald-800 text-emerald-400 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider mb-3 inline-block">التقديم أونلاين</span>
-                    <h2 class="text-2xl sm:text-4xl font-black text-white mb-2 sm:mb-3">استمارة التقديم والالتحاق للطلاب الجدد</h2>
-                    <p class="text-slate-400 text-xs sm:text-sm font-semibold leading-relaxed px-2">قم بملء البيانات وسنقوم بالتواصل معك لترتيب بدء الحضور وموعد الاختبار.</p>
+    {{-- ─── ENROLLMENT APPLICATION FORM (Touch-Friendly Responsive Form) ─── --}}
+    <section id="enroll" class="py-14 sm:py-20 bg-white border-b border-slate-200">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-white border border-slate-300 p-5 sm:p-8 lg:p-10 rounded-2xl sm:rounded-3xl shadow-sm" data-aos="fade-up">
+                
+                <div class="text-center max-w-xl mx-auto mb-6 sm:mb-8">
+                    <span class="academic-badge bg-emerald-100 text-emerald-800 border border-emerald-200 mb-2">استمارة التقديم</span>
+                    <h2 class="font-heading text-xl sm:text-3xl font-extrabold text-slate-900 mb-1.5">طلب الالتحاق وحجز المقعد</h2>
+                    <p class="text-slate-500 text-xs sm:text-sm leading-relaxed">سجل بيانات الطالب وسنتواصل معك هاتفياً لتأكيد المقعد وتحديد موعد الحضور.</p>
                 </div>
 
-                <form id="enrollmentForm" class="space-y-4 sm:space-y-6">
+                <form id="enrollmentForm" class="space-y-3.5 sm:space-y-4">
                     @csrf
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 mb-1.5">اسم الطالب ثلاثي / رباعي *</label>
-                            <input type="text" name="name" required placeholder="أحمد محمد علي" class="w-full px-4 py-3 sm:py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">اسم الطالب (ثلاثي أو رباعي) *</label>
+                            <input type="text" name="name" required placeholder="مثال: أحمد محمد علي" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold text-slate-900 focus:outline-none focus:border-sky-600 focus:bg-white transition">
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 mb-1.5">النوع *</label>
-                            <select name="gender" required class="w-full px-4 py-3 sm:py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
-                                <option value="male">ذكر</option>
-                                <option value="female">أنثى</option>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">النوع *</label>
+                            <select name="gender" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold text-slate-900 focus:outline-none focus:border-sky-600 focus:bg-white transition">
+                                <option value="male">ذكر (طالب)</option>
+                                <option value="female">أنثى (طالبة)</option>
                             </select>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 mb-1.5">المرحلة الدراسية *</label>
-                            <select id="stageSelect" name="stage_id" required class="w-full px-4 py-3 sm:py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
-                                <option value="">-- اختر المرحلة --</option>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">المرحلة الدراسية *</label>
+                            <select id="stageSelect" name="stage_id" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold text-slate-900 focus:outline-none focus:border-sky-600 focus:bg-white transition">
+                                <option value="">-- اختر المرحلة الدراسية --</option>
                                 @foreach($stages as $stage)
                                     <option value="{{ $stage->id }}">{{ $stage->name }}</option>
                                 @endforeach
@@ -396,68 +633,103 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 mb-1.5">المجموعة المرغوبة (اختياري)</label>
-                            <select id="groupSelect" name="group_id" class="w-full px-4 py-3 sm:py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">المجموعة المرغوبة (اختياري)</label>
+                            <select id="groupSelect" name="group_id" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold text-slate-900 focus:outline-none focus:border-sky-600 focus:bg-white transition">
                                 <option value="">-- اختر المجموعة بعد تحديد المرحلة --</option>
                             </select>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 mb-1.5">رقم هاتف ولي الأمر *</label>
-                            <input type="tel" name="parent_phone" required placeholder="01xxxxxxxxx" class="w-full px-4 py-3 sm:py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">رقم هاتف ولي الأمر *</label>
+                            <input type="tel" name="parent_phone" required placeholder="01xxxxxxxxx" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold text-slate-900 focus:outline-none focus:border-sky-600 focus:bg-white transition" dir="ltr">
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 mb-1.5">رقم هاتف الطالب (إن وجد)</label>
-                            <input type="tel" name="phone" placeholder="01xxxxxxxxx" class="w-full px-4 py-3 sm:py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">رقم هاتف الطالب (إن وجد)</label>
+                            <input type="tel" name="phone" placeholder="01xxxxxxxxx" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold text-slate-900 focus:outline-none focus:border-sky-600 focus:bg-white transition" dir="ltr">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1.5">العنوان السكني</label>
-                        <input type="text" name="address" placeholder="المدينة / المنطقة..." class="w-full px-4 py-3 sm:py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">العنوان / المنطقة السكنية</label>
+                        <input type="text" name="address" placeholder="المدينة / الشارع / المنطقة..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold text-slate-900 focus:outline-none focus:border-sky-600 focus:bg-white transition">
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1.5">ملاحظات إضافية</label>
-                        <textarea name="notes" rows="2" placeholder="أي ملاحظات أو استفسارات إضافية..." class="w-full px-4 py-3 sm:py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition"></textarea>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">ملاحظات إضافية أو استفسار</label>
+                        <textarea name="notes" rows="2" placeholder="أي تفاصيل أو رغبة في مواعيد معينة..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold text-slate-900 focus:outline-none focus:border-sky-600 focus:bg-white transition"></textarea>
                     </div>
 
-                    <div id="formResponse" class="hidden p-4 rounded-xl text-xs font-bold"></div>
+                    <div id="formResponse" class="hidden p-3.5 rounded-xl text-xs font-bold"></div>
 
-                    <button type="submit" class="w-full py-3.5 sm:py-4.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black rounded-2xl text-sm sm:text-base shadow-xl shadow-emerald-600/30 transition transform hover:-translate-y-0.5">
-                        تأكيد إرسال طلب التقديم 🚀
+                    <button type="submit" class="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-2 mt-2">
+                        <span>إرسال طلب التسجيل للأستاذ</span>
+                        <span>←</span>
                     </button>
                 </form>
+
             </div>
         </div>
     </section>
 
-    {{-- ─── FOOTER ─── --*/}}
-    <footer class="bg-slate-950 border-t border-slate-800/80 py-14 text-slate-400 text-xs font-bold">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div class="flex items-center gap-4">
+    {{-- ─── FOOTER (Responsive Multi-column / Stack) ─── --}}
+    <footer class="bg-slate-900 border-t border-slate-800 py-10 sm:py-12 text-slate-400 text-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-5 sm:gap-6 text-center md:text-right">
+            <div class="flex items-center gap-3.5">
                 @if(!empty($settings['center_logo']))
-                    <img src="{{ asset('storage/' . $settings['center_logo']) }}" class="w-10 h-10 object-contain rounded-xl border border-slate-800">
+                    <img src="{{ asset('storage/' . $settings['center_logo']) }}" class="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-xl bg-white p-0.5 border border-slate-700 shrink-0">
                 @endif
                 <div>
-                    <p class="text-white font-black text-sm mb-0.5">{{ $settings['center_name'] }}</p>
-                    <p class="text-slate-400 text-xs">العنوان: {{ $settings['center_address'] }} — هاتف: {{ $settings['center_phone'] }}</p>
+                    <p class="text-white font-heading font-bold text-sm">{{ $settings['center_name'] }}</p>
+                    <p class="text-slate-400 text-xs mt-0.5">{{ $settings['center_address'] }} — هاتف: <span class="font-mono text-sky-400" dir="ltr">{{ $settings['center_phone'] }}</span></p>
                 </div>
             </div>
-            <p>© {{ date('Y') }} جميع الحقوق محفوظة — المنصة التعليمية الذكية.</p>
+            <p class="font-medium text-center md:text-left text-slate-400">
+                جميع الحقوق محفوظة © {{ date('Y') }} — المنظومة التعليمية للأستاذ محمد الجندي.
+            </p>
         </div>
     </footer>
 
-    {{-- AOS Script --}}
+    {{-- Scripts & Responsiveness Controller --}}
     <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
     <script>
         AOS.init({
-            duration: 800,
+            duration: 700,
             once: true,
-            easing: 'ease-out-cubic'
+            easing: 'ease-out-cubic',
+            disable: 'mobile' // Smoother scroll on mobile devices
         });
 
+        // Mobile Menu Drawer Handler
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const hamburgerIcon = document.getElementById('hamburgerIcon');
+        const closeIcon = document.getElementById('closeIcon');
+
+        function toggleMobileMenu() {
+            const isHidden = mobileMenu.classList.contains('hidden');
+            if (isHidden) {
+                mobileMenu.classList.remove('hidden');
+                hamburgerIcon.classList.add('hidden');
+                closeIcon.classList.remove('hidden');
+            } else {
+                mobileMenu.classList.add('hidden');
+                hamburgerIcon.classList.remove('hidden');
+                closeIcon.classList.add('hidden');
+            }
+        }
+
+        function closeMobileMenu() {
+            mobileMenu.classList.add('hidden');
+            hamburgerIcon.classList.remove('hidden');
+            closeIcon.classList.add('hidden');
+        }
+
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+        }
+
+        // Dynamic Group Select based on Stage
         const stageSelect = document.getElementById('stageSelect');
         const groupSelect = document.getElementById('groupSelect');
 
@@ -482,6 +754,9 @@
                     data.forEach(g => {
                         groupSelect.innerHTML += `<option value="${g.id}">${g.name} (${g.price_per_month} ج.م/شهرياً)</option>`;
                     });
+                })
+                .catch(() => {
+                    groupSelect.innerHTML = '<option value="">-- تعذر تحميل المجموعات --</option>';
                 });
         });
 
@@ -493,18 +768,18 @@
             }, 300);
         }
 
+        // AJAX Form Submission
         document.getElementById('enrollmentForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const responseDiv = document.getElementById('formResponse');
             responseDiv.classList.add('hidden');
             
             const submitBtn = this.querySelector('button[type="submit"]');
-            const originalBtnText = submitBtn.innerText;
+            const originalBtnText = submitBtn.innerHTML;
             submitBtn.disabled = true;
-            submitBtn.innerText = 'جار إرسال الطلب... ⏳';
+            submitBtn.innerHTML = 'جار إرسال الطلب... ⏳';
 
             const formData = new FormData(this);
-
             const csrfToken = document.querySelector('input[name="_token"]')?.value || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
             fetch('{{ route("enroll.submit") }}', {
@@ -528,19 +803,19 @@
                 return data;
             })
             .then(data => {
-                responseDiv.className = 'p-4 rounded-xl text-xs font-bold bg-emerald-950 border border-emerald-800 text-emerald-300';
-                responseDiv.innerText = data.message;
+                responseDiv.className = 'p-4 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-800';
+                responseDiv.innerText = data.message || 'تم إرسال طلبك بنجاح وسنتواصل معك قريباً!';
                 responseDiv.classList.remove('hidden');
                 this.reset();
             })
             .catch(err => {
-                responseDiv.className = 'p-4 rounded-xl text-xs font-bold bg-rose-950 border border-rose-800 text-rose-300';
+                responseDiv.className = 'p-4 rounded-xl text-xs font-bold bg-rose-50 border border-rose-200 text-rose-800';
                 responseDiv.innerText = err.message || 'حدث خطأ أثناء إرسال الطلب، يرجى التأكد من البيانات والمحاولة مجدداً.';
                 responseDiv.classList.remove('hidden');
             })
             .finally(() => {
                 submitBtn.disabled = false;
-                submitBtn.innerText = originalBtnText;
+                submitBtn.innerHTML = originalBtnText;
             });
         });
     </script>
