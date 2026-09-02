@@ -56,6 +56,45 @@ class TenantResource extends Resource
                             ->label('تاريخ انتهاء الفترة التجريبية'),
                     ])
                     ->columns(2),
+
+                Forms\Components\Section::make('خطة الاشتراك والحساب الإداري للمدرس')
+                    ->description('تحديد باقة الاشتراك وحساب الدخول الخاص بالمدرس مباشرة')
+                    ->schema([
+                        Forms\Components\Select::make('plan_id')
+                            ->label('باقة الاشتراك')
+                            ->options(\App\Models\Plan::where('is_active', true)->pluck('name', 'id'))
+                            ->default(fn () => \App\Models\Plan::first()?->id)
+                            ->required()
+                            ->dehydrated(false)
+                            ->helperText('اختر الباقة التي تريد إسناد المدرس إليها فوراً'),
+
+                        Forms\Components\Select::make('subscription_status')
+                            ->label('حالة الاشتراك المبدئية')
+                            ->options([
+                                'trial' => 'فترة تجريبية مجانية (7 أيام)',
+                                'active' => 'نشط ومفعل مباشرة (شهر كامل)',
+                            ])
+                            ->default('active')
+                            ->required()
+                            ->dehydrated(false),
+
+                        Forms\Components\TextInput::make('admin_name')
+                            ->label('اسم صاحب الحساب / المدرس')
+                            ->placeholder('مثال: أ. محمد أحمد')
+                            ->visibleOn('create')
+                            ->required(fn (string $operation): bool => $operation === 'create')
+                            ->dehydrated(false),
+
+                        Forms\Components\TextInput::make('admin_password')
+                            ->label('كلمة مرور حساب المدرس')
+                            ->password()
+                            ->default('123456789')
+                            ->visibleOn('create')
+                            ->required(fn (string $operation): bool => $operation === 'create')
+                            ->dehydrated(false)
+                            ->helperText('كلمة المرور الافتراضية 123456789'),
+                    ])
+                    ->columns(2),
             ]);
     }
 
