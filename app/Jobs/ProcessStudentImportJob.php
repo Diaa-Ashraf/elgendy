@@ -24,6 +24,14 @@ class ProcessStudentImportJob implements ShouldQueue
 
     public function handle(StudentImportService $importService): void
     {
+        // مزامنة سياق الـ Tenant في الخلفية
+        if ($this->import->tenant_id) {
+            $tenant = \App\Models\Tenant::find($this->import->tenant_id);
+            if ($tenant) {
+                app(\App\Services\TenantContext::class)->set($tenant);
+            }
+        }
+
         $importService->processImport($this->import);
     }
 

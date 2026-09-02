@@ -435,5 +435,33 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
             ->success()
             ->send();
     }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            \Filament\Actions\Action::make('export_data')
+                ->label('تصدير بيانات السنتر (ZIP)')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->color('success')
+                ->action(function () {
+                    $tenant = app(\App\Services\TenantContext::class)->get();
+                    if (! $tenant) {
+                        return;
+                    }
+
+                    try {
+                        $relativeZipPath = app(\App\Services\TenantExportService::class)->exportAll($tenant);
+                        $fullPath = storage_path("app/{$relativeZipPath}");
+
+                        return response()->download($fullPath);
+                    } catch (\Exception $e) {
+                        Notification::make()
+                            ->title('حدث خطأ أثناء تصدير البيانات: ' . $e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                }),
+        ];
+    }
 }
 

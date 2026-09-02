@@ -40,7 +40,7 @@ class OnlineExamService
             return $existingAttempt;
         }
 
-        // حساب الدرجة القصوى لأسئلة الامتحان
+        // حساب الدرجة الكلية لأسئلة الامتحان
         $maxScore = (float) $exam->questions()->sum('exam_questions.marks');
         if ($maxScore <= 0) {
             $maxScore = (float) $exam->total_marks;

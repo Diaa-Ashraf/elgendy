@@ -13,11 +13,11 @@ class OnlineExamController extends Controller
     /**
      * Show the exam lobby/instructions before starting.
      */
-    public function show(int $id)
+    public function show(string $tenant, int $id)
     {
-        $studentId = session('parent_student_id');
+        $studentId = session('student_portal_id') ?? session('parent_student_id');
         if (! $studentId) {
-            return redirect()->route('parent.login');
+            return redirect()->route('tenant.student.login', ['tenant' => $tenant]);
         }
 
         $student = Student::with('educationalStage')->findOrFail($studentId);
@@ -55,11 +55,11 @@ class OnlineExamController extends Controller
     /**
      * Start the exam and enter the exam runner UI.
      */
-    public function start(int $id, OnlineExamService $examService)
+    public function start(string $tenant, int $id, OnlineExamService $examService)
     {
-        $studentId = session('parent_student_id');
+        $studentId = session('student_portal_id') ?? session('parent_student_id');
         if (! $studentId) {
-            return redirect()->route('parent.login');
+            return redirect()->route('tenant.student.login', ['tenant' => $tenant]);
         }
 
         $student = Student::findOrFail($studentId);
@@ -75,7 +75,7 @@ class OnlineExamController extends Controller
         $attempt = $examService->startAttempt($student, $exam);
 
         if ($attempt->status === 'completed') {
-            return redirect()->route('parent.exams.result', ['id' => $exam->id]);
+            return redirect()->route('tenant.student.exams.result', ['tenant' => $tenant, 'id' => $exam->id]);
         }
 
         // حساب الوقت المتبقي بالثواني
@@ -92,17 +92,18 @@ class OnlineExamController extends Controller
             'attempt' => $attempt,
             'questions' => $exam->questions,
             'remainingSeconds' => $remainingSeconds,
+            'tenant' => $tenant,
         ]);
     }
 
     /**
      * Submit and auto-grade the student's exam.
      */
-    public function submit(Request $request, int $id, OnlineExamService $examService)
+    public function submit(Request $request, string $tenant, int $id, OnlineExamService $examService)
     {
-        $studentId = session('parent_student_id');
+        $studentId = session('student_portal_id') ?? session('parent_student_id');
         if (! $studentId) {
-            return redirect()->route('parent.login');
+            return redirect()->route('tenant.student.login', ['tenant' => $tenant]);
         }
 
         $student = Student::findOrFail($studentId);
@@ -116,18 +117,18 @@ class OnlineExamController extends Controller
 
         $gradedAttempt = $examService->submitAttempt($attempt, (array) $submittedAnswers);
 
-        return redirect()->route('parent.exams.result', ['id' => $exam->id])
+        return redirect()->route('tenant.student.exams.result', ['tenant' => $tenant, 'id' => $exam->id])
             ->with('success', 'تم تسليم الامتحان وتصحيحه تلقائياً بنجاح! 🎉');
     }
 
     /**
      * Show the detailed instant result and explanations.
      */
-    public function result(int $id)
+    public function result(string $tenant, int $id)
     {
-        $studentId = session('parent_student_id');
+        $studentId = session('student_portal_id') ?? session('parent_student_id');
         if (! $studentId) {
-            return redirect()->route('parent.login');
+            return redirect()->route('tenant.student.login', ['tenant' => $tenant]);
         }
 
         $student = Student::findOrFail($studentId);
@@ -142,6 +143,7 @@ class OnlineExamController extends Controller
             'exam' => $exam,
             'attempt' => $attempt,
             'questions' => $exam->questions->keyBy('id'),
+            'tenant' => $tenant,
         ]);
     }
 }

@@ -53,7 +53,12 @@
 
     <main class="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
 
-        <form id="examForm" action="{{ route('parent.exams.submit', ['id' => $exam->id]) }}" method="POST" class="space-y-6">
+        @php
+            $submitRoute = isset($tenant) 
+                ? route('tenant.student.exams.submit', ['tenant' => $tenant, 'id' => $exam->id])
+                : (Route::has('parent.exams.submit') ? route('parent.exams.submit', ['id' => $exam->id]) : '#');
+        @endphp
+        <form id="examForm" action="{{ $submitRoute }}" method="POST" class="space-y-6">
             @csrf
 
             @foreach($questions as $index => $question)

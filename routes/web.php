@@ -1,37 +1,85 @@
 <?php
 
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\OnlineExamController;
 use App\Http\Controllers\ParentPortalController;
+use App\Http\Controllers\PlatformController;
 use App\Http\Controllers\StudentPdfController;
+use App\Http\Controllers\StudentPortalController;
 use Illuminate\Support\Facades\Route;
 
-// 🌐 الواجهة العامة للموقع التعريفي
-Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::post('/enroll', [HomeController::class, 'submitEnrollment'])->name('enroll.submit');
-Route::get('/api/stages/{stage}/groups', [HomeController::class, 'getGroupsByStage'])->name('stage.groups');
+/*
+|--------------------------------------------------------------------------
+| 🌐 1. مسارات منصة الـ SaaS العامة (Platform Marketing & Pricing)
+|--------------------------------------------------------------------------
+*/
+Route::get('/', [PlatformController::class, 'index'])->name('platform.home');
+Route::get('/pricing', [PlatformController::class, 'pricing'])->name('platform.pricing');
+Route::get('/register', [PlatformController::class, 'showRegister'])->name('platform.register');
+Route::post('/register', [PlatformController::class, 'register'])->name('platform.register.submit');
 
-// 📱 بوابة ولي الأمر
-Route::prefix('parent')->group(function () {
-    Route::get('/login', [ParentPortalController::class, 'showLogin'])->name('parent.login');
-    Route::post('/login', [ParentPortalController::class, 'login'])->name('parent.login.submit');
-    Route::get('/dashboard', [ParentPortalController::class, 'dashboard'])->name('parent.dashboard');
-    Route::post('/payment', [ParentPortalController::class, 'submitPayment'])->name('parent.payment.submit');
-    Route::get('/logout', [ParentPortalController::class, 'logout'])->name('parent.logout');
+/*
+|--------------------------------------------------------------------------
+| 🏫 2. مسارات المؤسسات التعليمية والمدرسين (Tenant Scope: /t/{tenant})
+|--------------------------------------------------------------------------
+*/
+Route::prefix('t/{tenant}')
+    ->middleware(['tenant.resolve'])
+    ->group(function () {
 
-    // 📝 الاختبارات الإلكترونية أونلاين
-    Route::get('/exams/{id}', [\App\Http\Controllers\OnlineExamController::class, 'show'])->name('parent.exams.show');
-    Route::get('/exams/{id}/start', [\App\Http\Controllers\OnlineExamController::class, 'start'])->name('parent.exams.start');
-    Route::post('/exams/{id}/submit', [\App\Http\Controllers\OnlineExamController::class, 'submit'])->name('parent.exams.submit');
-    Route::get('/exams/{id}/result', [\App\Http\Controllers\OnlineExamController::class, 'result'])->name('parent.exams.result');
-});
+        // 📱 أ. بوابة الطالب (Student Portal)
+        Route::prefix('student')->name('tenant.student.')->group(function () {
+            Route::get('/login', [StudentPortalController::class, 'showLogin'])->name('login');
+            Route::post('/login', [StudentPortalController::class, 'login'])->name('login.submit');
+            Route::get('/dashboard', [StudentPortalController::class, 'dashboard'])->name('dashboard');
+            Route::get('/logout', [StudentPortalController::class, 'logout'])->name('logout');
 
+            // اختبارات الطالب أونلاين
+            Route::get('/exams/{id}', [OnlineExamController::class, 'show'])->name('exams.show');
+            Route::get('/exams/{id}/start', [OnlineExamController::class, 'start'])->name('exams.start');
+            Route::post('/exams/{id}/submit', [OnlineExamController::class, 'submit'])->name('exams.submit');
+            Route::get('/exams/{id}/result', [OnlineExamController::class, 'result'])->name('exams.result');
+        });
+
+        // 👨‍👩‍👦 ب. بوابة ولي الأمر (Parent Portal)
+        Route::prefix('parent')->name('tenant.parent.')->group(function () {
+            Route::get('/login', [ParentPortalController::class, 'showLogin'])->name('login');
+            Route::post('/login', [ParentPortalController::class, 'login'])->name('login.submit');
+            Route::get('/dashboard', [ParentPortalController::class, 'dashboard'])->name('dashboard');
+            Route::post('/payment', [ParentPortalController::class, 'submitPayment'])->name('payment.submit');
+            Route::get('/logout', [ParentPortalController::class, 'logout'])->name('logout');
+        });
+
+        // 💳 د. إدارة اشتراك المدرس وسداد الرسوم (Teacher Subscription)
+        Route::prefix('subscription')->name('tenant.subscription.')->group(function () {
+            Route::get('/status', [\App\Http\Controllers\SubscriptionPaymentController::class, 'status'])->name('status');
+            Route::get('/pay', [\App\Http\Controllers\SubscriptionPaymentController::class, 'showPay'])->name('pay');
+            Route::post('/pay', [\App\Http\Controllers\SubscriptionPaymentController::class, 'submitPay'])->name('pay.submit');
+            Route::get('/history', [\App\Http\Controllers\SubscriptionPaymentController::class, 'history'])->name('history');
+        });
+
+        // 🌐 هـ. الموقع التعريفي للمدرس وحجز الطلاب (Teacher Landing & Enrollment)
+        Route::get('/', [HomeController::class, 'index'])->name('tenant.home');
+        Route::post('/enroll', [HomeController::class, 'submitEnrollment'])->name('tenant.enroll.submit');
+        Route::get('/api/stages/{stage}/groups', [HomeController::class, 'getGroupsByStage'])->name('tenant.stage.groups');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| 📄 3. المستندات والطباعة (Authenticated Admin Utilities)
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth'])->group(function () {
     Route::get('/admin/students/{record}/ledger/pdf', [StudentPdfController::class, 'printLedger'])->name('student.ledger.pdf');
     Route::get('/admin/students/{record}/card/print', [StudentPdfController::class, 'printCard'])->name('student.card.print');
     Route::get('/admin/exams/{record}/pdf', [StudentPdfController::class, 'printExam'])->name('exam.pdf.print');
 });
 
-// 🖼️ مسار قراءة ملفات الميديا والصور احتياطياً لاستضافات cPanel و Hostinger
+/*
+|--------------------------------------------------------------------------
+| 🖼️ 4. مسار قراءة ملفات الميديا والصور احتياطياً لاستضافات cPanel
+|--------------------------------------------------------------------------
+*/
 Route::get('/storage/{path}', function ($path) {
     $path1 = storage_path('app/public/' . $path);
     $path2 = storage_path('public/' . $path);

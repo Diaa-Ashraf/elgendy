@@ -85,7 +85,12 @@
                         <div class="p-4 bg-emerald-950/80 border border-emerald-800 rounded-2xl text-emerald-300 text-sm font-bold">
                             لقد قمت بأداء هذا الاختبار بالفعل محققاً نتيجة ({{ $attempt->total_score }} / {{ $attempt->max_possible_score }}) بنسبة {{ $attempt->percentage }}% ✅
                         </div>
-                        <a href="{{ route('parent.exams.result', ['id' => $exam->id]) }}" class="inline-block px-8 py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-2xl text-sm font-black shadow-xl shadow-indigo-950 transition">
+                        @php
+                            $resultRoute = isset($tenant)
+                                ? route('tenant.student.exams.result', ['tenant' => $tenant, 'id' => $exam->id])
+                                : (Route::has('parent.exams.result') ? route('parent.exams.result', ['id' => $exam->id]) : '#');
+                        @endphp
+                        <a href="{{ $resultRoute }}" class="inline-block px-8 py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-2xl text-sm font-black shadow-xl shadow-indigo-950 transition">
                             عرض بطاقة النتيجة والشرح النموذجي ↗
                         </a>
                     </div>
@@ -94,8 +99,13 @@
                         ⚠️ {{ $availabilityMessage }}
                     </div>
                 @else
-                    <a href="{{ route('parent.exams.start', ['id' => $exam->id]) }}" class="inline-block w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-2xl text-base font-black shadow-xl shadow-emerald-950 transition transform hover:-translate-y-0.5">
-                        🚀 بدء الاختبار الآن
+                    @php
+                        $startRoute = isset($tenant)
+                            ? route('tenant.student.exams.start', ['tenant' => $tenant, 'id' => $exam->id])
+                            : (Route::has('parent.exams.start') ? route('parent.exams.start', ['id' => $exam->id]) : '#');
+                    @endphp
+                    <a href="{{ $startRoute }}" class="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-2xl text-base font-black shadow-xl shadow-emerald-950 transition transform hover:-translate-y-0.5">
+                        <span>ابدأ الاختبار الآن</span> 🚀
                     </a>
                 @endif
             </div>

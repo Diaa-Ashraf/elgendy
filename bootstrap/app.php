@@ -13,6 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->validateCsrfTokens(except: [
             'enroll',
+            't/*/enroll',
+        ]);
+
+        $middleware->alias([
+            'tenant.resolve' => \App\Http\Middleware\ResolveTenant::class,
+            'tenant.subscription' => \App\Http\Middleware\CheckSubscription::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

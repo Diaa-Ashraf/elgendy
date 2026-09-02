@@ -35,10 +35,10 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->tenant(\App\Models\Tenant::class, slugAttribute: 'slug')
             ->login()
-            ->brandName($brandName)
-            ->brandLogo($logo)
-            ->favicon($favicon)
+            ->brandName(fn () => \Filament\Facades\Filament::getTenant()?->name ?? 'المنظومة التعليمية الذكية')
+            ->brandLogo(fn () => \Filament\Facades\Filament::getTenant()?->logo ? asset('storage/' . \Filament\Facades\Filament::getTenant()->logo) : null)
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -68,6 +68,9 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+            ])
+            ->tenantMiddleware([
+                \App\Http\Middleware\SyncFilamentTenant::class,
             ])
             ->authMiddleware([
                 Authenticate::class,

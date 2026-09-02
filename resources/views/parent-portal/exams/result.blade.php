@@ -20,8 +20,13 @@
 
     <header class="bg-slate-900/90 border-b border-slate-800 backdrop-blur-md sticky top-0 z-50 px-4 py-4">
         <div class="max-w-4xl mx-auto flex items-center justify-between">
-            <a href="{{ route('parent.dashboard') }}" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
-                <span>←</span> العودة للوحة ولي الأمر
+            @php
+                $backRoute = isset($tenant)
+                    ? route('tenant.student.dashboard', ['tenant' => $tenant])
+                    : (Route::has('parent.dashboard') ? route('parent.dashboard') : '#');
+            @endphp
+            <a href="{{ $backRoute }}" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                <span>←</span> العودة للوحة المتابعة
             </a>
             <div class="text-xs font-bold text-slate-400">
                 الطالب: <span class="text-white font-extrabold">{{ $student->name }}</span>
