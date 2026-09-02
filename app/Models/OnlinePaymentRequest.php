@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 class OnlinePaymentRequest extends Model
 {
+    use BelongsToTenant;
     protected $guarded = [];
 
     protected $casts = [
