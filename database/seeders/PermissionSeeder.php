@@ -214,6 +214,8 @@ class PermissionSeeder extends Seeder
                 'password' => \Illuminate\Support\Facades\Hash::make('123456789'),
             ]
         );
+        $superAdminRole = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $user->assignRole($superAdminRole);
         $user->assignRole($adminRole);
     }
 }

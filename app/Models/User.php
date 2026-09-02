@@ -34,11 +34,21 @@ class User extends Authenticatable implements FilamentUser, HasTenants
 
     public function getTenants(Panel $panel): array|Collection
     {
+        // إذا كان المدير العام (Super Admin) يرى جميع السناتر في لوحة التحكم
+        if ($this->hasRole('super_admin') || $this->email === 'admin@admin.com') {
+            return Tenant::all();
+        }
+
         return $this->tenant ? collect([$this->tenant]) : collect();
     }
 
     public function canAccessTenant(Model $tenant): bool
     {
+        // المدير العام له حق الوصول لأي سنتر
+        if ($this->hasRole('super_admin') || $this->email === 'admin@admin.com') {
+            return true;
+        }
+
         return $this->tenant_id === $tenant->id;
     }
 
