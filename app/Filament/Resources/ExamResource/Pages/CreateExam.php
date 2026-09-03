@@ -16,6 +16,11 @@ class CreateExam extends CreateRecord
 
     protected function getRedirectUrl(): string
     {
+        // إذا كان الامتحان أونلاين، نوجهه لصفحة التعديل فوراً لإضافة الأسئلة
+        if ($this->record->is_online) {
+            return $this->getResource()::getUrl('edit', ['record' => $this->record]);
+        }
+
         return $this->getResource()::getUrl('index');
     }
 }
