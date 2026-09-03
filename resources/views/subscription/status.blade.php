@@ -91,7 +91,7 @@
             <div style="margin-top: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
                 <a href="{{ route('tenant.subscription.pay', ['tenant' => $tenant->slug]) }}" class="btn">💳 تجديد الاشتراك / رفع إيصال</a>
                 <a href="{{ route('tenant.subscription.history', ['tenant' => $tenant->slug]) }}" class="btn btn-outline">سجل المدفوعات السابقة</a>
-                <a href="/t/{{ $tenant->slug }}/admin" class="btn btn-outline">العودة للوحة التحكم</a>
+                <a href="/admin/{{ $tenant->slug }}" class="btn btn-outline">العودة للوحة التحكم</a>
             </div>
         </div>
 
