@@ -297,7 +297,62 @@
             </div>
         </div>
 
-        {{-- ─── 4. الاختبارات الإلكترونية أونلاين ─── --}}
+        {{-- ─── 4. متابعة الواجبات المنزلية ─── --}}
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl">
+            <h2 class="font-black text-base text-white mb-4 flex items-center justify-between border-b border-slate-800 pb-3">
+                <span class="flex items-center gap-2">
+                    <span class="text-amber-400">📋</span> متابعة الواجبات والمهام المنزلية
+                </span>
+                <span class="text-xs font-semibold text-slate-400">{{ count($homeworks ?? []) }} واجب متاح</span>
+            </h2>
+
+            <div class="space-y-3">
+                @forelse($homeworks ?? [] as $hw)
+                    @php
+                        $sub = $hw->student_submission;
+                        $isSubmitted = $sub && $sub->isSubmitted();
+                        $isGraded = $sub && $sub->isGraded();
+                        $isOverdue = $hw->isOverdue();
+                    @endphp
+                    <div class="p-4 bg-slate-950 border border-slate-800/90 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-amber-500/50 transition">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-extrabold text-white text-sm">{{ $hw->title }}</span>
+                                <span class="text-[10px] font-bold text-amber-400 bg-amber-950 px-2 py-0.5 rounded border border-amber-900">{{ $hw->subject?->name }}</span>
+                            </div>
+                            <div class="text-xs text-slate-400 flex flex-wrap items-center gap-3">
+                                <span>⏰ الموعد النهائي: {{ $hw->due_date->format('Y-m-d h:i A') }}</span>
+                                <span>📊 الدرجة الكلية: {{ $hw->total_marks }}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            @if($isGraded)
+                                <span class="px-3.5 py-1.5 bg-emerald-950 border border-emerald-800 text-emerald-300 rounded-xl font-black text-xs">
+                                    تم التصحيح: {{ $sub->score }} / {{ $hw->total_marks }} 🎖️
+                                </span>
+                            @elseif($isSubmitted)
+                                <span class="px-3.5 py-1.5 bg-amber-950 border border-amber-800 text-amber-300 rounded-xl font-black text-xs">
+                                    تم التسليم (بانتظار التصحيح) ⏳
+                                </span>
+                            @elseif($isOverdue)
+                                <span class="px-3 py-1 bg-rose-950 border border-rose-800 text-rose-300 rounded-xl font-black text-xs">
+                                    لم يُسلَّم (انتهى الموعد) ❌
+                                </span>
+                            @else
+                                <span class="px-3 py-1 bg-slate-800 border border-slate-700 text-slate-300 rounded-xl font-black text-xs">
+                                    مطلوب التسليم ⏳
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+                @empty
+                    <p class="text-xs text-slate-500 text-center py-6">لا توجد واجبات منزلية مسجلة حالياً</p>
+                @endforelse
+            </div>
+        </div>
+
+        {{-- ─── 5. الاختبارات الإلكترونية أونلاين ─── --}}
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl">
             <h2 class="font-black text-base text-white mb-4 flex items-center justify-between border-b border-slate-800 pb-3">
                 <span class="flex items-center gap-2">

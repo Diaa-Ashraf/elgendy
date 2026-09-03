@@ -39,6 +39,10 @@ Route::prefix('t/{tenant}')
             Route::get('/exams/{id}/start', [OnlineExamController::class, 'start'])->name('exams.start');
             Route::post('/exams/{id}/submit', [OnlineExamController::class, 'submit'])->name('exams.submit');
             Route::get('/exams/{id}/result', [OnlineExamController::class, 'result'])->name('exams.result');
+
+            // الواجبات المنزلية
+            Route::get('/homeworks/{id}', [StudentPortalController::class, 'showHomework'])->name('homeworks.show');
+            Route::post('/homeworks/{id}/submit', [StudentPortalController::class, 'submitHomework'])->name('homeworks.submit');
         });
 
         // 👨‍👩‍👦 ب. بوابة ولي الأمر (Parent Portal)

@@ -100,10 +100,70 @@
                                 </div>
                             @endforeach
                         </div>
+                </div>
+
+                {{-- 2. الواجبات المنزلية --}}
+                <div class="bg-slate-900/90 border border-slate-800/80 rounded-3xl p-5 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-extrabold text-sm sm:text-base text-white flex items-center gap-2">
+                            <span>📋</span> الواجبات المنزلية
+                        </h3>
+                        <span class="text-xs text-amber-400 font-semibold">{{ $homeworks->count() }} واجب</span>
+                    </div>
+
+                    @if($homeworks->isEmpty())
+                        <div class="text-center py-8 text-slate-500 text-xs">
+                            لا توجد واجبات منزلية مطلوبة منك حالياً 🎉
+                        </div>
+                    @else
+                        <div class="space-y-3">
+                            @foreach($homeworks as $hw)
+                                @php
+                                    $sub = $hw->student_submission;
+                                    $isSubmitted = $sub && $sub->isSubmitted();
+                                    $isGraded = $sub && $sub->isGraded();
+                                    $isOverdue = $hw->isOverdue();
+                                @endphp
+                                <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-amber-500/40 transition">
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-bold text-sm text-white">{{ $hw->title }}</span>
+                                            <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold {{ $hw->type === 'questions' ? 'bg-sky-500/10 text-sky-400' : ($hw->type === 'file_upload' ? 'bg-amber-500/10 text-amber-400' : 'bg-purple-500/10 text-purple-400') }}">
+                                                {{ $hw->type === 'questions' ? 'أسئلة 📝' : ($hw->type === 'file_upload' ? 'ملف 📎' : 'مختلط') }}
+                                            </span>
+                                        </div>
+                                        <div class="text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-3">
+                                            <span>📚 {{ $hw->subject?->name ?? 'مادة' }}</span>
+                                            <span>⏰ الموعد: {{ $hw->due_date->format('Y-m-d h:i A') }}</span>
+                                            <span>📊 الدرجة: {{ $hw->total_marks }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        @if($isGraded)
+                                            <a href="{{ route('tenant.student.homeworks.show', ['tenant' => $currentTenant->slug, 'id' => $hw->id]) }}" class="px-3.5 py-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20 text-xs font-bold rounded-xl transition inline-block">
+                                                الدرجة: {{ $sub->score }} / {{ $hw->total_marks }} 🎖️
+                                            </a>
+                                        @elseif($isSubmitted)
+                                            <a href="{{ route('tenant.student.homeworks.show', ['tenant' => $currentTenant->slug, 'id' => $hw->id]) }}" class="px-3.5 py-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 text-xs font-bold rounded-xl transition inline-block">
+                                                تم التسليم (قيد المراجعة) ⏳
+                                            </a>
+                                        @elseif($isOverdue && ! $hw->allow_late_submission)
+                                            <span class="px-3 py-1 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold rounded-xl">
+                                                انتهى الموعد 🔒
+                                            </span>
+                                        @else
+                                            <a href="{{ route('tenant.student.homeworks.show', ['tenant' => $currentTenant->slug, 'id' => $hw->id]) }}" class="px-4 py-1.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white text-xs font-bold rounded-xl transition shadow-sm inline-block">
+                                                حل وتسليم الواجب 🚀
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
                     @endif
                 </div>
 
-                {{-- الامتحانات الأونلاين المتاحة --}}
+                {{-- 3. الامتحانات الأونلاين المتاحة --}}
                 <div class="bg-slate-900/90 border border-slate-800/80 rounded-3xl p-5 shadow-sm">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="font-extrabold text-sm sm:text-base text-white flex items-center gap-2">

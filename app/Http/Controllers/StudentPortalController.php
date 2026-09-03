@@ -40,7 +40,7 @@ class StudentPortalController extends Controller
         return redirect()->route('tenant.student.dashboard', ['tenant' => $tenant]);
     }
 
-    public function dashboard(string $tenant)
+    public function dashboard(string $tenant, \App\Services\HomeworkService $homeworkService)
     {
         $studentId = session('student_portal_id');
         if (! $studentId) {
@@ -48,8 +48,64 @@ class StudentPortalController extends Controller
         }
 
         $student = \App\Models\Student::with(['educationalStage', 'groups.subject'])->findOrFail($studentId);
+        $homeworks = $homeworkService->getStudentHomeworks($student);
 
-        return view('student-portal.dashboard', compact('student'));
+        return view('student-portal.dashboard', compact('student', 'homeworks'));
+    }
+
+    public function showHomework(string $tenant, int $id)
+    {
+        $studentId = session('student_portal_id');
+        if (! $studentId) {
+            return redirect()->route('tenant.student.login', ['tenant' => $tenant]);
+        }
+
+        $student = \App\Models\Student::with('groups')->findOrFail($studentId);
+        $homework = \App\Models\Homework::with(['subject', 'group', 'questions'])->published()->findOrFail($id);
+
+        $submission = \App\Models\HomeworkSubmission::where('homework_id', $homework->id)
+            ->where('student_id', $student->id)
+            ->first();
+
+        return view('student-portal.homework-show', compact('student', 'homework', 'submission'));
+    }
+
+    public function submitHomework(Request $request, string $tenant, int $id, \App\Services\HomeworkService $homeworkService)
+    {
+        $studentId = session('student_portal_id');
+        if (! $studentId) {
+            return redirect()->route('tenant.student.login', ['tenant' => $tenant]);
+        }
+
+        $student = \App\Models\Student::findOrFail($studentId);
+        $homework = \App\Models\Homework::findOrFail($id);
+
+        $request->validate([
+            'attachment' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'answers' => 'nullable|array',
+            'notes' => 'nullable|string|max:1000',
+        ], [
+            'attachment.mimes' => 'يجب أن يكون الملف المرفق بصيغة PDF أو صورة (JPG, PNG).',
+            'attachment.max' => 'الحد الأقصى لحجم الملف هو 10 ميجابايت.',
+        ]);
+
+        $attachmentPath = null;
+        if ($request->hasFile('attachment')) {
+            $attachmentPath = $request->file('attachment')->store('homeworks/submissions', 'public');
+        }
+
+        try {
+            $homeworkService->submitHomework($student, $homework, [
+                'student_answers' => $request->input('answers', []),
+                'attachment' => $attachmentPath,
+                'notes' => $request->input('notes'),
+            ]);
+
+            return redirect()->route('tenant.student.homeworks.show', ['tenant' => $tenant, 'id' => $id])
+                ->with('success', 'تم تسليم الواجب بنجاح! 🚀');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 
     public function logout(string $tenant)

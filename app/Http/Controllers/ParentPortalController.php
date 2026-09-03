@@ -132,11 +132,16 @@ class ParentPortalController extends Controller
             'instructions' => $settingService->get('online_payment_instructions', 'يرجى إرسال المبلغ ثم إرفاق صورة إشعار التحويل لتأكيد السداد.'),
         ];
 
+        // الواجبات المنزلية
+        $homeworkService = app(\App\Services\HomeworkService::class);
+        $homeworks = $homeworkService->getStudentHomeworks($student);
+
         return view('parent-portal.dashboard', [
             'student' => $student,
             'attendances' => $attendances,
             'examResults' => $examResults,
             'onlineExams' => $onlineExams,
+            'homeworks' => $homeworks,
             'ledger' => $ledger,
             'materials' => $materials,
             'onlinePaymentRequests' => $onlinePaymentRequests,

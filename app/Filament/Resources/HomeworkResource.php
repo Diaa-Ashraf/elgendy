@@ -1,0 +1,310 @@
+<?php
+
+namespace App\Filament\Resources;
+
+use App\Filament\Resources\HomeworkResource\Pages;
+use App\Filament\Resources\HomeworkResource\RelationManagers;
+use App\Models\Homework;
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Notifications\Notification;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Table;
+
+class HomeworkResource extends Resource
+{
+    protected static ?string $model = Homework::class;
+
+    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
+
+    protected static ?string $modelLabel = 'واجب';
+
+    protected static ?string $pluralModelLabel = 'الواجبات المنزلية';
+
+    protected static ?string $navigationLabel = 'الواجبات المنزلية';
+
+    protected static ?string $navigationGroup = 'الإدارة الأكاديمية';
+
+    protected static ?int $navigationSort = 5;
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\Section::make('بيانات الواجب الأساسية')
+                    ->schema([
+                        Forms\Components\TextInput::make('title')
+                            ->label('عنوان الواجب')
+                            ->required()
+                            ->maxLength(255)
+                            ->placeholder('مثال: واجب الفصل الثالث - قوانين نيوتن'),
+
+                        Forms\Components\Select::make('stage_id')
+                            ->label('المرحلة الدراسية')
+                            ->relationship('educationalStage', 'name')
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->reactive(),
+
+                        Forms\Components\Select::make('subject_id')
+                            ->label('المادة الدراسية')
+                            ->relationship('subject', 'name')
+                            ->required()
+                            ->searchable()
+                            ->preload(),
+
+                        Forms\Components\Select::make('group_id')
+                            ->label('المجموعة (اختياري)')
+                            ->relationship(
+                                'group',
+                                'name',
+                                fn ($query, $get) => $get('stage_id')
+                                    ? $query->where('stage_id', $get('stage_id'))
+                                    : $query
+                            )
+                            ->searchable()
+                            ->preload()
+                            ->helperText('اتركه فارغاً لإرسال الواجب لجميع طلاب المرحلة.'),
+
+                        Forms\Components\Select::make('type')
+                            ->label('نوع الواجب')
+                            ->options([
+                                'questions' => 'أسئلة اختيارية من بنك الأسئلة 📝',
+                                'file_upload' => 'رفع ملف (PDF / صورة) 📎',
+                                'mixed' => 'مختلط (أسئلة + رفع ملف) 📝📎',
+                            ])
+                            ->default('questions')
+                            ->required()
+                            ->native(false)
+                            ->reactive(),
+
+                        Forms\Components\TextInput::make('total_marks')
+                            ->label('الدرجة الكلية')
+                            ->numeric()
+                            ->default(10)
+                            ->required()
+                            ->minValue(1),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('الوصف والمرفقات')
+                    ->schema([
+                        Forms\Components\RichEditor::make('description')
+                            ->label('وصف الواجب وتعليمات الحل')
+                            ->placeholder('اكتب تعليمات وتفاصيل الواجب هنا...')
+                            ->columnSpanFull(),
+
+                        Forms\Components\FileUpload::make('attachment')
+                            ->label('ملف مرفق بالواجب (PDF أو صورة)')
+                            ->directory('homeworks/attachments')
+                            ->acceptedFileTypes(['application/pdf', 'image/*'])
+                            ->maxSize(10240)
+                            ->columnSpanFull(),
+                    ])
+                    ->collapsible(),
+
+                Forms\Components\Section::make('مواعيد النشر والتسليم ⏰')
+                    ->schema([
+                        Forms\Components\DateTimePicker::make('due_date')
+                            ->label('الموعد النهائي للتسليم')
+                            ->required()
+                            ->displayFormat('Y-m-d h:i A')
+                            ->seconds(false)
+                            ->native(false),
+
+                        Forms\Components\DateTimePicker::make('published_at')
+                            ->label('تاريخ ووقت النشر')
+                            ->displayFormat('Y-m-d h:i A')
+                            ->seconds(false)
+                            ->native(false)
+                            ->helperText('اتركه فارغاً ليبقى كمسودة. أو حدد تاريخ مستقبلي للنشر التلقائي.'),
+
+                        Forms\Components\Select::make('status')
+                            ->label('حالة الواجب')
+                            ->options([
+                                'draft' => 'مسودة 📋',
+                                'published' => 'منشور ✅',
+                                'closed' => 'مُغلق 🔒',
+                            ])
+                            ->default('draft')
+                            ->required()
+                            ->native(false),
+
+                        Forms\Components\Toggle::make('allow_late_submission')
+                            ->label('السماح بالتسليم المتأخر بعد الموعد')
+                            ->default(false),
+
+                        Forms\Components\TextInput::make('max_attempts')
+                            ->label('عدد المحاولات المسموحة')
+                            ->numeric()
+                            ->default(1)
+                            ->minValue(1)
+                            ->maxValue(10),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('أسئلة الواجب 📝')
+                    ->description('تنبيه: يتم إدارة وإضافة أسئلة الواجب من جدول "أسئلة الواجب" بالأسفل بعد حفظ الواجب.')
+                    ->schema([])
+                    ->collapsed()
+                    ->collapsible()
+                    ->visible(fn ($get) => in_array($get('type'), ['questions', 'mixed'])),
+            ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('title')
+                    ->label('عنوان الواجب')
+                    ->searchable()
+                    ->sortable()
+                    ->limit(40),
+
+                Tables\Columns\TextColumn::make('educationalStage.name')
+                    ->label('المرحلة')
+                    ->sortable()
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('subject.name')
+                    ->label('المادة')
+                    ->sortable()
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('group.name')
+                    ->label('المجموعة')
+                    ->default('جميع المرحلة')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('type')
+                    ->label('النوع')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'questions' => 'info',
+                        'file_upload' => 'warning',
+                        'mixed' => 'primary',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'questions' => 'أسئلة 📝',
+                        'file_upload' => 'رفع ملف 📎',
+                        'mixed' => 'مختلط',
+                        default => $state,
+                    }),
+
+                Tables\Columns\TextColumn::make('due_date')
+                    ->label('موعد التسليم')
+                    ->dateTime('Y-m-d h:i A')
+                    ->sortable()
+                    ->color(fn (Homework $record): string => $record->isOverdue() ? 'danger' : 'success'),
+
+                Tables\Columns\TextColumn::make('status')
+                    ->label('الحالة')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'draft' => 'gray',
+                        'published' => 'success',
+                        'closed' => 'danger',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'draft' => 'مسودة 📋',
+                        'published' => 'منشور ✅',
+                        'closed' => 'مُغلق 🔒',
+                        default => $state,
+                    }),
+
+                Tables\Columns\TextColumn::make('total_marks')
+                    ->label('الدرجة')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('submissions_count')
+                    ->label('التسليمات')
+                    ->counts('submissions')
+                    ->badge()
+                    ->color('info'),
+            ])
+            ->defaultSort('created_at', 'desc')
+            ->filters([
+                Tables\Filters\SelectFilter::make('stage_id')
+                    ->label('المرحلة الدراسية')
+                    ->relationship('educationalStage', 'name'),
+
+                Tables\Filters\SelectFilter::make('subject_id')
+                    ->label('المادة الدراسية')
+                    ->relationship('subject', 'name'),
+
+                Tables\Filters\SelectFilter::make('status')
+                    ->label('الحالة')
+                    ->options([
+                        'draft' => 'مسودة',
+                        'published' => 'منشور',
+                        'closed' => 'مُغلق',
+                    ]),
+            ])
+            ->actions([
+                Tables\Actions\Action::make('publish')
+                    ->label('نشر الآن')
+                    ->icon('heroicon-o-paper-airplane')
+                    ->color('success')
+                    ->visible(fn (Homework $record): bool => $record->status === 'draft')
+                    ->requiresConfirmation()
+                    ->modalHeading('نشر الواجب للطلاب')
+                    ->modalDescription('سيتم نشر الواجب فوراً وسيظهر في بوابة الطالب. هل أنت متأكد؟')
+                    ->action(function (Homework $record): void {
+                        $record->update([
+                            'status' => 'published',
+                            'published_at' => now(),
+                        ]);
+
+                        Notification::make()
+                            ->title('تم نشر الواجب بنجاح! 🚀')
+                            ->success()
+                            ->send();
+                    }),
+
+                Tables\Actions\Action::make('close')
+                    ->label('إغلاق')
+                    ->icon('heroicon-o-lock-closed')
+                    ->color('danger')
+                    ->visible(fn (Homework $record): bool => $record->status === 'published')
+                    ->requiresConfirmation()
+                    ->action(function (Homework $record): void {
+                        $record->update(['status' => 'closed']);
+
+                        Notification::make()
+                            ->title('تم إغلاق الواجب 🔒')
+                            ->success()
+                            ->send();
+                    }),
+
+                Tables\Actions\EditAction::make()->label('تعديل'),
+                Tables\Actions\DeleteAction::make()->label('حذف'),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make()->label('حذف المحدد'),
+                ]),
+            ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\QuestionsRelationManager::class,
+            RelationManagers\SubmissionsRelationManager::class,
+        ];
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListHomeworks::route('/'),
+            'create' => Pages\CreateHomework::route('/create'),
+            'edit' => Pages\EditHomework::route('/{record}/edit'),
+        ];
+    }
+}
