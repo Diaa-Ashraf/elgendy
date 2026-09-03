@@ -21,7 +21,12 @@
     <header class="bg-slate-900/90 border-b border-slate-800 backdrop-blur-md sticky top-0 z-50 px-4 py-4">
         <div class="max-w-3xl mx-auto flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <a href="{{ route('parent.dashboard') }}" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition flex items-center gap-1">
+                @php
+                    $backRoute = isset($tenant)
+                        ? route('tenant.student.dashboard', ['tenant' => $tenant])
+                        : (Route::has('tenant.parent.dashboard') ? route('tenant.parent.dashboard', ['tenant' => 'mr-diaa']) : '#');
+                @endphp
+                <a href="{{ $backRoute }}" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition flex items-center gap-1">
                     <span>←</span> رجوع للرئيسية
                 </a>
             </div>

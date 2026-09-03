@@ -49,6 +49,7 @@ class OnlineExamController extends Controller
             'attempt' => $attempt,
             'isAvailable' => $isAvailable,
             'availabilityMessage' => $availabilityMessage,
+            'tenant' => $tenant,
         ]);
     }
 
