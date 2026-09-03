@@ -156,10 +156,16 @@ class QuestionImportService
      * @param string $filePath Absolute path to the uploaded Excel file
      * @param int $stageId Educational Stage ID
      * @param int $subjectId Subject ID
+     * @param int|null $tenantId Tenant ID
      * @return array Summary of import ['total' => int, 'success' => int, 'failed' => int, 'errors' => array]
      */
-    public function importQuestions(string $filePath, int $stageId, int $subjectId): array
+    public function importQuestions(string $filePath, int $stageId, int $subjectId, ?int $tenantId = null): array
     {
+        if (! $tenantId) {
+            $tenantId = app(\App\Services\TenantContext::class)->id()
+                ?? (\Filament\Facades\Filament::getTenant()?->id ?? null);
+        }
+
         $spreadsheet = IOFactory::load($filePath);
         $sheet = $spreadsheet->getActiveSheet();
         $rows = $sheet->toArray(null, true, true, true);
@@ -290,6 +296,7 @@ class QuestionImportService
             }
 
             $batch[] = [
+                'tenant_id' => $tenantId,
                 'stage_id' => $stageId,
                 'subject_id' => $subjectId,
                 'question_text' => $questionText,
