@@ -16,7 +16,10 @@ class AttendanceService
      */
     public function generateSessions(int $groupId, string $fromDate, string $toDate): int
     {
-        $group = Group::with('schedules')->findOrFail($groupId);
+        $group = Group::withoutGlobalScope('tenant')->with(['schedules' => function ($q) {
+            $q->withoutGlobalScope('tenant');
+        }])->findOrFail($groupId);
+
         $schedules = $group->schedules;
 
         if ($schedules->isEmpty()) {
@@ -45,12 +48,13 @@ class AttendanceService
 
         foreach ($period as $date) {
             if (in_array($date->dayOfWeek, $targetDays)) {
-                $session = GroupSession::firstOrCreate(
+                $session = GroupSession::withoutGlobalScope('tenant')->firstOrCreate(
                     [
                         'group_id' => $groupId,
                         'date' => $date->format('Y-m-d'),
                     ],
                     [
+                        'tenant_id' => $group->tenant_id,
                         'status' => 'scheduled',
                     ]
                 );

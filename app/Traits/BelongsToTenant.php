@@ -20,7 +20,13 @@ trait BelongsToTenant
         // 2. Creating Observer: حقن tenant_id تلقائياً عند إنشاء أي سجل
         static::creating(function ($model) {
             if (empty($model->tenant_id)) {
-                $model->tenant_id = app(TenantContext::class)->id();
+                $tenantId = app(TenantContext::class)->id();
+                if (! $tenantId && class_exists(\Filament\Facades\Filament::class)) {
+                    $tenantId = \Filament\Facades\Filament::getTenant()?->id;
+                }
+                if ($tenantId) {
+                    $model->tenant_id = $tenantId;
+                }
             }
         });
     }
