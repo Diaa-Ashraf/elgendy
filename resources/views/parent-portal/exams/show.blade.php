@@ -22,9 +22,11 @@
         <div class="max-w-3xl mx-auto flex items-center justify-between">
             <div class="flex items-center gap-3">
                 @php
+                    $isParent = session()->has('parent_student_id') && ! session()->has('student_portal_id');
+                    $dashboardRoute = $isParent ? 'tenant.parent.dashboard' : 'tenant.student.dashboard';
                     $backRoute = isset($tenant)
-                        ? route('tenant.student.dashboard', ['tenant' => $tenant])
-                        : (Route::has('tenant.parent.dashboard') ? route('tenant.parent.dashboard', ['tenant' => 'mr-diaa']) : '#');
+                        ? route($dashboardRoute, ['tenant' => $tenant])
+                        : (Route::has($dashboardRoute) ? route($dashboardRoute, ['tenant' => 'mr-diaa']) : '#');
                 @endphp
                 <a href="{{ $backRoute }}" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition flex items-center gap-1">
                     <span>←</span> رجوع للرئيسية
