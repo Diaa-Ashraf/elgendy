@@ -1,28 +1,35 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>تفاصيل الاختبار — {{ $exam->title }}</title>
     @php
-        $faviconUrl = app(\App\Services\SettingService::class)->url('site_favicon');
+    $faviconUrl = app(\App\Services\SettingService::class)->url('site_favicon');
     @endphp
     @if($faviconUrl)
-        <link rel="icon" href="{{ $faviconUrl }}">
-        <link rel="shortcut icon" href="{{ $faviconUrl }}">
-        <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
+    <link rel="icon" href="{{ $faviconUrl }}">
+    <link rel="shortcut icon" href="{{ $faviconUrl }}">
+    <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
     @endif
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <style> body { font-family: 'Cairo', sans-serif; } </style>
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+        }
+    </style>
 </head>
+
 <body class="bg-slate-950 text-slate-100 min-h-screen pb-16">
 
     <header class="bg-slate-900/90 border-b border-slate-800 backdrop-blur-md sticky top-0 z-50 px-4 py-4">
         <div class="max-w-3xl mx-auto flex items-center justify-between">
             <div class="flex items-center gap-3">
                 @php
-                    $isParent = session()->has('parent_student_id') && ! session()->has('student_portal_id');
+                    $currentRouteName = request()->route()?->getName() ?? '';
+                    $isParent = str_starts_with($currentRouteName, 'tenant.parent.') || (session()->has('parent_student_id') && ! session()->has('student_portal_id'));
                     $dashboardRoute = $isParent ? 'tenant.parent.dashboard' : 'tenant.student.dashboard';
                     $backRoute = isset($tenant)
                         ? route($dashboardRoute, ['tenant' => $tenant])
@@ -41,9 +48,9 @@
     <main class="max-w-3xl mx-auto p-4 sm:p-6 space-y-6 mt-4">
 
         @if(session('error'))
-            <div class="bg-rose-950 border border-rose-800 p-4 rounded-2xl text-rose-200 text-xs font-bold">
-                {{ session('error') }}
-            </div>
+        <div class="bg-rose-950 border border-rose-800 p-4 rounded-2xl text-rose-200 text-xs font-bold">
+            {{ session('error') }}
+        </div>
         @endif
 
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden text-center space-y-6">
@@ -88,32 +95,32 @@
             {{-- حالة المحاولة وزر البدء --}}
             <div class="pt-2">
                 @if($attempt && $attempt->status === 'completed')
-                    <div class="space-y-3">
-                        <div class="p-4 bg-emerald-950/80 border border-emerald-800 rounded-2xl text-emerald-300 text-sm font-bold">
-                            لقد قمت بأداء هذا الاختبار بالفعل محققاً نتيجة ({{ $attempt->total_score }} / {{ $attempt->max_possible_score }}) بنسبة {{ $attempt->percentage }}% ✅
-                        </div>
-                        @php
-                            $resultRoute = isset($tenant)
-                                ? route('tenant.student.exams.result', ['tenant' => $tenant, 'id' => $exam->id])
-                                : (Route::has('parent.exams.result') ? route('parent.exams.result', ['id' => $exam->id]) : '#');
-                        @endphp
-                        <a href="{{ $resultRoute }}" class="inline-block px-8 py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-2xl text-sm font-black shadow-xl shadow-indigo-950 transition">
-                            عرض بطاقة النتيجة والشرح النموذجي ↗
-                        </a>
+                <div class="space-y-3">
+                    <div class="p-4 bg-emerald-950/80 border border-emerald-800 rounded-2xl text-emerald-300 text-sm font-bold">
+                        لقد قمت بأداء هذا الاختبار بالفعل محققاً نتيجة ({{ $attempt->total_score }} / {{ $attempt->max_possible_score }}) بنسبة {{ $attempt->percentage }}% ✅
                     </div>
-                @elseif(! $isAvailable)
-                    <div class="p-4 bg-amber-950/80 border border-amber-800 rounded-2xl text-amber-300 text-xs font-bold leading-relaxed">
-                        ⚠️ {{ $availabilityMessage }}
-                    </div>
-                @else
                     @php
-                        $startRoute = isset($tenant)
-                            ? route('tenant.student.exams.start', ['tenant' => $tenant, 'id' => $exam->id])
-                            : (Route::has('parent.exams.start') ? route('parent.exams.start', ['id' => $exam->id]) : '#');
+                    $resultRoute = isset($tenant)
+                    ? route('tenant.student.exams.result', ['tenant' => $tenant, 'id' => $exam->id])
+                    : (Route::has('parent.exams.result') ? route('parent.exams.result', ['id' => $exam->id]) : '#');
                     @endphp
-                    <a href="{{ $startRoute }}" class="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-2xl text-base font-black shadow-xl shadow-emerald-950 transition transform hover:-translate-y-0.5">
-                        <span>ابدأ الاختبار الآن</span> 🚀
+                    <a href="{{ $resultRoute }}" class="inline-block px-8 py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-2xl text-sm font-black shadow-xl shadow-indigo-950 transition">
+                        عرض بطاقة النتيجة والشرح النموذجي ↗
                     </a>
+                </div>
+                @elseif(! $isAvailable)
+                <div class="p-4 bg-amber-950/80 border border-amber-800 rounded-2xl text-amber-300 text-xs font-bold leading-relaxed">
+                    ⚠️ {{ $availabilityMessage }}
+                </div>
+                @else
+                @php
+                $startRoute = isset($tenant)
+                ? route('tenant.student.exams.start', ['tenant' => $tenant, 'id' => $exam->id])
+                : (Route::has('parent.exams.start') ? route('parent.exams.start', ['id' => $exam->id]) : '#');
+                @endphp
+                <a href="{{ $startRoute }}" class="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-2xl text-base font-black shadow-xl shadow-emerald-950 transition transform hover:-translate-y-0.5">
+                    <span>ابدأ الاختبار الآن</span> 🚀
+                </a>
                 @endif
             </div>
         </div>
@@ -121,4 +128,5 @@
     </main>
 
 </body>
+
 </html>

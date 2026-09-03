@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
@@ -21,7 +22,8 @@
     <header class="bg-slate-900/90 border-b border-slate-800 backdrop-blur-md sticky top-0 z-50 px-4 py-4">
         <div class="max-w-4xl mx-auto flex items-center justify-between">
             @php
-                $isParent = session()->has('parent_student_id') && ! session()->has('student_portal_id');
+                $currentRouteName = request()->route()?->getName() ?? '';
+                $isParent = str_starts_with($currentRouteName, 'tenant.parent.') || (session()->has('parent_student_id') && ! session()->has('student_portal_id'));
                 $dashboardRoute = $isParent ? 'tenant.parent.dashboard' : 'tenant.student.dashboard';
                 $backRoute = isset($tenant)
                     ? route($dashboardRoute, ['tenant' => $tenant])

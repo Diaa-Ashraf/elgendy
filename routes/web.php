@@ -52,6 +52,10 @@ Route::prefix('t/{tenant}')
             Route::get('/dashboard', [ParentPortalController::class, 'dashboard'])->name('dashboard');
             Route::post('/payment', [ParentPortalController::class, 'submitPayment'])->name('payment.submit');
             Route::get('/logout', [ParentPortalController::class, 'logout'])->name('logout');
+
+            // تقارير وتفاصيل الامتحانات الخاصة بولي الأمر
+            Route::get('/exams/{id}', [OnlineExamController::class, 'show'])->name('exams.show');
+            Route::get('/exams/{id}/result', [OnlineExamController::class, 'result'])->name('exams.result');
         });
 
         // 💳 د. إدارة اشتراك المدرس وسداد الرسوم (Teacher Subscription)

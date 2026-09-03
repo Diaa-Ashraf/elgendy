@@ -388,12 +388,12 @@
                                         {{ $userAttempt->total_score }} / {{ $userAttempt->max_possible_score }} ({{ $userAttempt->percentage }}%)
                                     </span>
                                 </div>
-                                <a href="{{ route('tenant.student.exams.result', ['tenant' => $tenantSlug ?? 'mr-diaa', 'id' => $onlineExam->id]) }}" class="px-3.5 py-1.5 bg-indigo-950 border border-indigo-700 text-indigo-300 hover:bg-indigo-900 rounded-xl text-xs font-black transition">
+                                <a href="{{ route('tenant.parent.exams.result', ['tenant' => $tenantSlug ?? 'mr-diaa', 'id' => $onlineExam->id]) }}" class="px-3.5 py-1.5 bg-indigo-950 border border-indigo-700 text-indigo-300 hover:bg-indigo-900 rounded-xl text-xs font-black transition">
                                     عرض النتيجة والتفسير ↗
                                 </a>
                             @else
-                                <a href="{{ route('tenant.student.exams.show', ['tenant' => $tenantSlug ?? 'mr-diaa', 'id' => $onlineExam->id]) }}" class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-black shadow-md shadow-emerald-950 transition flex items-center gap-1">
-                                    <span>بدء الاختبار</span> 🚀
+                                <a href="{{ route('tenant.parent.exams.show', ['tenant' => $tenantSlug ?? 'mr-diaa', 'id' => $onlineExam->id]) }}" class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-black shadow-md shadow-emerald-950 transition flex items-center gap-1">
+                                    <span>تفاصيل الاختبار</span> ℹ️
                                 </a>
                             @endif
                         </div>
