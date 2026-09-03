@@ -233,16 +233,36 @@ class GroupSessionResource extends Resource
                             ->label('سبب التأجيل (اختياري)')
                             ->placeholder('مثال: ظروف طارئة للمدرس...'),
                     ])
-                    ->action(function (GroupSession $record, array $data): void {
+                    ->action(function (GroupSession $record, array $data, Tables\Actions\Action $action): void {
+                        $newDate = $data['new_date'];
+
+                        // التحقق من عدم وجود حصة أخرى مسجلة بالفعل لنفس المجموعة في هذا التاريخ
+                        $exists = GroupSession::withoutGlobalScope('tenant')
+                            ->where('group_id', $record->group_id)
+                            ->where('date', $newDate)
+                            ->where('id', '!=', $record->id)
+                            ->exists();
+
+                        if ($exists) {
+                            Notification::make()
+                                ->title('يوجد حصة مسجلة بالفعل لهذه المجموعة في نفس التاريخ المختار!')
+                                ->body("التاريخ {$newDate} محجوز بحصة أخرى، يرجى اختيار موعد بديل.")
+                                ->danger()
+                                ->send();
+
+                            $action->halt();
+                            return;
+                        }
+
                         $record->update([
-                            'date' => $data['new_date'],
+                            'date' => $newDate,
                             'status' => 'postponed',
                             'topic' => ($record->topic ? $record->topic . ' - ' : '') . 'تم التأجيل: ' . ($data['reason'] ?? 'بدون سبب'),
                         ]);
 
                         Notification::make()
                             ->title('تم تأجيل موعد الحصة بنجاح')
-                            ->body("الموعد الجديد: {$data['new_date']}")
+                            ->body("الموعد الجديد: {$newDate}")
                             ->success()
                             ->send();
                     }),
