@@ -15,6 +15,20 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             PermissionSeeder::class,
+            PlanSeeder::class,
         ]);
+
+        // إنشاء مدرس تجريبي جاهز mr-diaa
+        $service = app(\App\Services\TenantRegistrationService::class);
+        if (! \App\Models\Tenant::where('slug', 'mr-diaa')->exists()) {
+            $service->register([
+                'name' => 'الأستاذ ضياء أشرف',
+                'center_name' => 'سنتر الأستاذ ضياء',
+                'slug' => 'mr-diaa',
+                'email' => 'mr-diaa@admin.com',
+                'phone' => '01202325201',
+                'password' => '123456789',
+            ]);
+        }
     }
 }

@@ -56,6 +56,96 @@ class Tenant extends Model
         return $this->hasMany(Exam::class);
     }
 
+    public function educationalStages(): HasMany
+    {
+        return $this->hasMany(EducationalStage::class);
+    }
+
+    public function subjects(): HasMany
+    {
+        return $this->hasMany(Subject::class);
+    }
+
+    public function discounts(): HasMany
+    {
+        return $this->hasMany(Discount::class);
+    }
+
+    public function groupSessions(): HasMany
+    {
+        return $this->hasMany(GroupSession::class);
+    }
+
+    public function groupSchedules(): HasMany
+    {
+        return $this->hasMany(GroupSchedule::class);
+    }
+
+    public function questions(): HasMany
+    {
+        return $this->hasMany(Question::class);
+    }
+
+    public function studentPayments(): HasMany
+    {
+        return $this->hasMany(StudentPayment::class);
+    }
+
+    public function salaries(): HasMany
+    {
+        return $this->hasMany(Salary::class);
+    }
+
+    public function expenseCategories(): HasMany
+    {
+        return $this->hasMany(ExpenseCategory::class);
+    }
+
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class);
+    }
+
+    public function inventoryItems(): HasMany
+    {
+        return $this->hasMany(InventoryItem::class);
+    }
+
+    public function inventoryMovements(): HasMany
+    {
+        return $this->hasMany(InventoryMovement::class);
+    }
+
+    public function studentApplications(): HasMany
+    {
+        return $this->hasMany(StudentApplication::class);
+    }
+
+    public function studyMaterials(): HasMany
+    {
+        return $this->hasMany(StudyMaterial::class);
+    }
+
+    public function studentMaterialDeliveries(): HasMany
+    {
+        return $this->hasMany(StudentMaterialDelivery::class);
+    }
+
+    public function onlinePaymentRequests(): HasMany
+    {
+        return $this->hasMany(OnlinePaymentRequest::class);
+    }
+
+    public function onlineExamAttempts(): HasMany
+    {
+        return $this->hasMany(OnlineExamAttempt::class);
+    }
+
+    public function studentImports(): HasMany
+    {
+        return $this->hasMany(StudentImport::class);
+    }
+
     // Helper لقراءة الإعدادات السريعة
     public function getSetting(string $key, mixed $default = null): mixed
     {
