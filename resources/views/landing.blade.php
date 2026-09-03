@@ -7,6 +7,8 @@
     <title>{{ $settings['center_name'] }} — {{ $settings['teacher_name'] }}</title>
     
     @php
+        $tenant = app(\App\Services\TenantContext::class)->get();
+        $tenantSlug = $tenant?->slug ?? request()->route('tenant');
         $settingService = app(\App\Services\SettingService::class);
         $faviconUrl = $settingService->url('site_favicon');
         $logoUrl = $settingService->url('center_logo');
@@ -167,15 +169,26 @@
 
             {{-- Action Buttons & Mobile Hamburger --}}
             <div class="flex items-center gap-2 sm:gap-2.5">
-                <a href="{{ route('parent.login') }}" class="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300/80 rounded-xl text-xs sm:text-sm font-bold text-slate-800 transition flex items-center gap-1.5">
-                    <span>👨‍👩‍👦</span>
-                    <span class="hidden xs:inline sm:inline">بوابة ولي الأمر</span>
-                    <span class="inline xs:hidden sm:hidden">البوابة</span>
-                </a>
-                <a href="/admin" class="hidden sm:flex px-3.5 sm:px-4 py-1.5 sm:py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl text-xs sm:text-sm font-bold text-white transition items-center gap-1.5 shadow-sm">
-                    <span>لوحة التحكم</span>
-                    <span class="text-xs opacity-75">➔</span>
-                </a>
+                @if($tenantSlug)
+                    <a href="{{ route('tenant.student.login', ['tenant' => $tenantSlug]) }}" class="hidden md:flex px-2.5 sm:px-3 py-1.5 sm:py-2 bg-sky-50 hover:bg-sky-100 border border-sky-200 rounded-xl text-xs sm:text-sm font-bold text-sky-800 transition items-center gap-1.5">
+                        <span>🎓</span>
+                        <span>بوابة الطالب</span>
+                    </a>
+                    <a href="{{ route('tenant.parent.login', ['tenant' => $tenantSlug]) }}" class="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300/80 rounded-xl text-xs sm:text-sm font-bold text-slate-800 transition flex items-center gap-1.5">
+                        <span>👨‍👩‍👦</span>
+                        <span class="hidden xs:inline sm:inline">بوابة ولي الأمر</span>
+                        <span class="inline xs:hidden sm:hidden">البوابة</span>
+                    </a>
+                    <a href="/admin/{{ $tenantSlug }}" class="hidden sm:flex px-3.5 sm:px-4 py-1.5 sm:py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl text-xs sm:text-sm font-bold text-white transition items-center gap-1.5 shadow-sm">
+                        <span>لوحة التحكم</span>
+                        <span class="text-xs opacity-75">➔</span>
+                    </a>
+                @else
+                    <a href="/admin" class="hidden sm:flex px-3.5 sm:px-4 py-1.5 sm:py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl text-xs sm:text-sm font-bold text-white transition items-center gap-1.5 shadow-sm">
+                        <span>لوحة التحكم</span>
+                        <span class="text-xs opacity-75">➔</span>
+                    </a>
+                @endif
 
                 {{-- Hamburger Button for Mobile --}}
                 <button id="mobileMenuBtn" aria-label="القائمة الرئيسية" class="lg:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 border border-slate-200 focus:outline-none transition">
@@ -207,12 +220,21 @@
                 📝 تقديم طلب وتسجيل جديد
             </a>
             <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
-                <a href="{{ route('parent.login') }}" class="flex-1 py-2 text-center bg-slate-100 rounded-xl text-xs font-bold text-slate-800">
-                    بوابة ولي الأمر
-                </a>
-                <a href="/admin" class="flex-1 py-2 text-center bg-slate-900 rounded-xl text-xs font-bold text-white">
-                    لوحة التحكم
-                </a>
+                @if($tenantSlug)
+                    <a href="{{ route('tenant.student.login', ['tenant' => $tenantSlug]) }}" class="flex-1 py-2 text-center bg-sky-50 rounded-xl text-xs font-bold text-sky-800">
+                        بوابة الطالب
+                    </a>
+                    <a href="{{ route('tenant.parent.login', ['tenant' => $tenantSlug]) }}" class="flex-1 py-2 text-center bg-slate-100 rounded-xl text-xs font-bold text-slate-800">
+                        بوابة ولي الأمر
+                    </a>
+                    <a href="/admin/{{ $tenantSlug }}" class="flex-1 py-2 text-center bg-slate-900 rounded-xl text-xs font-bold text-white">
+                        لوحة التحكم
+                    </a>
+                @else
+                    <a href="/admin" class="flex-1 py-2 text-center bg-slate-900 rounded-xl text-xs font-bold text-white">
+                        لوحة التحكم
+                    </a>
+                @endif
             </div>
         </div>
     </header>
@@ -782,7 +804,9 @@
                 return;
             }
 
-            fetch(`/api/stages/${stageId}/groups`)
+            const groupsUrl = '{{ $tenantSlug ? route("tenant.stage.groups", ["tenant" => $tenantSlug, "stage" => ":stageId"]) : "/api/stages/:stageId/groups" }}'.replace(':stageId', stageId);
+
+            fetch(groupsUrl)
                 .then(res => res.json())
                 .then(data => {
                     groupSelect.innerHTML = '<option value="">-- اختر المجموعة (اختياري) --</option>';
@@ -816,8 +840,9 @@
 
             const formData = new FormData(this);
             const csrfToken = document.querySelector('input[name="_token"]')?.value || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const enrollUrl = '{{ $tenantSlug ? route("tenant.enroll.submit", ["tenant" => $tenantSlug]) : "/enroll" }}';
 
-            fetch('{{ route("enroll.submit") }}', {
+            fetch(enrollUrl, {
                 method: 'POST',
                 body: formData,
                 headers: {

@@ -36,16 +36,20 @@
                 </div>
             </div>
 
+            @php
+                $tenant = app(\App\Services\TenantContext::class)->get();
+                $tenantSlug = $tenant?->slug ?? request()->route('tenant');
+            @endphp
             <div class="flex items-center gap-2">
                 @if($paymentSettings['enabled'])
                     <button @click="showPayModal = true" class="px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-black shadow-lg shadow-emerald-950 flex items-center gap-1.5 transition">
                         <span>💳</span> سداد أونلاين
                     </button>
                 @endif
-                <a href="{{ route('home') }}" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition">
+                <a href="{{ $tenantSlug ? route('tenant.home', ['tenant' => $tenantSlug]) : '/' }}" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition">
                     الموقع 🌐
                 </a>
-                <a href="{{ route('parent.logout') }}" class="px-3 py-1.5 bg-rose-950/80 border border-rose-800/80 text-rose-300 hover:bg-rose-900 rounded-xl text-xs font-bold transition">
+                <a href="{{ $tenantSlug ? route('tenant.parent.logout', ['tenant' => $tenantSlug]) : '#' }}" class="px-3 py-1.5 bg-rose-950/80 border border-rose-800/80 text-rose-300 hover:bg-rose-900 rounded-xl text-xs font-bold transition">
                     خروج 🚪
                 </a>
             </div>
@@ -476,7 +480,7 @@
             </div>
 
             {{-- نموذج رفع الإيصال --}}
-            <form action="{{ route('parent.payment.submit') }}" method="POST" enctype="multipart/form-data" class="space-y-3">
+            <form action="{{ $tenantSlug ? route('tenant.parent.payment.submit', ['tenant' => $tenantSlug]) : '#' }}" method="POST" enctype="multipart/form-data" class="space-y-3">
                 @csrf
                 <input type="hidden" name="payment_method" :value="activeMethod">
 

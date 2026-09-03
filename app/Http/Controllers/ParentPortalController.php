@@ -61,12 +61,18 @@ class ParentPortalController extends Controller
             ]);
         }
 
-        // إذا وصل هنا، فالبيانات صحيحة ومطباقة بالكامل
+        // إذا وصل هنا، فالبيانات صحيحة ومطابقة بالكامل
         $student = $studentById;
 
         session(['parent_student_id' => $student->id]);
 
-        return redirect()->route('parent.dashboard');
+        $tenantSlug = $request->route('tenant') ?? app(\App\Services\TenantContext::class)->get()?->slug;
+
+        if ($tenantSlug) {
+            return redirect()->route('tenant.parent.dashboard', ['tenant' => $tenantSlug]);
+        }
+
+        return redirect()->route('tenant.parent.dashboard', ['tenant' => 'mr-diaa']);
     }
 
     public function dashboard(StudentLedgerService $ledgerService)
@@ -192,13 +198,16 @@ class ParentPortalController extends Controller
             \Illuminate\Support\Facades\Log::error('Online Payment Bell Notification Error: ' . $e->getMessage());
         }
 
-        return redirect()->route('parent.dashboard')
+        $tenantSlug = $request->route('tenant') ?? app(\App\Services\TenantContext::class)->get()?->slug;
+
+        return redirect()->route('tenant.parent.dashboard', ['tenant' => $tenantSlug ?? 'mr-diaa'])
             ->with('payment_success', 'تم إرسال إيصال التحويل بنجاح! سيتم مراجعة الإيصال من إدارة السنتر وتأكيد نزول المبلغ في حساب الطالب فوراً مع إرسال إشعار واتساب لكم 🚀');
     }
 
-    public function logout()
+    public function logout(Request $request)
     {
         session()->forget('parent_student_id');
-        return redirect()->route('parent.login');
+        $tenantSlug = $request->route('tenant') ?? app(\App\Services\TenantContext::class)->get()?->slug;
+        return redirect()->route('tenant.parent.login', ['tenant' => $tenantSlug ?? 'mr-diaa']);
     }
 }

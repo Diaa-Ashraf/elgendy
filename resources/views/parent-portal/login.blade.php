@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>بوابة ولي الأمر — تسجيل الدخول</title>
     @php
+        $tenant = app(\App\Services\TenantContext::class)->get();
+        $tenantSlug = $tenant?->slug ?? request()->route('tenant');
         $faviconUrl = app(\App\Services\SettingService::class)->url('site_favicon');
     @endphp
     @if($faviconUrl)
@@ -29,7 +31,7 @@
 
     {{-- زر العودة للرئيسية --}}
     <div class="max-w-md mx-auto w-full pt-2 sm:pt-4 flex justify-between items-center relative z-10">
-        <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-sm">
+        <a href="{{ $tenantSlug ? route('tenant.home', ['tenant' => $tenantSlug]) : '/' }}" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-sm">
             <span>←</span>
             <span>العودة للموقع الرئيسي</span>
         </a>
@@ -54,7 +56,7 @@
             </div>
         @endif
 
-        <form action="{{ route('parent.login.submit') }}" method="POST" class="space-y-4">
+        <form action="{{ $tenantSlug ? route('tenant.parent.login.submit', ['tenant' => $tenantSlug]) : '#' }}" method="POST" class="space-y-4">
             @csrf
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1.5">رقم هاتف ولي الأمر المسجل</label>
