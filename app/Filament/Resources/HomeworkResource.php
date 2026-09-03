@@ -126,11 +126,11 @@ class HomeworkResource extends Resource
                         Forms\Components\Select::make('status')
                             ->label('حالة الواجب')
                             ->options([
-                                'draft' => 'مسودة 📋',
                                 'published' => 'منشور ✅',
+                                'draft' => 'مسودة 📋',
                                 'closed' => 'مُغلق 🔒',
                             ])
-                            ->default('draft')
+                            ->default('published')
                             ->required()
                             ->native(false),
 
