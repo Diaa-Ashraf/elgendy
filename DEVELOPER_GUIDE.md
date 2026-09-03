@@ -1,390 +1,410 @@
-# Developer & System Architectural Handbook (دليل المطور الشامل للمشروع)
+# الدليل الهندسي الشامل لتطوير وصيانة المنظومة (Developer Guide)
 
-## 📌 Project Overview
-- **System Type:** Multi-Tenant SaaS Platform for Tutors, Teachers, and Educational Academies.
-- **Tech Stack:** Laravel 12 (PHP 8.3+) | Filament v3/v5 | Tailwind CSS | MySQL | Alpine.js | Redis & Queues.
-- **Primary Goal:** Enable tutors to manage their students, attendance, homework, exams (online & paper), study materials, financial ledger, and WhatsApp alerts through a tenant-isolated subdomain/route system with separate portals for students and parents.
-
----
-
-## 1. Multi-Tenancy Architecture (كيف تعمل المنظومة السحابية وعزل البيانات)
-
-### 1.1 Architecture Pattern: Single Database with Row-Level Tenancy
-- Every tutor or educational center is stored as a record in the `tenants` table.
-- Identification happens via a unique `slug` (e.g., `mr-diaa`).
-- Every tenant-owned database table contains a indexed foreign key column: `tenant_id`.
-
-### 1.2 Request Life Cycle & Context Resolution (دورة حياة الطلب من الدخول حتى التنفيذ)
-1. **Request Hits URL:** User requests a path under `/t/{tenant}/...` (e.g., `/t/mr-diaa/student/dashboard`).
-2. **Middleware Interception:** `ResolveTenant` middleware (`app/Http/Middleware/ResolveTenant.php`) intercepts the request:
-   - Reads the `{tenant}` parameter from the route.
-   - Finds the matching record in `Tenant` model. If not found, aborts with 404.
-   - Binds the found tenant into the `TenantContext` singleton service (`app/Services/TenantContext.php`).
-   - Shares `$currentTenant` variable with all Blade views.
-3. **Data Scoping (Automatic Isolation):**
-   - Any model using `BelongsToTenant` trait (`app/Traits/BelongsToTenant.php`) attaches an Eloquent Global Scope `tenant`.
-   - All `SELECT`, `UPDATE`, `DELETE` queries are automatically scoped with: `WHERE tenant_id = currentTenant->id`.
-   - On `creating` model event, `tenant_id` is automatically set to `TenantContext::id()`.
-4. **Filament Admin Panel Tenancy:**
-   - In `app/Providers/Filament/AdminPanelProvider.php`, `.tenant(Tenant::class, slugAttribute: 'slug')` handles isolation for teacher dashboards (`/admin/{tenant}`).
-   - Middleware `SyncFilamentTenant` (`app/Http/Middleware/SyncFilamentTenant.php`) syncs the Filament active tenant with `TenantContext`.
+## نظرة عامة على النظام
+- **نوع النظام:** منصة سحابية متعددة المستأجرين (Multi-Tenant SaaS) لإدارة المعلمين والمراكز التعليمية والدروس الخصوصية.
+- **التقنيات المستخدمة:** Laravel 12 (PHP 8.3+) | Filament v3/v5 | Tailwind CSS | MySQL | Alpine.js | Redis & Queues.
+- **الهدف من النظام:** تمكين المدرس من إدارة طلابه، الحضور والغياب، الواجبات، الامتحانات (الإلكترونية والورقية)، الملازم، الحسابات المالية، وإشعارات الواتساب التلقائية من خلال نطاق/مسار خاص بكل مدرس مع بوابات منفصلة للطلاب وأولياء الأمور.
 
 ---
 
-## 2. Exhaustive Services Directory (دليل طبقة الخدمات الـ 19 بالتفصيل)
+## 1. معمارية الـ Multi-Tenancy وعزل البيانات
 
-All heavy business logic, calculations, database transactions, and external integrations MUST reside in `app/Services/`. Below is the complete directory of every service:
+### 1.1 نمط المعمارية: قاعدة بيانات واحدة مع عزل الصفوف (Single DB - Row Level Tenancy)
+- كل مدرس أو مركز تعليمي مسجل كصف في جدول `tenants`.
+- يتم التعرف على المدرس من خلال المعرف النصي الفريد `slug` (مثال: `mr-diaa`).
+- جميع الجداول التابعة للمدرسين تحتوي على عمود مفهرس: `tenant_id`.
 
-### 1. `TenantContext` (`app/Services/TenantContext.php`)
-- **Purpose:** Request-scoped singleton holding the active `Tenant` model.
-- **Key Methods:** `set(Tenant $tenant)`, `get(): ?Tenant`, `id(): ?int`.
-- **Used By:** `ResolveTenant`, `BelongsToTenant`, `SyncFilamentTenant`.
+### 1.2 دورة حياة الطلب (Request Lifecycle) وتحديد المدرس
+1. **دخول الرابط:** يدخل المستخدم رابط يبدأ بـ `/t/{tenant}/...` (مثال: `/t/mr-diaa/student/dashboard`).
+2. **اعتراض الوسيط (Middleware):** وسيط `ResolveTenant` (`app/Http/Middleware/ResolveTenant.php`) يعترض الطلب:
+   - يقرأ قيمة `{tenant}` من الرابط.
+   - يبحث عن المدرس في جدول `tenants`؛ وإذا لم يجده يرجع خطأ 404.
+   - يحقن المدرس داخل كلاس `TenantContext` كـ Singleton (`app/Services/TenantContext.php`).
+   - يشارك المتغير `$currentTenant` مع جميع واجهات Blade.
+3. **العزل التلقائي للبيانات (Global Scope):**
+   - أي موديل يستخدم Trait `BelongsToTenant` (`app/Traits/BelongsToTenant.php`) يطبق Global Scope باسم `tenant`.
+   - جميع استعلامات القراءة والتعديل والحذف يتم تصفيتها تلقائياً بشرط: `WHERE tenant_id = currentTenant->id`.
+   - عند إنشاء أي سجل جديد، يتم ملء `tenant_id` تلقائياً من `TenantContext::id()`.
+4. **عزل لوحة تحكم المعلم (Filament Admin):**
+   - في `app/Providers/Filament/AdminPanelProvider.php`، يتم تفعيل العزل عبر `.tenant(Tenant::class, slugAttribute: 'slug')` للوحة `/admin/{tenant}`.
+   - وسيط `SyncFilamentTenant` (`app/Http/Middleware/SyncFilamentTenant.php`) يضمن مزامنة المدرس النشط في Filament مع `TenantContext`.
 
-### 2. `HomeworkService` (`app/Services/HomeworkService.php`)
-- **Purpose:** Handles homework distribution, student submissions, and auto-grading of MCQ questions.
-- **Key Methods:**
-  - `getStudentHomeworks(Student $student)`: Retrieves published homework matching the student's educational stage and enrolled groups.
-  - `submitHomework(Student $student, Homework $homework, array $data)`: Saves files or answers and triggers grading.
-  - `autoGradeQuestions(HomeworkSubmission $submission)`: Compares student answers against question keys and calculates score.
-  - `getSubmissionStats(Homework $homework)`: Aggregates counts of graded, pending, and late submissions.
-- **Used By:** `StudentPortalController`, `ParentPortalController`, `HomeworkResource`.
+---
 
-### 3. `OnlineExamService` (`app/Services/OnlineExamService.php`)
-- **Purpose:** Full online quiz engine, countdown timer validation, anti-cheat tracking, auto-correction, and AI-powered weakness diagnosis.
-- **Key Methods:**
-  - `startAttempt(Student $student, Exam $exam)`: Initializes an exam session and starts timer.
-  - `submitAttempt(OnlineExamAttempt $attempt, array $answers)`: Auto-corrects questions, generates strengths/weaknesses topics analysis.
-  - `getStudentExamHistory(Student $student)`: Lists past attempts and scores.
-- **Used By:** `OnlineExamController`, `ExamResource`.
+## 2. دليل الخدمات الشامل (Services Matrix - 19 خدمة)
 
-### 4. `AttendanceService` (`app/Services/AttendanceService.php`)
-- **Purpose:** Processing student check-in/check-out in group sessions, calculating consecutive absences, and triggering warnings.
-- **Key Methods:**
+جميع العمليات المعقدة والمنطق البرمجي والحسابات موجودة حصراً في مجلد `app/Services/`:
+
+### 1. سياق المدرس الحالي (`app/Services/TenantContext.php`)
+- **الوظيفة:** Singleton يحتفظ ببيانات المدرس الحالي طوال مدة تنفيذ الطلب (Request).
+- **الدوال الأساسية:** `set(Tenant $tenant)`, `get(): ?Tenant`, `id(): ?int`.
+- **المستخدمون:** `ResolveTenant`, `BelongsToTenant`, `SyncFilamentTenant`.
+
+### 2. خدمة الواجبات المنزلية (`app/Services/HomeworkService.php`)
+- **الوظيفة:** توزيع الواجبات على الطلاب، استقبال الحلول والمرفقات، والتصحيح التلقائي لأسئلة الاختيار من متعدد.
+- **الدوال الأساسية:**
+  - `getStudentHomeworks(Student $student)`: جلب الواجبات المنشورة المطابقة لمرحلة ومجموعة الطالب.
+  - `submitHomework(Student $student, Homework $homework, array $data)`: حفظ الإجابات أو المرفقات وتصحيحها.
+  - `autoGradeQuestions(HomeworkSubmission $submission)`: مطابقة إجابات الطالب بالإجابات النموذجية واحتساب الدرجة.
+  - `getSubmissionStats(Homework $homework)`: إحصائيات التسليمات (المصححة، المتأخرة، قيد المراجعة).
+- **المستخدمون:** `StudentPortalController`, `ParentPortalController`, `HomeworkResource`.
+
+### 3. خدمة الامتحانات الإلكترونية (`app/Services/OnlineExamService.php`)
+- **الوظيفة:** إدارة محرك الامتحانات الأونلاين، المؤقت التنازلي، منع الغش، التصحيح التلقائي الفوري، وتشخيص نقاط القوة والضعف للطالب.
+- **الدوال الأساسية:**
+  - `startAttempt(Student $student, Exam $exam)`: بدء جلسة الامتحان وتفعيل المؤقت.
+  - `submitAttempt(OnlineExamAttempt $attempt, array $answers)`: التصحيح الفوري واستخراج تقرير الدرجات والدروس التي يحتاج الطالب التركيز عليها.
+  - `getStudentExamHistory(Student $student)`: سجل امتحانات الطالب السابقة.
+- **المستخدمون:** `OnlineExamController`, `ExamResource`.
+
+### 4. خدمة الحضور والغياب (`app/Services/AttendanceService.php`)
+- **الوظيفة:** تسجيل حضور وغياب الطلاب في الحصص، تتبع مرات الغياب المتتالية، وإطلاق التنبيهات.
+- **الدوال الأساسية:**
   - `recordAttendance(GroupSession $session, Student $student, string $status, ?string $notes)`
   - `bulkRecord(GroupSession $session, array $records)`
   - `getConsecutiveAbsenceCount(Student $student)`
-- **Used By:** `GroupSessionResource`, `QrScanner` (Page), `Attendance`.
+- **المستخدمون:** `GroupSessionResource`, `QrScanner` (Page), `Attendance`.
 
-### 5. `WhatsAppNotificationService` (`app/Services/WhatsAppNotificationService.php`)
-- **Purpose:** Sending automated real-time WhatsApp alerts to parents upon student attendance, absence, exam results, and payment receipts.
-- **Key Methods:**
+### 5. خدمة إشعارات الواتساب (`app/Services/WhatsAppNotificationService.php`)
+- **الوظيفة:** إرسال رسائل واتساب آلية وفورية لأولياء الأمور فور تسجيل الحضور أو الغياب أو رصد الدرجات أو سداد الرسوم.
+- **الدوال الأساسية:**
   - `sendAttendanceAlert(Attendance $attendance)`
   - `sendExamResultAlert(Student $student, Exam $exam, float $score, float $total)`
   - `sendPaymentReceiptAlert(StudentPayment $payment)`
-- **Used By:** `AttendanceService`, `OnlineExamService`, `StudentPaymentResource`.
+- **المستخدمون:** `AttendanceService`, `OnlineExamService`, `StudentPaymentResource`.
 
-### 6. `StudentLedgerService` (`app/Services/StudentLedgerService.php`)
-- **Purpose:** Comprehensive financial balance calculation for students (Total Required Charges - Total Paid Amounts = Net Balance Due).
-- **Key Methods:**
-  - `getFullLedger(Student $student)`: Returns itemized statements of monthly session fees, materials received, and payments made.
-  - `getBalance(Student $student)`: Returns exact numeric balance due.
-- **Used By:** `StudentResource`, `ParentPortalController`, `StudentPdfController`.
+### 6. خدمة كشف الحساب الأكاديمي (`app/Services/StudentLedgerService.php`)
+- **الوظيفة:** حساب الذمة المالية الشاملة للطالب (إجمالي المطلوب - إجمالي المسدد = المتبقي).
+- **الدوال الأساسية:**
+  - `getFullLedger(Student $student)`: كشف حساب تفصيلي بالحضور، الملازم المستلمة، والمدفوعات.
+  - `getBalance(Student $student)`: الرصيد المتبقي كرقم.
+- **المستخدمون:** `StudentResource`, `ParentPortalController`, `StudentPdfController`.
 
-### 7. `PaymentService` (`app/Services/PaymentService.php`)
-- **Purpose:** Creating official student payment records, managing partial payments, applying discounts, and generating receipts.
-- **Key Methods:**
+### 7. خدمة المدفوعات والخصومات (`app/Services/PaymentService.php`)
+- **الوظيفة:** إنشاء سندات القبض، معالجة الدفعات الجزئية، تطبيق الخصومات، وتوليد الإيصالات.
+- **الدوال الأساسية:**
   - `createPayment(Student $student, array $data)`
   - `applyDiscount(Student $student, Discount $discount)`
-- **Used By:** `StudentPaymentResource`, `OnlinePaymentRequestResource`.
+- **المستخدمون:** `StudentPaymentResource`, `OnlinePaymentRequestResource`.
 
-### 8. `QuestionImportService` (`app/Services/QuestionImportService.php`)
-- **Purpose:** Parsing Excel spreadsheets, Word (.docx) documents, and unstructured raw question text into structured MCQ and True/False database questions.
-- **Key Methods:**
+### 8. خدمة استيراد الأسئلة (`app/Services/QuestionImportService.php`)
+- **الوظيفة:** استيراد الأسئلة من ملفات Excel و Word وتحليل النصوص بالذكاء الاصطناعي إلى بنك الأسئلة.
+- **الدوال الأساسية:**
   - `importFromExcel($filePath, $stageId, $subjectId)`
   - `parseRawTextWithAi(string $rawText)`
-- **Used By:** `QuestionResource`, `ExamResource`.
+- **المستخدمون:** `QuestionResource`, `ExamResource`.
 
-### 9. `StudentImportService` (`app/Services/StudentImportService.php`)
-- **Purpose:** Bulk student roster onboarding from Excel/CSV files, deduplicating phone numbers, and auto-enrolling into assigned groups.
-- **Key Methods:**
+### 9. خدمة استيراد الطلاب الجماعي (`app/Services/StudentImportService.php`)
+- **الوظيفة:** استيراد قوائم الطلاب من Excel/CSV، فحص تكرار الهواتف، وتسكينهم في المجموعات تلقائياً.
+- **الدوال الأساسية:**
   - `processImport(StudentImport $importRecord)`
   - `validateRows(array $rows)`
-- **Used By:** `StudentImports` (Filament Page), `ProcessStudentImportJob`.
+- **المستخدمون:** `StudentImports` (Page), `ProcessStudentImportJob`.
 
-### 10. `ExamService` (`app/Services/ExamService.php`)
-- **Purpose:** Managing traditional offline/paper exams, recording marks, computing class average, rank percentiles, and top student lists.
-- **Key Methods:**
+### 10. خدمة الامتحانات الورقية (`app/Services/ExamService.php`)
+- **الوظيفة:** رصد وتوثيق نتائج الامتحانات الورقية، حساب المتوسطات، وقائمة الأوائل.
+- **الدوال الأساسية:**
   - `recordResults(Exam $exam, array $results)`
   - `getTopPerformers(Exam $exam, int $limit = 10)`
-- **Used By:** `ExamResource`, `ExamResult`.
+- **المستخدمون:** `ExamResource`, `ExamResult`.
 
-### 11. `ExpenseService` (`app/Services/ExpenseService.php`)
-- **Purpose:** Accounting module for tracking center operating expenses categorized under customizable categories (Rent, Utilities, Print, etc.).
-- **Key Methods:**
+### 11. خدمة المصروفات العامة (`app/Services/ExpenseService.php`)
+- **الوظيفة:** قيد المصروفات وتبويبها ومتابعة بنود الصرف بالسنتر.
+- **الدوال الأساسية:**
   - `recordExpense(array $data)`
   - `getExpensesSummaryByPeriod($startDate, $endDate)`
-- **Used By:** `ExpenseResource`, `ExpenseCategoryResource`.
+- **المستخدمون:** `ExpenseResource`, `ExpenseCategoryResource`.
 
-### 12. `SalaryService` (`app/Services/SalaryService.php`)
-- **Purpose:** Payroll calculations for assistant teachers, staff, hourly session rates, bonuses, and deductions.
-- **Key Methods:**
+### 12. خدمة الرواتب والاستحقاقات (`app/Services/SalaryService.php`)
+- **الوظيفة:** حساب مرتبات وساعات عمل المساعدين والخصومات والمكافآت.
+- **الدوال الأساسية:**
   - `calculateAssistantSalary(User $assistant, $month, $year)`
-- **Used By:** `SalaryResource`.
+- **المستخدمون:** `SalaryResource`.
 
-### 13. `ReportService` (`app/Services/ReportService.php`)
-- **Purpose:** Generating comprehensive analytics (monthly net profits, attendance ratios, group profitability, cash flow analysis).
-- **Key Methods:**
+### 13. خدمة التقارير الإدارية والمالية (`app/Services/ReportService.php`)
+- **الوظيفة:** إعداد تقارير الأرباح الشهرية، التدفقات النقدية، نسب الحضور، وربحية المجموعات.
+- **الدوال الأساسية:**
   - `getExecutiveOverview()`
   - `getMonthlyProfitabilityReport($year, $month)`
-- **Used By:** `Reports` (Page), `AdvancedAnalytics` (Page), `ExecutiveStatsWidget`.
+- **المستخدمون:** `Reports` (Page), `AdvancedAnalytics` (Page), `ExecutiveStatsWidget`.
 
-### 14. `SettingService` (`app/Services/SettingService.php`)
-- **Purpose:** Cached key-value settings storage for tenant customization (center name, logo, Vodafone Cash numbers, InstaPay QR, WhatsApp API keys).
-- **Key Methods:**
+### 14. خدمة الإعدادات وهوية السنتر (`app/Services/SettingService.php`)
+- **الوظيفة:** قراءة وتعديل إعدادات السنتر (اللوجو، أرقام الكاش، بيانات انستاباي، إعدادات الواتساب) مع دعم الكاش (Cache).
+- **الدوال الأساسية:**
   - `get(string $key, $default = null)`
   - `set(string $key, $value)`
-  - `url(string $key)`: Returns full URL for uploaded assets.
-- **Used By:** `ManageSettings` (Page), `ParentPortalController`, and portal templates.
+  - `url(string $key)`: رابط الملفات المرفوعة.
+- **المستخدمون:** `ManageSettings` (Page), `ParentPortalController`, وجميع الواجهات.
 
-### 15. `SubscriptionService` (`app/Services/SubscriptionService.php`)
-- **Purpose:** SaaS tenant subscription lifecycle management, checking trial expiration dates, plan upgrades, and invoice generation.
-- **Key Methods:**
+### 15. خدمة اشتراكات المنصة السحابية (`app/Services/SubscriptionService.php`)
+- **الوظيفة:** إدارة اشتراكات المعلمين بالمنصة، فحص صلاحية التجربة المجانية، وتجديد الباقات.
+- **الدوال الأساسية:**
   - `isSubscriptionActive(Tenant $tenant): bool`
   - `renewSubscription(Tenant $tenant, Plan $plan, int $months)`
   - `recordPayment(Subscription $subscription, array $data)`
-- **Used By:** `CheckSubscription` (Middleware), `SubscriptionPaymentController`, `SuperAdmin Panel`.
+- **المستخدمون:** `CheckSubscription` (Middleware), `SubscriptionPaymentController`, لوحة SuperAdmin.
 
-### 16. `TenantRegistrationService` (`app/Services/TenantRegistrationService.php`)
-- **Purpose:** New teacher signup workflow: creating Tenant record, registering Admin User, setting permissions, assigning default Free Trial.
-- **Key Methods:**
+### 16. خدمة تسجيل معلم جديد (`app/Services/TenantRegistrationService.php`)
+- **الوظيفة:** إجراءات تسجيل سنتر جديد: إنشاء الـ Tenant، حساب المدير، وتعيين الفترة التجريبية.
+- **الدوال الأساسية:**
   - `registerTenant(array $data): Tenant`
-- **Used By:** `PlatformController@register`.
+- **المستخدمون:** `PlatformController@register`.
 
-### 17. `TenantExportService` (`app/Services/TenantExportService.php`)
-- **Purpose:** Complete data backup and export for a specific tenant into zip archives containing CSV/JSON exports.
-- **Key Methods:**
+### 17. خدمة تصدير بيانات السنتر (`app/Services/TenantExportService.php`)
+- **الوظيفة:** تجميع وتصدير كافة بيانات السنتر (الطلاب، الحسابات، الدرجات) في ملف مضغوط.
+- **الدوال الأساسية:**
   - `exportTenantData(Tenant $tenant): string`
-- **Used By:** `TenantResource` in SuperAdmin.
+- **المستخدمون:** `TenantResource` في السوبر أدمن.
 
-### 18. `BackupService` (`app/Services/BackupService.php`)
-- **Purpose:** Generating direct MySQL database dumps and allowing admins to download or restore center backups.
-- **Key Methods:**
+### 18. خدمة النسخ الاحتياطي (`app/Services/BackupService.php`)
+- **الوظيفة:** أخذ نسخ احتياطية لقاعدة البيانات وتحميلها واستعادتها.
+- **الدوال الأساسية:**
   - `createDatabaseBackup(): string`
   - `getAvailableBackups(): array`
-- **Used By:** `Backups` (Filament Page).
+- **المستخدمون:** `Backups` (Page).
 
-### 19. `NotificationService` (`app/Services/NotificationService.php`)
-- **Purpose:** Internal bell notifications in Filament dashboard and SMS alert triggers.
-- **Used By:** Filament notifications and event listeners.
-
----
-
-## 3. Module-by-Module Code Map & Modification Guide (خريطة الموديولات الكاملة لتعديل الكود)
-
-If you need to edit, debug, or add features to any specific module, here are all the connected files for each:
+### 19. خدمة التنبيهات الداخلية (`app/Services/NotificationService.php`)
+- **الوظيفة:** التنبيهات الداخلية في لوحة التحكم ورسائل الـ SMS.
+- **المستخدمون:** لوحات Filament وواجهات البوابات.
 
 ---
 
-### Module 1: Student Management & Bulk Import (إدارة الطلاب والاستيراد)
-- **Database Tables:** `students`, `student_imports`
-- **Models:** `app/Models/Student.php`, `app/Models/StudentImport.php`
-- **Service Layer:** `app/Services/StudentImportService.php`, `app/Services/StudentLedgerService.php`
-- **Background Jobs:** `app/Jobs/ProcessStudentImportJob.php`
-- **Filament Admin Panel:**
-  - Resource: `app/Filament/Resources/StudentResource.php`
-  - Bulk Import Page: `app/Filament/Pages/StudentImports.php`
-- **PDF & Document Generation:** `app/Http/Controllers/StudentPdfController.php` (`printCard`, `printLedger`)
-- **Student Authentication:** `StudentPortalController.php` authenticates students by `id` (student code) and matching `parent_phone`.
+## 3. دليل الموديولات وملفات كل موديول (Code Map)
+
+إذا أردت تعديل أو تطوير أي موديول، إليك قائمة بجميع الملفات المرتبطة به:
 
 ---
 
-### Module 2: Groups, Timetables & Class Sessions (المجموعات والحصص)
-- **Database Tables:** `groups`, `group_schedules`, `group_sessions`, `group_student_pivot`
-- **Models:** `app/Models/Group.php`, `app/Models/GroupSchedule.php`, `app/Models/GroupSession.php`
-- **Filament Admin Panel:**
-  - `app/Filament/Resources/GroupResource.php` (Group details, subject, stage, pricing)
-  - `app/Filament/Resources/GroupSessionResource.php` (Live sessions, attendance sheet, topic covered)
-  - `app/Filament/Pages/WeeklyTimetable.php` (Visual weekly schedule calendar)
+### الموديول 1: إدارة الطلاب والاستيراد الجماعي
+- **الجداول في قاعدة البيانات:** `students`, `student_imports`
+- **النماذج (Models):** `app/Models/Student.php`, `app/Models/StudentImport.php`
+- **الخدمات (Services):** `app/Services/StudentImportService.php`, `app/Services/StudentLedgerService.php`
+- **المهام في الخلفية (Jobs):** `app/Jobs/ProcessStudentImportJob.php`
+- **لوحة التحكم (Filament):**
+  - المورد: `app/Filament/Resources/StudentResource.php`
+  - صفحة الاستيراد: `app/Filament/Pages/StudentImports.php`
+- **طباعة المستندات (PDF):** `app/Http/Controllers/StudentPdfController.php` (`printCard`, `printLedger`)
+- **دخول الطالب:** `StudentPortalController.php` (تسجيل الدخول بكود الطالب وهاتف ولي الأمر).
 
 ---
 
-### Module 3: Attendance Tracking & Smart QR Scanner (الحضور والغياب والباركود)
-- **Database Tables:** `attendances`
-- **Models:** `app/Models/Attendance.php`
-- **Service Layer:** `app/Services/AttendanceService.php`, `app/Services/WhatsAppNotificationService.php`
-- **Filament Admin Panel:**
-  - Smart Scanner: `app/Filament/Pages/QrScanner.php` (Instant QR scanning via camera or barcode gun)
-  - Session Sheet: `app/Filament/Resources/GroupSessionResource.php`
+### الموديول 2: المجموعات الدراسية والجداول والحصص
+- **الجداول في قاعدة البيانات:** `groups`, `group_schedules`, `group_sessions`, `group_student_pivot`
+- **النماذج (Models):** `app/Models/Group.php`, `app/Models/GroupSchedule.php`, `app/Models/GroupSession.php`
+- **لوحة التحكم (Filament):**
+  - `app/Filament/Resources/GroupResource.php` (بيانات المجموعة، المادة، المرحلة، السعر)
+  - `app/Filament/Resources/GroupSessionResource.php` (تسجيل الحصص والحضور والدرس المشروح)
+  - `app/Filament/Pages/WeeklyTimetable.php` (جدول المواعيد الأسبوعي)
 
 ---
 
-### Module 4: Question Bank & AI Importer (بنك الأسئلة والذكاء الاصطناعي)
-- **Database Tables:** `questions`
-- **Models:** `app/Models/Question.php`
-- **Service Layer:** `app/Services/QuestionImportService.php`
-- **Filament Admin Panel:** `app/Filament/Resources/QuestionResource.php`
-- **Features:** Supports `single_choice`, `multiple_choice`, `true_false`, image attachments, topic tags, difficulty levels (`easy`, `medium`, `hard`), and scientific explanations.
+### الموديول 3: الحضور والغياب والباركود الذكي
+- **الجداول في قاعدة البيانات:** `attendances`
+- **النماذج (Models):** `app/Models/Attendance.php`
+- **الخدمات (Services):** `app/Services/AttendanceService.php`, `app/Services/WhatsAppNotificationService.php`
+- **لوحة التحكم (Filament):**
+  - ماسح الـ QR السريع: `app/Filament/Pages/QrScanner.php` (مسح بالكاميرا أو قارئ الباركود)
+  - شيت الحصة: `app/Filament/Resources/GroupSessionResource.php`
 
 ---
 
-### Module 5: Online & Paper Exams (الامتحانات والكويزات الإلكترونية والورقية)
-- **Database Tables:** `exams`, `exam_questions`, `online_exam_attempts`, `exam_results`
-- **Models:** `app/Models/Exam.php`, `app/Models/OnlineExamAttempt.php`, `app/Models/ExamResult.php`
-- **Service Layer:** `app/Services/OnlineExamService.php`, `app/Services/ExamService.php`
-- **Filament Admin Panel:**
+### الموديول 4: بنك الأسئلة والذكاء الاصطناعي
+- **الجداول في قاعدة البيانات:** `questions`
+- **النماذج (Models):** `app/Models/Question.php`
+- **الخدمات (Services):** `app/Services/QuestionImportService.php`
+- **لوحة التحكم (Filament):** `app/Filament/Resources/QuestionResource.php`
+- **الأنواع المدعومة:** اختيار من متعدد فردي وجماعي، صح وخطأ، صور الأسئلة، التصنيف حسب الموضوع، ومستوى الصعوبة والتفسير العلمي.
+
+---
+
+### الموديول 5: الامتحانات الورقية والإلكترونية والكويزات
+- **الجداول في قاعدة البيانات:** `exams`, `exam_questions`, `online_exam_attempts`, `exam_results`
+- **النماذج (Models):** `app/Models/Exam.php`, `app/Models/OnlineExamAttempt.php`, `app/Models/ExamResult.php`
+- **الخدمات (Services):** `app/Services/OnlineExamService.php`, `app/Services/ExamService.php`
+- **لوحة التحكم (Filament):**
   - `app/Filament/Resources/ExamResource.php`
-  - Questions Relation Manager: `app/Filament/Resources/ExamResource/RelationManagers/QuestionsRelationManager.php`
-- **Public & Student Controllers:** `app/Http/Controllers/OnlineExamController.php`
-- **Blade Views:**
-  - Exam Lobby & Instructions: `resources/views/parent-portal/exams/show.blade.php`
-  - Interactive Quiz Runner (Alpine.js + Countdown Timer): `resources/views/parent-portal/exams/take.blade.php`
-  - Detailed Report & Strengths/Weaknesses Breakdown: `resources/views/parent-portal/exams/result.blade.php`
+  - إدارة الأسئلة: `app/Filament/Resources/ExamResource/RelationManagers/QuestionsRelationManager.php`
+- **الكنترولر:** `app/Http/Controllers/OnlineExamController.php`
+- **واجهات Blade:**
+  - تفاصيل الامتحان: `resources/views/parent-portal/exams/show.blade.php`
+  - شاشة الامتحان التفاعلية والمؤقت: `resources/views/parent-portal/exams/take.blade.php`
+  - تقرير النتيجة ونقاط الضعف: `resources/views/parent-portal/exams/result.blade.php`
 
 ---
 
-### Module 6: Homework & Assignments (الواجبات والمهام المنزلية)
-- **Database Tables:** `homeworks`, `homework_questions`, `homework_submissions`
-- **Models:** `app/Models/Homework.php`, `app/Models/HomeworkSubmission.php`
-- **Service Layer:** `app/Services/HomeworkService.php`
-- **Filament Admin Panel:**
-  - Main Resource: `app/Filament/Resources/HomeworkResource.php`
-  - Questions Manager: `app/Filament/Resources/HomeworkResource/RelationManagers/QuestionsRelationManager.php`
-  - Submissions & Grading Manager: `app/Filament/Resources/HomeworkResource/RelationManagers/SubmissionsRelationManager.php`
-- **Controllers:** `app/Http/Controllers/StudentPortalController.php` (`showHomework`, `submitHomework`)
-- **Blade Views:**
-  - Student Homework Solver: `resources/views/student-portal/homework-show.blade.php`
-  - Parent Homework Monitor: `resources/views/parent-portal/dashboard.blade.php`
+### الموديول 6: الواجبات المنزلية والمهام
+- **الجداول في قاعدة البيانات:** `homeworks`, `homework_questions`, `homework_submissions`
+- **النماذج (Models):** `app/Models/Homework.php`, `app/Models/HomeworkSubmission.php`
+- **الخدمات (Services):** `app/Services/HomeworkService.php`
+- **لوحة التحكم (Filament):**
+  - المورد الأساسي: `app/Filament/Resources/HomeworkResource.php`
+  - إدارة أسئلة الواجب: `app/Filament/Resources/HomeworkResource/RelationManagers/QuestionsRelationManager.php`
+  - تسليمات الطلاب والتصحيح: `app/Filament/Resources/HomeworkResource/RelationManagers/SubmissionsRelationManager.php`
+- **الكنترولر:** `app/Http/Controllers/StudentPortalController.php` (`showHomework`, `submitHomework`)
+- **واجهات Blade:**
+  - حل وتسليم الواجب للطالب: `resources/views/student-portal/homework-show.blade.php`
+  - متابعة الواجبات لولي الأمر: `resources/views/parent-portal/dashboard.blade.php`
 
 ---
 
-### Module 7: Accounting, Billing & Online Payments (الحسابات وسداد الرسوم)
-- **Database Tables:** `student_payments`, `expenses`, `expense_categories`, `salaries`, `discounts`, `online_payment_requests`
-- **Models:** `app/Models/StudentPayment.php`, `app/Models/Expense.php`, `app/Models/Salary.php`, `app/Models/OnlinePaymentRequest.php`, `app/Models/Discount.php`
-- **Service Layer:** `app/Services/StudentLedgerService.php`, `app/Services/PaymentService.php`, `app/Services/ExpenseService.php`, `app/Services/SalaryService.php`
-- **Filament Admin Panel:**
-  - `app/Filament/Resources/StudentPaymentResource.php` (Cashier receipts)
-  - `app/Filament/Resources/OnlinePaymentRequestResource.php` (Parent InstaPay/Vodafone Cash review & approval)
-  - `app/Filament/Resources/ExpenseResource.php`
-  - `app/Filament/Resources/SalaryResource.php`
+### الموديول 7: الحسابات وسداد الرسوم والتحصيل
+- **الجداول في قاعدة البيانات:** `student_payments`, `expenses`, `expense_categories`, `salaries`, `discounts`, `online_payment_requests`
+- **النماذج (Models):** `app/Models/StudentPayment.php`, `app/Models/Expense.php`, `app/Models/Salary.php`, `app/Models/OnlinePaymentRequest.php`, `app/Models/Discount.php`
+- **الخدمات (Services):** `app/Services/StudentLedgerService.php`, `app/Services/PaymentService.php`, `app/Services/ExpenseService.php`, `app/Services/SalaryService.php`
+- **لوحة التحكم (Filament):**
+  - إيصالات القبض: `app/Filament/Resources/StudentPaymentResource.php`
+  - مراجعة واعتماد التحويلات الإلكترونية (InstaPay/Cash): `app/Filament/Resources/OnlinePaymentRequestResource.php`
+  - المصروفات والرواتب: `ExpenseResource.php`, `SalaryResource.php`
 
 ---
 
-### Module 8: Study Materials & Inventory (الملازم والمطبوعات والمخزن)
-- **Database Tables:** `study_materials`, `student_material_deliveries`, `inventory_items`, `inventory_movements`
-- **Models:** `app/Models/StudyMaterial.php`, `app/Models/StudentMaterialDelivery.php`, `app/Models/InventoryItem.php`
-- **Filament Admin Panel:**
+### الموديول 8: الملازم والمطبوعات والمخازن
+- **الجداول في قاعدة البيانات:** `study_materials`, `student_material_deliveries`, `inventory_items`, `inventory_movements`
+- **النماذج (Models):** `app/Models/StudyMaterial.php`, `app/Models/StudentMaterialDelivery.php`, `app/Models/InventoryItem.php`
+- **لوحة التحكم (Filament):**
   - `app/Filament/Resources/StudyMaterialResource.php`
   - `app/Filament/Resources/StudentMaterialDeliveryResource.php`
 
 ---
 
-### Module 9: Portals & Landing Pages (بوابات المتابعة والمواقع)
-- **Teacher Profile & Online Student Enrollment:**
-  - Route: `/t/{tenant}`
-  - Controller: `app/Http/Controllers/HomeController.php`
-  - View: `resources/views/tenant-landing/index.blade.php`
-  - Admin Approval: `app/Filament/Resources/StudentApplicationResource.php`
-- **Student Portal:**
-  - Routes: `/t/{tenant}/student/*`
-  - Controller: `app/Http/Controllers/StudentPortalController.php`
-  - Views: `resources/views/student-portal/login.blade.php`, `resources/views/student-portal/dashboard.blade.php`
-- **Parent Portal:**
-  - Routes: `/t/{tenant}/parent/*`
-  - Controller: `app/Http/Controllers/ParentPortalController.php`
-  - Views: `resources/views/parent-portal/login.blade.php`, `resources/views/parent-portal/dashboard.blade.php`
+### الموديول 9: البوابات والمواقع التعريفية
+- **موقع المعلم وحجز الطلاب الجدد:**
+  - الرابط: `/t/{tenant}`
+  - الكنترولر: `app/Http/Controllers/HomeController.php`
+  - الواجهة: `resources/views/tenant-landing/index.blade.php`
+  - قبول طلبات الحجز: `app/Filament/Resources/StudentApplicationResource.php`
+- **بوابة الطالب:**
+  - الروابط: `/t/{tenant}/student/*`
+  - الكنترولر: `app/Http/Controllers/StudentPortalController.php`
+  - الواجهات: `resources/views/student-portal/login.blade.php`, `resources/views/student-portal/dashboard.blade.php`
+- **بوابة ولي الأمر:**
+  - الروابط: `/t/{tenant}/parent/*`
+  - الكنترولر: `app/Http/Controllers/ParentPortalController.php`
+  - الواجهات: `resources/views/parent-portal/login.blade.php`, `resources/views/parent-portal/dashboard.blade.php`
 
 ---
 
-### Module 10: SaaS Tenant Subscriptions & SuperAdmin (اشتراكات المدرسين والمنصة)
-- **Database Tables:** `tenants`, `plans`, `subscriptions`, `subscription_payments`
-- **Models:** `app/Models/Tenant.php`, `app/Models/Plan.php`, `app/Models/Subscription.php`, `app/Models/SubscriptionPayment.php`
-- **Middleware:** `app/Http/Middleware/CheckSubscription.php` (Restricts expired tenants)
-- **Service Layer:** `app/Services/SubscriptionService.php`
-- **SuperAdmin Panel (`/super-admin`):**
-  - Panel Config: `app/Providers/Filament/SuperAdminPanelProvider.php`
-  - Resources: `TenantResource.php`, `PlanResource.php`, `SubscriptionResource.php`, `SubscriptionPaymentResource.php`
-- **Teacher Subscription Management UI:**
-  - Controller: `app/Http/Controllers/SubscriptionPaymentController.php`
-  - Views: `resources/views/subscription/status.blade.php`, `resources/views/subscription/pay.blade.php`
+### الموديول 10: اشتراكات المعلمين بالسحابة ولوحة السوبر أدمن
+- **الجداول في قاعدة البيانات:** `tenants`, `plans`, `subscriptions`, `subscription_payments`
+- **النماذج (Models):** `app/Models/Tenant.php`, `app/Models/Plan.php`, `app/Models/Subscription.php`, `app/Models/SubscriptionPayment.php`
+- **الوسيط (Middleware):** `app/Http/Middleware/CheckSubscription.php`
+- **الخدمات (Services):** `app/Services/SubscriptionService.php`
+- **لوحة السوبر أدمن (`/super-admin`):**
+  - مزود اللوحة: `app/Providers/Filament/SuperAdminPanelProvider.php`
+  - الموارد: `TenantResource.php`, `PlanResource.php`, `SubscriptionResource.php`, `SubscriptionPaymentResource.php`
+- **شاشة سداد وتجديد اشتراك المعلم:**
+  - الكنترولر: `app/Http/Controllers/SubscriptionPaymentController.php`
+  - الواجهات: `resources/views/subscription/status.blade.php`, `resources/views/subscription/pay.blade.php`
 
 ---
 
-### Module 11: Settings, Customization & Backups (الإعدادات والنسخ الاحتياطي)
-- **Models:** `app/Models/TenantSetting.php`
-- **Service Layer:** `app/Services/SettingService.php`, `app/Services/BackupService.php`
-- **Filament Pages:**
-  - `app/Filament/Pages/ManageSettings.php` (Logo, contact numbers, payment accounts, WhatsApp API config)
-  - `app/Filament/Pages/Backups.php` (MySQL database export and restore)
+### الموديول 11: الإعدادات والنسخ الاحتياطي
+- **النماذج (Models):** `app/Models/TenantSetting.php`
+- **الخدمات (Services):** `app/Services/SettingService.php`, `app/Services/BackupService.php`
+- **صفحات Filament:**
+  - إعدادات السنتر: `app/Filament/Pages/ManageSettings.php` (اللوجو، أرقام الكاش، حسابات انستاباي، إعدادات الواتساب)
+  - النسخ الاحتياطي: `app/Filament/Pages/Backups.php`
 
 ---
 
-## 4. Routing Architecture & Route Tree (شجرة المسارات)
+## 4. شجرة المسارات المعتمدة (Routing Architecture)
 
-All routes are registered in `routes/web.php` with distinct prefixes and named route groups:
+جميع المسارات معرفة ومجمعة داخل `routes/web.php`:
 
-```
-Platform / Marketing Routes:
-  GET  /                              --> platform.home
-  GET  /pricing                       --> platform.pricing
-  GET  /register                      --> platform.register
-  POST /register                      --> platform.register.submit
+### مسارات المنصة العامة والتسويق (Platform Marketing):
+- `GET  /` ⬅️ `platform.home`
+- `GET  /pricing` ⬅️ `platform.pricing`
+- `GET  /register` ⬅️ `platform.register`
+- `POST /register` ⬅️ `platform.register.submit`
 
-Tenant Scoped Routes (/t/{tenant}/ - Middleware: tenant.resolve):
-  Teacher Landing & Enrollment:
-    GET  /t/{tenant}/                 --> tenant.home
-    POST /t/{tenant}/enroll           --> tenant.enroll.submit
+### مسارات المدرسين المعزولة (`/t/{tenant}/` مع وسيط `tenant.resolve`):
+- **موقع المدرس وحجز الطلاب:**
+  - `GET  /t/{tenant}/` ⬅️ `tenant.home`
+  - `POST /t/{tenant}/enroll` ⬅️ `tenant.enroll.submit`
+- **بوابة الطالب:**
+  - `GET  /t/{tenant}/student/login` ⬅️ `tenant.student.login`
+  - `POST /t/{tenant}/student/login` ⬅️ `tenant.student.login.submit`
+  - `GET  /t/{tenant}/student/dashboard` ⬅️ `tenant.student.dashboard`
+  - `GET  /t/{tenant}/student/logout` ⬅️ `tenant.student.logout`
+  - `GET  /t/{tenant}/student/exams/{id}` ⬅️ `tenant.student.exams.show`
+  - `GET  /t/{tenant}/student/exams/{id}/start` ⬅️ `tenant.student.exams.start`
+  - `POST /t/{tenant}/student/exams/{id}/submit` ⬅️ `tenant.student.exams.submit`
+  - `GET  /t/{tenant}/student/exams/{id}/result` ⬅️ `tenant.student.exams.result`
+  - `GET  /t/{tenant}/student/homeworks/{id}` ⬅️ `tenant.student.homeworks.show`
+  - `POST /t/{tenant}/student/homeworks/{id}/submit` ⬅️ `tenant.student.homeworks.submit`
+- **بوابة ولي الأمر:**
+  - `GET  /t/{tenant}/parent/login` ⬅️ `tenant.parent.login`
+  - `POST /t/{tenant}/parent/login` ⬅️ `tenant.parent.login.submit`
+  - `GET  /t/{tenant}/parent/dashboard` ⬅️ `tenant.parent.dashboard`
+  - `POST /t/{tenant}/parent/payment` ⬅️ `tenant.parent.payment.submit`
+  - `GET  /t/{tenant}/parent/logout` ⬅️ `tenant.parent.logout`
+  - `GET  /t/{tenant}/parent/exams/{id}` ⬅️ `tenant.parent.exams.show`
+  - `GET  /t/{tenant}/parent/exams/{id}/result` ⬅️ `tenant.parent.exams.result`
+- **إدارة اشتراك المعلم:**
+  - `GET  /t/{tenant}/subscription/status` ⬅️ `tenant.subscription.status`
+  - `GET  /t/{tenant}/subscription/pay` ⬅️ `tenant.subscription.pay`
+  - `POST /t/{tenant}/subscription/pay` ⬅️ `tenant.subscription.pay.submit`
 
-  Student Portal:
-    GET  /t/{tenant}/student/login          --> tenant.student.login
-    POST /t/{tenant}/student/login          --> tenant.student.login.submit
-    GET  /t/{tenant}/student/dashboard      --> tenant.student.dashboard
-    GET  /t/{tenant}/student/logout         --> tenant.student.logout
-    GET  /t/{tenant}/student/exams/{id}     --> tenant.student.exams.show
-    GET  /t/{tenant}/student/exams/{id}/start --> tenant.student.exams.start
-    POST /t/{tenant}/student/exams/{id}/submit --> tenant.student.exams.submit
-    GET  /t/{tenant}/student/exams/{id}/result --> tenant.student.exams.result
-    GET  /t/{tenant}/student/homeworks/{id}  --> tenant.student.homeworks.show
-    POST /t/{tenant}/student/homeworks/{id}/submit --> tenant.student.homeworks.submit
-
-  Parent Portal:
-    GET  /t/{tenant}/parent/login           --> tenant.parent.login
-    POST /t/{tenant}/parent/login           --> tenant.parent.login.submit
-    GET  /t/{tenant}/parent/dashboard       --> tenant.parent.dashboard
-    POST /t/{tenant}/parent/payment         --> tenant.parent.payment.submit
-    GET  /t/{tenant}/parent/logout          --> tenant.parent.logout
-    GET  /t/{tenant}/parent/exams/{id}      --> tenant.parent.exams.show
-    GET  /t/{tenant}/parent/exams/{id}/result --> tenant.parent.exams.result
-
-  Teacher SaaS Subscription Renewal:
-    GET  /t/{tenant}/subscription/status    --> tenant.subscription.status
-    GET  /t/{tenant}/subscription/pay       --> tenant.subscription.pay
-    POST /t/{tenant}/subscription/pay       --> tenant.subscription.pay.submit
-    GET  /t/{tenant}/subscription/history   --> tenant.subscription.history
-
-Filament Dashboards:
-  /admin/{tenant}                     --> Teacher Control Panel
-  /super-admin                        --> Platform SuperAdmin Dashboard
-```
+### لوحات تحكم Filament:
+- `/admin/{tenant}` ⬅️ لوحة تحكم المعلم والسنتر
+- `/super-admin` ⬅️ لوحة إدارة المنظومة السحابية
 
 ---
 
-## 5. Troubleshooting & Debugging Guide (دليل حل المشاكل البرمجية)
+## 5. لوحات تحكم Filament وتكوين الـ Tenancy
 
-### Issue 1: `Route [xxx] not defined`
-- **Cause:** Calling a route name without passing the mandatory `tenant` route parameter.
-- **Fix:** Always provide `tenant` slug:
-  `route('tenant.student.dashboard', ['tenant' => $currentTenant->slug])`
+1. **لوحة تحكم المعلم والسنتر (Admin Panel):**
+   - **المزود:** `app/Providers/Filament/AdminPanelProvider.php`
+   - **الرابط:** `/admin/{tenant}`
+   - **العزل:** مفعل عبر `.tenant(Tenant::class, slugAttribute: 'slug')`
+   - **الموارد:** مجلد `app/Filament/Resources/`
+   - **الصفحات:** مجلد `app/Filament/Pages/`
+   - **الودجات:** مجلد `app/Filament/Widgets/`
 
-### Issue 2: `The model [Tenant] does not have a relationship named [xxx]`
-- **Cause:** Filament expects an Eloquent relationship on `Tenant.php` matching the resource model.
-- **Fix:**
-  1. Add the `HasMany` relation in `app/Models/Tenant.php`:
+2. **لوحة السوبر أدمن (SuperAdmin Panel):**
+   - **المزود:** `app/Providers/Filament/SuperAdminPanelProvider.php`
+   - **الرابط:** `/super-admin`
+   - **العزل:** غير مقيدة بـ Tenant لإدارة ومراقبة جميع المشتركين والمدفوعات.
+   - **الموارد:** مجلد `app/Filament/SuperAdmin/Resources/`
+
+---
+
+## 6. دليل حل المشاكل البرمجية الشائعة (Troubleshooting)
+
+### المشكلة 1: خطأ `Route [xxx] not defined`
+- **السبب:** استدعاء مسار معزول بدون تمرير متغير الـ `tenant`.
+- **الحل:** مرر اسم المدرس دائماً:
+  ```php
+  route('tenant.student.dashboard', ['tenant' => $currentTenant->slug])
+  ```
+
+### المشكلة 2: خطأ `The model [Tenant] does not have a relationship named [xxx]` في Filament
+- **السبب:** Filament يبحث عن علاقة Eloquent داخل `Tenant.php` تربطه بجدول الموديل الجديد.
+- **الحل:**
+  1. أضف العلاقة داخل `app/Models/Tenant.php`:
      ```php
      public function myModels(): HasMany {
          return $this->hasMany(MyModel::class);
      }
      ```
-  2. Set `$tenantRelationshipName = 'myModels';` in the Filament Resource class.
+  2. حدد اسم العلاقة في ملف الـ Resource:
+     ```php
+     protected static ?string $tenantRelationshipName = 'myModels';
+     ```
 
-### Issue 3: Newly created record not visible to students
-- **Checklist:**
-  - Is `status` set to `'published'`?
-  - Does the record's `stage_id` match the student's `stage_id`?
-  - If `group_id` is specified, is the student an active member of that group?
-  - Is `tenant_id` correctly assigned?
+### المشكلة 3: بيانات مدرس تظهر لمدرس آخر (Data Leak)
+- **السبب:** نسيان استخدام Trait `BelongsToTenant`.
+- **الحل:** أضف `use BelongsToTenant;` داخل الـ Model وتأكد من وجود عمود `tenant_id` في جدول قاعدة البيانات.
 
-### Issue 4: Changes to views, config, or routes not reflecting
-- **Fix:** Clear all compiled caches:
+### المشكلة 4: عنصر تم حفظه في اللوحة ولا يظهر للطالب أو ولي الأمر
+- **قائمة الفحص:**
+  - هل حالة العنصر `published` وليست `draft`؟
+  - هل `stage_id` تطابق مرحلة الطالب؟
+  - إذا كان مرتبطاً بمجموعة `group_id`، هل الطالب منضم لتلك المجموعة؟
+  - هل `tenant_id` متطابق؟
+
+### المشكلة 5: تعديلات الكود أو الواجهات لا تنعكس في المتصفح
+- **الحل الفوري:** تشغيل أمر تنظيف الكاش الشامل:
   ```bash
   php artisan optimize:clear
   ```
