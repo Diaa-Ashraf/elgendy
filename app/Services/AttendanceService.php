@@ -39,7 +39,7 @@ class AttendanceService
 
         $targetDays = $schedules->pluck('day_of_week')
             ->map(fn ($day) => $dayMapping[strtolower($day)] ?? null)
-            ->filter()
+            ->filter(fn ($val) => !is_null($val))
             ->unique()
             ->toArray();
 
