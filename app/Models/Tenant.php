@@ -146,6 +146,16 @@ class Tenant extends Model
         return $this->hasMany(StudentImport::class);
     }
 
+    public function homeworks(): HasMany
+    {
+        return $this->hasMany(Homework::class);
+    }
+
+    public function homeworkSubmissions(): HasMany
+    {
+        return $this->hasMany(HomeworkSubmission::class);
+    }
+
     // Helper لقراءة الإعدادات السريعة
     public function getSetting(string $key, mixed $default = null): mixed
     {
