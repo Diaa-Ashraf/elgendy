@@ -100,6 +100,7 @@
                                 </div>
                             @endforeach
                         </div>
+                    @endif
                 </div>
 
                 {{-- 2. الواجبات المنزلية --}}
