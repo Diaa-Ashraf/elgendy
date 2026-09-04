@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| 🌐 1. مسارات منصة الـ SaaS العامة (Platform Marketing & Pricing)
+|  1. مسارات منصة الـ SaaS العامة (Platform Marketing & Pricing)
 |--------------------------------------------------------------------------
 */
 Route::get('/', [PlatformController::class, 'index'])->name('platform.home');
@@ -20,7 +20,7 @@ Route::post('/register', [PlatformController::class, 'register'])->name('platfor
 
 /*
 |--------------------------------------------------------------------------
-| 🏫 2. مسارات المؤسسات التعليمية والمدرسين (Tenant Scope: /t/{tenant})
+|  2. مسارات المؤسسات التعليمية والمدرسين (Tenant Scope: /t/{tenant})
 |--------------------------------------------------------------------------
 */
 Route::prefix('t/{tenant}')
@@ -45,7 +45,7 @@ Route::prefix('t/{tenant}')
             Route::post('/homeworks/{id}/submit', [StudentPortalController::class, 'submitHomework'])->name('homeworks.submit');
         });
 
-        // 👨‍👩‍👦 ب. بوابة ولي الأمر (Parent Portal)
+        // ب. بوابة ولي الأمر (Parent Portal)
         Route::prefix('parent')->name('tenant.parent.')->group(function () {
             Route::get('/login', [ParentPortalController::class, 'showLogin'])->name('login');
             Route::post('/login', [ParentPortalController::class, 'login'])->name('login.submit');
@@ -58,7 +58,7 @@ Route::prefix('t/{tenant}')
             Route::get('/exams/{id}/result', [OnlineExamController::class, 'result'])->name('exams.result');
         });
 
-        // 💳 د. إدارة اشتراك المدرس وسداد الرسوم (Teacher Subscription)
+        //  د. إدارة اشتراك المدرس وسداد الرسوم (Teacher Subscription)
         Route::prefix('subscription')->name('tenant.subscription.')->group(function () {
             Route::get('/status', [\App\Http\Controllers\SubscriptionPaymentController::class, 'status'])->name('status');
             Route::get('/pay', [\App\Http\Controllers\SubscriptionPaymentController::class, 'showPay'])->name('pay');
@@ -66,7 +66,7 @@ Route::prefix('t/{tenant}')
             Route::get('/history', [\App\Http\Controllers\SubscriptionPaymentController::class, 'history'])->name('history');
         });
 
-        // 🌐 هـ. الموقع التعريفي للمدرس وحجز الطلاب (Teacher Landing & Enrollment)
+        //  هـ. الموقع التعريفي للمدرس وحجز الطلاب (Teacher Landing & Enrollment)
         Route::get('/', [HomeController::class, 'index'])->name('tenant.home');
         Route::post('/enroll', [HomeController::class, 'submitEnrollment'])->name('tenant.enroll.submit');
         Route::get('/api/stages/{stage}/groups', [HomeController::class, 'getGroupsByStage'])->name('tenant.stage.groups');
@@ -74,7 +74,7 @@ Route::prefix('t/{tenant}')
 
 /*
 |--------------------------------------------------------------------------
-| 📄 3. المستندات والطباعة (Authenticated Admin Utilities)
+|  3. المستندات والطباعة (Authenticated Admin Utilities)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->group(function () {
@@ -85,7 +85,7 @@ Route::middleware(['auth'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| 🖼️ 4. مسار قراءة ملفات الميديا والصور احتياطياً لاستضافات cPanel
+|  4. مسار قراءة ملفات الميديا والصور احتياطياً لاستضافات cPanel
 |--------------------------------------------------------------------------
 */
 Route::get('/storage/{path}', function ($path) {
