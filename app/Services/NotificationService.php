@@ -13,52 +13,64 @@ class NotificationService
      */
     public static function sendSystemNotification(string $title, string $body, string $type = 'info', ?string $url = null): void
     {
-        $users = User::all();
+        // إرسال الإشعار للمستخدمين النشطين فقط دفعة واحدة
+        $users = User::select('id')->get();
+        if ($users->isEmpty()) {
+            return;
+        }
+
+        $notificationData = json_encode([
+            'actions' => $url ? [
+                [
+                    'name' => 'view',
+                    'label' => 'عرض التفاصيل',
+                    'url' => $url,
+                ]
+            ] : [],
+            'body' => $body,
+            'color' => match ($type) {
+                'success' => 'success',
+                'warning' => 'warning',
+                'danger' => 'danger',
+                default => 'info',
+            },
+            'duration' => 'persistent',
+            'icon' => match ($type) {
+                'success' => 'heroicon-o-check-circle',
+                'warning' => 'heroicon-o-exclamation-triangle',
+                'danger' => 'heroicon-o-x-circle',
+                default => 'heroicon-o-information-circle',
+            },
+            'iconColor' => match ($type) {
+                'success' => 'success',
+                'warning' => 'warning',
+                'danger' => 'danger',
+                default => 'info',
+            },
+            'status' => $type,
+            'title' => $title,
+            'view' => 'filament-notifications::notification',
+            'viewData' => [],
+            'format' => 'filament',
+        ]);
+
+        $now = now();
+        $notifications = [];
 
         foreach ($users as $user) {
-            $notificationData = [
-                'actions' => $url ? [
-                    [
-                        'name' => 'view',
-                        'label' => 'عرض التفاصيل',
-                        'url' => $url,
-                    ]
-                ] : [],
-                'body' => $body,
-                'color' => match ($type) {
-                    'success' => 'success',
-                    'warning' => 'warning',
-                    'danger' => 'danger',
-                    default => 'info',
-                },
-                'duration' => 'persistent',
-                'icon' => match ($type) {
-                    'success' => 'heroicon-o-check-circle',
-                    'warning' => 'heroicon-o-exclamation-triangle',
-                    'danger' => 'heroicon-o-x-circle',
-                    default => 'heroicon-o-information-circle',
-                },
-                'iconColor' => match ($type) {
-                    'success' => 'success',
-                    'warning' => 'warning',
-                    'danger' => 'danger',
-                    default => 'info',
-                },
-                'status' => $type,
-                'title' => $title,
-                'view' => 'filament-notifications::notification',
-                'viewData' => [],
-                'format' => 'filament',
-            ];
-
-            \Illuminate\Notifications\DatabaseNotification::create([
+            $notifications[] = [
                 'id' => (string) \Illuminate\Support\Str::uuid(),
                 'type' => 'Filament\Notifications\DatabaseNotification',
-                'notifiable_type' => get_class($user),
+                'notifiable_type' => User::class,
                 'notifiable_id' => $user->id,
                 'data' => $notificationData,
-            ]);
+                'read_at' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
         }
+
+        \Illuminate\Notifications\DatabaseNotification::insert($notifications);
     }
 
     /**

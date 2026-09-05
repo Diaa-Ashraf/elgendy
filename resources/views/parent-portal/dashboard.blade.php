@@ -543,7 +543,7 @@
             </div>
 
             {{-- نموذج رفع الإيصال --}}
-            <form action="{{ route('parent.payment.submit') }}" method="POST" enctype="multipart/form-data" class="space-y-3">
+            <form action="{{ route('parent.payment.submit') }}" method="POST" enctype="multipart/form-data" class="space-y-3" x-data="{ isSubmitting: false }" @submit="isSubmitting = true">
                 @csrf
                 <input type="hidden" name="payment_method" :value="activeMethod">
 
@@ -584,8 +584,15 @@
                     <input type="text" name="notes" placeholder="مثال: رسوم شهر 9 + ملزمة الوحدة الأولى" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
                 </div>
 
-                <button type="submit" class="w-full mt-2 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-2xl text-xs font-black shadow-lg shadow-emerald-950 transition flex items-center justify-center gap-2">
-                    <span>🚀</span> إرسال إشعار السداد للتأكيد
+                <button type="submit" :disabled="isSubmitting" class="w-full mt-2 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-2xl text-xs font-black shadow-lg shadow-emerald-950 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span x-show="!isSubmitting">🚀 إرسال إشعار السداد للتأكيد</span>
+                    <span x-show="isSubmitting" class="flex items-center gap-2">
+                        <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        جاري إرسال وتأكيد الطلب...
+                    </span>
                 </button>
             </form>
         </div>

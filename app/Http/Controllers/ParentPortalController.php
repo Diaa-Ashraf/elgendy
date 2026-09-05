@@ -159,14 +159,14 @@ class ParentPortalController extends Controller
             'sender_phone' => 'nullable|string|max:50',
             'transaction_reference' => 'nullable|string|max:100',
             'notes' => 'nullable|string|max:500',
-            'receipt' => 'required|image|mimes:jpeg,png,jpg,webp,heic|max:5120',
+            'receipt' => 'required|file|mimes:jpeg,png,jpg,webp,heic,heif|max:10240',
         ], [
             'amount.required' => 'يرجى إدخال المبلغ المحول بدقة.',
             'amount.numeric' => 'المبلغ يجب أن يكون رقماً صحيحاً.',
             'amount.min' => 'المبلغ المحول يجب ألا يقل عن 1 ج.م.',
             'receipt.required' => 'صورة إيصال التحويل (Screenshot) مطلوبة لتأكيد الدفع.',
-            'receipt.image' => 'الملف المرفق يجب أن يكون صورة صالحة.',
-            'receipt.max' => 'حجم الصورة لا يجب أن يتعدى 5 ميجابايت.',
+            'receipt.mimes' => 'صورة الإيصال يجب أن تكون بصيغة (JPG, PNG, WEBP, HEIC).',
+            'receipt.max' => 'حجم الصورة لا يجب أن يتعدى 10 ميجابايت.',
         ]);
 
         $receiptPath = $request->file('receipt')->store('payment-receipts', 'public');
