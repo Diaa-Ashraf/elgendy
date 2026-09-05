@@ -156,7 +156,7 @@
             {{-- Desktop Main Menu --}}
             <nav class="hidden lg:flex items-center gap-7 text-sm font-bold text-slate-600">
                 <a href="#about-teacher" class="hover:text-sky-700 transition py-1 text-slate-900 font-extrabold flex items-center gap-1.5">
-                    <span>👨‍🏫</span>
+                    
                     <span>عن المعلم</span>
                 </a>
                 <a href="#features" class="hover:text-sky-700 transition py-1">المميزات</a>
@@ -168,7 +168,7 @@
             {{-- Action Buttons & Mobile Hamburger --}}
             <div class="flex items-center gap-2 sm:gap-2.5">
                 <a href="{{ route('parent.login') }}" class="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300/80 rounded-xl text-xs sm:text-sm font-bold text-slate-800 transition flex items-center gap-1.5">
-                    <span>👨‍👩‍👦</span>
+                    
                     <span class="hidden xs:inline sm:inline">بوابة ولي الأمر</span>
                     <span class="inline xs:hidden sm:hidden">البوابة</span>
                 </a>
@@ -192,19 +192,19 @@
         {{-- Mobile Drawer Menu --}}
         <div id="mobileMenu" class="hidden lg:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-5 space-y-2 shadow-xl transition-all">
             <a href="#about-teacher" onclick="closeMobileMenu()" class="block px-3 py-2.5 rounded-xl font-bold text-slate-800 hover:bg-slate-100 transition text-sm">
-                👨‍🏫 عن {{ $settings['teacher_name'] }}
+                 عن {{ $settings['teacher_name'] }}
             </a>
             <a href="#features" onclick="closeMobileMenu()" class="block px-3 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-100 transition text-sm">
-                ⭐ مميزات المنظومة التعليمية
+                مميزات المنظومة التعليمية
             </a>
             <a href="#stages" onclick="closeMobileMenu()" class="block px-3 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-100 transition text-sm">
-                🏫 المراحل والصفوف الدراسية
+                المراحل والصفوف الدراسية
             </a>
             <a href="#groups" onclick="closeMobileMenu()" class="block px-3 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-100 transition text-sm">
-                📅 جدول مواعيد المجموعات
+                 جدول مواعيد المجموعات
             </a>
             <a href="#enroll" onclick="closeMobileMenu()" class="block px-3 py-2.5 rounded-xl font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 transition text-sm text-center">
-                📝 تقديم طلب وتسجيل جديد
+                تقديم طلب وتسجيل جديد
             </a>
             <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
                 <a href="{{ route('parent.login') }}" class="flex-1 py-2 text-center bg-slate-100 rounded-xl text-xs font-bold text-slate-800">
@@ -244,11 +244,11 @@
 
                     <div data-aos="fade-up" data-aos-delay="300" class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 max-w-md mx-auto lg:mx-0">
                         <a href="#enroll" class="w-full sm:w-auto px-7 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
-                            <span>📝 حجز مقعد دراسي جديد</span>
+                            <span> حجز مقعد دراسي جديد</span>
                             <span>←</span>
                         </a>
                         <a href="#about-teacher" class="w-full sm:w-auto px-6 py-3.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold rounded-xl text-xs sm:text-sm transition backdrop-blur-sm flex items-center justify-center gap-2">
-                            <span>🎓 سيرة ومنهجية المعلم</span>
+                            <span> سيرة ومنهجية المعلم</span>
                         </a>
                     </div>
 
@@ -293,25 +293,25 @@
 
             </div>
 
-            {{-- 📊 ACADEMIC HIGHLIGHTS (4 Responsive Pillars) --}}
+            {{--  ACADEMIC HIGHLIGHTS (4 Responsive Pillars) --}}
             <div data-aos="fade-up" data-aos-delay="400" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mt-12 sm:mt-16 max-w-5xl mx-auto">
                 <div class="bg-white/5 border border-white/10 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl text-center backdrop-blur-sm">
-                    <div class="text-xl sm:text-2xl mb-1 sm:mb-2">🎯</div>
+                    <div class="text-xl sm:text-2xl mb-1 sm:mb-2"></div>
                     <span class="block text-base sm:text-xl lg:text-2xl font-heading font-black text-white mb-0.5 sm:mb-1">{{ $settings['hero_pillar_1_title'] }}</span>
                     <span class="text-[11px] sm:text-xs text-slate-300 font-medium">{{ $settings['hero_pillar_1_desc'] }}</span>
                 </div>
                 <div class="bg-white/5 border border-white/10 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl text-center backdrop-blur-sm">
-                    <div class="text-xl sm:text-2xl mb-1 sm:mb-2">📲</div>
+                    <div class="text-xl sm:text-2xl mb-1 sm:mb-2"></div>
                     <span class="block text-base sm:text-xl lg:text-2xl font-heading font-black text-emerald-300 mb-0.5 sm:mb-1">{{ $settings['hero_pillar_2_title'] }}</span>
                     <span class="text-[11px] sm:text-xs text-slate-300 font-medium">{{ $settings['hero_pillar_2_desc'] }}</span>
                 </div>
                 <div class="bg-white/5 border border-white/10 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl text-center backdrop-blur-sm">
-                    <div class="text-xl sm:text-2xl mb-1 sm:mb-2">🏷️</div>
+                    <div class="text-xl sm:text-2xl mb-1 sm:mb-2"></div>
                     <span class="block text-base sm:text-xl lg:text-2xl font-heading font-black text-sky-300 mb-0.5 sm:mb-1">{{ $settings['hero_pillar_3_title'] }}</span>
                     <span class="text-[11px] sm:text-xs text-slate-300 font-medium">{{ $settings['hero_pillar_3_desc'] }}</span>
                 </div>
                 <div class="bg-white/5 border border-white/10 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl text-center backdrop-blur-sm">
-                    <div class="text-xl sm:text-2xl mb-1 sm:mb-2">📑</div>
+                    <div class="text-xl sm:text-2xl mb-1 sm:mb-2"></div>
                     <span class="block text-base sm:text-xl lg:text-2xl font-heading font-black text-amber-300 mb-0.5 sm:mb-1">{{ $settings['hero_pillar_4_title'] }}</span>
                     <span class="text-[11px] sm:text-xs text-slate-300 font-medium">{{ $settings['hero_pillar_4_desc'] }}</span>
                 </div>
@@ -468,7 +468,7 @@
                 <div class="clean-card p-6 sm:p-8 rounded-2xl flex flex-col justify-between" data-aos="fade-up" data-aos-delay="200">
                     <div>
                         <div class="w-11 h-11 sm:w-12 sm:h-12 bg-emerald-50 text-emerald-700 rounded-xl flex items-center justify-center text-xl sm:text-2xl mb-4 sm:mb-5 border border-emerald-100 font-bold">
-                            📊
+                            
                         </div>
                         <h3 class="font-heading font-bold text-base sm:text-lg text-slate-900 mb-2">{{ $settings['feature_2_title'] }}</h3>
                         <p class="text-slate-600 text-xs sm:text-sm leading-relaxed">
@@ -484,7 +484,7 @@
                 <div class="clean-card p-6 sm:p-8 rounded-2xl flex flex-col justify-between md:col-span-2 lg:col-span-1" data-aos="fade-up" data-aos-delay="300">
                     <div>
                         <div class="w-11 h-11 sm:w-12 sm:h-12 bg-amber-50 text-amber-700 rounded-xl flex items-center justify-center text-xl sm:text-2xl mb-4 sm:mb-5 border border-amber-100 font-bold">
-                            🏆
+                            
                         </div>
                         <h3 class="font-heading font-bold text-base sm:text-lg text-slate-900 mb-2">{{ $settings['feature_3_title'] }}</h3>
                         <p class="text-slate-600 text-xs sm:text-sm leading-relaxed">
@@ -514,7 +514,7 @@
                         <div>
                             <div class="flex items-center justify-between mb-4">
                                 <div class="w-10 h-10 bg-slate-100 text-slate-700 rounded-xl flex items-center justify-center font-bold text-lg border border-slate-200">
-                                    🏫
+                                    
                                 </div>
                                 <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-200">
                                     {{ $stage->students_count }} طالب مقيد
@@ -565,7 +565,7 @@
                             <p class="text-xs font-semibold text-slate-500">المادة: <span class="font-bold text-slate-800">{{ $group->subject?->name ?? $settings['teacher_subject'] }}</span></p>
 
                             <div class="space-y-2 pt-2 border-t border-slate-100">
-                                <span class="text-xs font-bold text-slate-600 block">📅 المواعيد الأسبوعية:</span>
+                                <span class="text-xs font-bold text-slate-600 block"> المواعيد الأسبوعية:</span>
                                 @forelse($group->schedules as $sched)
                                     <div class="flex items-center justify-between text-xs font-medium text-slate-700 bg-slate-50 p-2 rounded-lg border border-slate-200">
                                         <span class="font-bold">
@@ -720,7 +720,7 @@
             @endif
 
             <p class="font-medium text-center md:text-left text-slate-400">
-                {{ $settings['footer_copyright_text'] }} © {{ date('Y') }} — {{ $settings['center_name'] }}
+                {{ $settings['footer_copyright_text'] }}  {{ date('Y') }} — {{ $settings['center_name'] }}
             </p>
         </div>
     </footer>

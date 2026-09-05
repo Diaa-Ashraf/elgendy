@@ -431,7 +431,7 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
         $settingService->setMany($formData);
 
         Notification::make()
-            ->title('تم حفظ وتحديث إعدادات النظام والموقع بنجاح ✨')
+            ->title('تم حفظ وتحديث إعدادات النظام والموقع بنجاح')
             ->success()
             ->send();
     }

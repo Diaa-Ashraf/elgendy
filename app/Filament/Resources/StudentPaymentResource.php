@@ -175,7 +175,7 @@ class StudentPaymentResource extends Resource
                             ->options([
                                 'cash' => 'نقداً (كاش)',
                                 'vodafone_cash' => 'فودافون كاش / محفظة إلكترونية 📱',
-                                'instapay' => 'انستاباي (InstaPay) ⚡',
+                                'instapay' => 'انستاباي (InstaPay)',
                                 'other' => 'طريقة أخرى / تحويل بنكي',
                             ])
                             ->default('cash')

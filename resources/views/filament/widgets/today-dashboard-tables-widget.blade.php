@@ -69,7 +69,7 @@
                             <span>مركز التنبيهات والإشعارات اللحظية</span>
                         </div>
                         <span class="text-xs px-2.5 py-1 bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 rounded-full font-bold">
-                            تحديث تلقائي ⚡
+                            تحديث تلقائي
                         </span>
                     </div>
                 </x-slot>
@@ -125,7 +125,7 @@
                             </div>
                             <a href="{{ url('/admin/student-applications/' . $app->id . '/edit') }}"
                                class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-black transition flex items-center gap-1 shadow-md shadow-amber-600/20">
-                                ⚡ مراجعة
+                                مراجعة
                             </a>
                         </div>
                     @empty

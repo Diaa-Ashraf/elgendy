@@ -250,7 +250,7 @@ class HomeworkResource extends Resource
                         ]);
 
                         Notification::make()
-                            ->title('تم نشر الواجب بنجاح! 🚀')
+                            ->title('تم نشر الواجب بنجاح')
                             ->success()
                             ->send();
                     }),

@@ -82,7 +82,7 @@ class StudentImports extends Page implements HasTable
                         $service->validateAndCreateImport($storedPath, Auth::id());
 
                         Notification::make()
-                            ->title('تم إرسال الملف للمعالجة بنجاح ⚡')
+                            ->title('تم إرسال الملف للمعالجة بنجاح')
                             ->body('جاري استيراد الطلاب في الخلفية، يمكنك متابعة شريط التقدم أدناه.')
                             ->success()
                             ->send();
@@ -126,7 +126,7 @@ class StudentImports extends Page implements HasTable
                     ->formatStateUsing(fn(string $state): string => match ($state) {
                         'queued' => 'في الانتظار ⏳',
                         'validating' => 'جاري الفحص 🔍',
-                        'processing' => 'جاري الاستيراد ⚡',
+                        'processing' => 'جاري الاستيراد',
                         'completed' => 'مكتمل بنجاح ✅',
                         'completed_with_errors' => 'مكتمل مع وجود أخطاء ⚠️',
                         'failed' => 'فشل الاستيراد ❌',
@@ -174,7 +174,7 @@ class StudentImports extends Page implements HasTable
                         \App\Jobs\ProcessStudentImportJob::dispatch($record);
 
                         Notification::make()
-                            ->title('تمت إعادة إرسال المهمة للـ Queue بنجاح ⚡')
+                            ->title('تمت إعادة إرسال المهمة للـ Queue بنجاح')
                             ->success()
                             ->send();
                     }),

@@ -8,7 +8,7 @@
                 </div>
                 <div class="space-y-1 text-sm">
                     <h3 class="font-extrabold text-base text-gray-900 dark:text-white">
-                        تعليمات استيراد بيانات الطلاب من ملف Excel ⚡
+                        تعليمات استيراد بيانات الطلاب من ملف Excel
                     </h3>
                     <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
                         • قم بتحميل <strong>قالب Excel الجاهز</strong> من الزر العلوي واملأ بيانات الطلاب بدون تغيير أسماء الأعمدة.<br>

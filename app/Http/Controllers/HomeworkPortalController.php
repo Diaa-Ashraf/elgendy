@@ -71,7 +71,7 @@ class HomeworkPortalController extends Controller
                 'notes' => $request->input('notes'),
             ]);
 
-            return back()->with('success', 'تم تسليم الواجب بنجاح! 🚀');
+            return back()->with('success', 'تم تسليم الواجب بنجاح!');
         } catch (\Throwable $e) {
             return back()->with('error', $e->getMessage());
         }

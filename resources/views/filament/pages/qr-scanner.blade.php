@@ -4,15 +4,15 @@
         {{-- ─── 0. اختيار وضع تسجيل الحضور (تلقائي ذكي / يدوي) ─── --}}
         <div class="flex items-center justify-between bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
             <div class="flex items-center space-x-3 space-x-reverse">
-                <span class="text-xl">⚡</span>
+                <span class="text-xl">📋</span>
                 <div>
                     <h4 class="font-bold text-sm text-gray-900 dark:text-white">طريقة ربط الجلسات</h4>
-                    <p class="text-xs text-gray-500">اختر بين التعرف التلقائي الذكي برقم الطالب أو التحديد اليدوي لجميع الطلاب</p>
+                    <p class="text-xs text-gray-500">اختر بين التعرف التلقائي برقم الطالب أو التحديد اليدوي لجميع الطلاب</p>
                 </div>
             </div>
             <div class="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
                 <button wire:click="$set('mode', 'auto')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition {{ $mode === 'auto' ? 'bg-emerald-600 text-white shadow' : 'text-gray-600 dark:text-gray-400' }}">
-                    🤖 تلقائي (حصة الطالب اليوم)
+                    تلقائي (حصة الطالب اليوم)
                 </button>
                 <button wire:click="$set('mode', 'manual')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition {{ $mode === 'manual' ? 'bg-blue-600 text-white shadow' : 'text-gray-600 dark:text-gray-400' }}">
                     📌 يدوي (حصة واحدة محددة)
@@ -65,7 +65,7 @@
                                class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-center font-mono font-bold text-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
 
                         <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition shadow-lg shadow-emerald-200 dark:shadow-none">
-                            تسجيل حضور الطالب 🚀
+                            تسجيل حضور الطالب
                         </button>
                     </form>
                 </div>

@@ -194,7 +194,7 @@ class QuestionsRelationManager extends RelationManager
 
                 // 2. تحديد واختيار مجموعة أسئلة من بنك الأسئلة دفعة واحدة (Bulk Selector)
                 Tables\Actions\Action::make('bulkAttachFromBank')
-                    ->label('تحديد أسئلة جماعية من بنك الأسئلة 📚⚡')
+                    ->label('تحديد أسئلة جماعية من بنك الأسئلة')
                     ->icon('heroicon-o-check-badge')
                     ->color('success')
                     ->modalHeading('اختيار أسئلة من بنك الأسئلة وإدراجها دفعة واحدة')
@@ -270,7 +270,7 @@ class QuestionsRelationManager extends RelationManager
                         $exam->questions()->attach($attachData);
 
                         Notification::make()
-                            ->title("تمت إضافة " . count($selectedIds) . " سؤال للامتحان بنجاح ⚡")
+                            ->title("تمت إضافة " . count($selectedIds) . " سؤال للامتحان بنجاح")
                             ->success()
                             ->send();
                     }),

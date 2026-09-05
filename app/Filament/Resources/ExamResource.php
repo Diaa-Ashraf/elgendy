@@ -84,7 +84,7 @@ class ExamResource extends Resource
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('إعدادات الاختبار الإلكتروني (Online Quiz) ⚡')
+                Forms\Components\Section::make('إعدادات الاختبار الإلكتروني (Online Quiz)')
                     ->schema([
                         Forms\Components\Toggle::make('is_online')
                             ->label('تفعيل كاختبار إلكتروني أونلاين')
@@ -157,7 +157,7 @@ class ExamResource extends Resource
                     ->label('النوع')
                     ->badge()
                     ->color(fn (bool $state): string => $state ? 'success' : 'gray')
-                    ->formatStateUsing(fn (bool $state): string => $state ? 'أونلاين ⚡' : 'ورقي 📄'),
+                    ->formatStateUsing(fn (bool $state): string => $state ? 'أونلاين' : 'ورقي 📄'),
 
                 Tables\Columns\TextColumn::make('exam_type')
                     ->label('التصنيف')

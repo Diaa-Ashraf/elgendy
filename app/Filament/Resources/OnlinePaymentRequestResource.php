@@ -82,7 +82,7 @@ class OnlinePaymentRequestResource extends Resource
                             ->label('طريقة الدفع')
                             ->options([
                                 'vodafone_cash' => 'فودافون كاش / محفظة 📱',
-                                'instapay' => 'انستاباي InstaPay ⚡',
+                                'instapay' => 'انستاباي InstaPay',
                                 'wallet' => 'محفظة إلكترونية أخرى',
                             ])
                             ->disabled(),
@@ -190,7 +190,7 @@ class OnlinePaymentRequestResource extends Resource
                     })
                     ->formatStateUsing(fn(string $state): string => match ($state) {
                         'vodafone_cash' => 'فودافون كاش 📱',
-                        'instapay' => 'انستاباي ⚡',
+                        'instapay' => 'انستاباي',
                         default => 'محفظة أخرى 💳',
                     }),
 
@@ -312,7 +312,7 @@ class OnlinePaymentRequestResource extends Resource
                         }
 
                         $notification = Notification::make()
-                            ->title('تم اعتماد الدفعة بنجاح 🚀')
+                            ->title('تم اعتماد الدفعة بنجاح')
                             ->body('تم تسجيل المبلغ بحساب الطالب وتحديث كشف الحساب.')
                             ->success();
 

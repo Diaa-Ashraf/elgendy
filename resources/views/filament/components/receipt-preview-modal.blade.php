@@ -2,7 +2,7 @@
     <div class="grid grid-cols-2 gap-2 text-sm bg-slate-800/60 p-3 rounded-xl border border-slate-700">
         <div><span class="text-slate-400 font-bold">الطالب:</span> <span class="font-extrabold text-white">{{ $record->student?->name }}</span></div>
         <div><span class="text-slate-400 font-bold">المبلغ:</span> <span class="font-extrabold text-emerald-400">{{ number_format($record->amount, 2) }} ج.م</span></div>
-        <div><span class="text-slate-400 font-bold">طريقة التحويل:</span> <span class="font-bold text-indigo-400">{{ $record->payment_method === 'instapay' ? 'انستاباي ⚡' : 'فودافون كاش 📱' }}</span></div>
+        <div><span class="text-slate-400 font-bold">طريقة التحويل:</span> <span class="font-bold text-indigo-400">{{ $record->payment_method === 'instapay' ? 'انستاباي' : 'فودافون كاش' }}</span></div>
         <div><span class="text-slate-400 font-bold">رقم المحول:</span> <span class="font-bold text-white font-mono">{{ $record->sender_phone ?? '-' }}</span></div>
     </div>
 

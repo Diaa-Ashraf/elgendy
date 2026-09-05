@@ -183,7 +183,7 @@ class QuestionsRelationManager extends RelationManager
                     }),
 
                 Tables\Actions\Action::make('bulkAttachFromBank')
-                    ->label('تحديد أسئلة جماعية من بنك الأسئلة 📚⚡')
+                    ->label('تحديد أسئلة جماعية من بنك الأسئلة')
                     ->icon('heroicon-o-check-badge')
                     ->color('success')
                     ->modalHeading('اختيار أسئلة من بنك الأسئلة للواجب')
@@ -254,7 +254,7 @@ class QuestionsRelationManager extends RelationManager
                         $homework->questions()->attach($attachData);
 
                         Notification::make()
-                            ->title("تمت إضافة " . count($selectedIds) . " سؤال للواجب بنجاح ⚡")
+                            ->title("تمت إضافة " . count($selectedIds) . " سؤال للواجب بنجاح")
                             ->success()
                             ->send();
                     }),

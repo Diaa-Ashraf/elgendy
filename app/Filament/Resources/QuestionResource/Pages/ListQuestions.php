@@ -30,7 +30,7 @@ class ListQuestions extends ListRecords
                 }),
 
             Actions\Action::make('importQuestions')
-                ->label('استيراد أسئلة من Excel ⚡')
+                ->label('استيراد أسئلة من Excel')
                 ->icon('heroicon-o-arrow-up-tray')
                 ->color('success')
                 ->form([
@@ -77,7 +77,7 @@ class ListQuestions extends ListRecords
 
                         if ($result['success'] > 0) {
                             Notification::make()
-                                ->title("تم استيراد {$result['success']} سؤال بنجاح 🚀")
+                                ->title("تم استيراد {$result['success']} سؤال بنجاح")
                                 ->body($result['failed'] > 0 ? "تنبيه: تعذر استيراد {$result['failed']} صف لوجود بيانات ناقصة." : null)
                                 ->success()
                                 ->send();

@@ -198,7 +198,7 @@ class ParentPortalController extends Controller
         }
 
         return redirect()->route('parent.dashboard')
-            ->with('payment_success', 'تم إرسال إيصال التحويل بنجاح! سيتم مراجعة الإيصال من إدارة السنتر وتأكيد نزول المبلغ في حساب الطالب فوراً مع إرسال إشعار واتساب لكم 🚀');
+            ->with('payment_success', 'تم إرسال إيصال التحويل بنجاح! سيتم مراجعة الإيصال من إدارة السنتر وتأكيد نزول المبلغ في حساب الطالب فوراً مع إرسال إشعار واتساب لكم.');
     }
 
     public function logout()

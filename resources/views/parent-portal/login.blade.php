@@ -39,9 +39,6 @@
     {{-- كارت تسجيل الدخول --}}
     <div class="w-full max-w-md mx-auto bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm relative z-10 my-auto">
         <div class="text-center mb-6 sm:mb-8">
-            <div class="w-14 h-14 bg-slate-900 text-white rounded-2xl flex items-center justify-center mx-auto text-2xl mb-4 shadow-sm">
-                👨‍👩‍👧‍👦
-            </div>
             <h1 class="font-heading font-extrabold text-xl sm:text-2xl text-slate-900 mb-1.5">بوابة متابعة ولي الأمر</h1>
             <p class="text-xs text-slate-500 font-medium leading-relaxed">
                 متابعة الحضور، تقارير الامتحانات الدورية، وسداد الرسوم الأكاديمية
@@ -50,7 +47,7 @@
 
         @if($errors->any())
             <div class="mb-5 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-bold leading-relaxed">
-                ⚠️ {{ $errors->first() }}
+                {{ $errors->first() }}
             </div>
         @endif
 
@@ -73,7 +70,7 @@
         </form>
 
         <div class="mt-6 pt-4 border-t border-slate-100 text-center text-[11px] text-slate-500 leading-normal">
-            💡 تجد كود الطالب مطبوعاً على كارنيه الطالب أو من خلال مسؤولي السنتر.
+            تجد كود الطالب مطبوعاً على كارنيه الطالب أو من خلال مسؤولي السنتر.
         </div>
     </div>
 

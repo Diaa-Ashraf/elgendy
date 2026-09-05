@@ -145,7 +145,7 @@ class NotificationService
      */
     public static function notifyNewOnlinePaymentRequest(string $studentName, float $amount, string $method, int $requestId): void
     {
-        $methodText = $method === 'instapay' ? 'انستاباي ⚡' : 'فودافون كاش 📱';
+        $methodText = $method === 'instapay' ? 'انستاباي' : 'فودافون كاش';
         $url = url('/admin/online-payment-requests');
 
         self::sendSystemNotification(
