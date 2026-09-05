@@ -7,6 +7,7 @@ use App\Models\HomeworkSubmission;
 use App\Models\Student;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class HomeworkService
 {
@@ -15,6 +16,10 @@ class HomeworkService
      */
     public function getStudentHomeworks(Student $student): Collection
     {
+        if (! Schema::hasTable('homeworks')) {
+            return collect();
+        }
+
         $student->loadMissing('groups');
 
         $groupIds = $student->groups->pluck('id')->toArray();
