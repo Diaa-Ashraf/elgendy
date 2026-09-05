@@ -345,6 +345,73 @@
             </div>
         </div>
 
+        {{-- ─── 4.5 الواجبات والتكليفات المنزلية ─── --}}
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl">
+            <h2 class="font-black text-base text-white mb-4 flex items-center justify-between border-b border-slate-800 pb-3">
+                <span class="flex items-center gap-2">
+                    <span class="text-amber-400">📚</span> الواجبات والتكليفات المنزلية (Homeworks)
+                </span>
+                <span class="text-xs font-semibold text-slate-400">{{ count($homeworks ?? []) }} واجب متاح</span>
+            </h2>
+
+            <div class="space-y-3">
+                @forelse($homeworks ?? [] as $hw)
+                    @php
+                        $sub = $hw->student_submission;
+                        $hasSubmitted = $sub && $sub->isSubmitted();
+                        $isGraded = $sub && $sub->isGraded();
+                    @endphp
+
+                    <div class="p-4 bg-slate-950 border border-slate-800/90 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-amber-500/50 transition">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-extrabold text-white text-sm">{{ $hw->title }}</span>
+                                <span class="text-[10px] font-bold text-amber-400 bg-amber-950 px-2 py-0.5 rounded border border-amber-900">{{ $hw->subject?->name }}</span>
+                                @if($hw->group)
+                                    <span class="text-[10px] font-bold text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">{{ $hw->group->name }}</span>
+                                @endif
+                            </div>
+                            <div class="flex items-center gap-3 text-[11px] text-slate-400 font-semibold">
+                                <span>📅 آخر موعد: {{ $hw->due_date->format('Y-m-d h:i A') }}</span>
+                                <span>•</span>
+                                <span>🎯 الدرجة: {{ $hw->total_marks }} درجة</span>
+                                <span>•</span>
+                                <span class="{{ $hw->isOverdue() ? 'text-rose-400 font-bold' : 'text-emerald-400' }}">
+                                    {{ $hw->isOverdue() ? 'انتهى الموعد' : 'متاح للتسليم' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 self-end sm:self-center">
+                            @if($isGraded)
+                                <div class="text-left ml-2">
+                                    <span class="text-xs font-black text-emerald-400">
+                                        الدرجة: {{ $sub->score }} / {{ $hw->total_marks }} ({{ $sub->score_percentage }}%)
+                                    </span>
+                                </div>
+                                <a href="{{ route('parent.homeworks.show', ['id' => $hw->id]) }}" class="px-3.5 py-1.5 bg-indigo-950 border border-indigo-700 text-indigo-300 hover:bg-indigo-900 rounded-xl text-xs font-black transition">
+                                    عرض التقييم والملاحظات ↗
+                                </a>
+                            @elseif($hasSubmitted)
+                                <span class="text-xs font-bold text-amber-400 bg-amber-950/80 border border-amber-800/80 px-3 py-1.5 rounded-xl">
+                                    تم التسليم (قيد التصحيح ⏳)
+                                </span>
+                                <a href="{{ route('parent.homeworks.show', ['id' => $hw->id]) }}" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition">
+                                    عرض التفاصيل
+                                </a>
+                            @else
+                                <a href="{{ route('parent.homeworks.show', ['id' => $hw->id]) }}" class="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-xl text-xs font-black shadow-md shadow-amber-950 transition flex items-center gap-1">
+                                    <span>حل وتسليم الواجب</span> 📝
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                @empty
+                    <p class="text-xs text-slate-500 text-center py-6">لا توجد واجبات منزلية منشورة حالياً</p>
+                @endforelse
+            </div>
+        </div>
+
         {{-- ─── 5. نتائج الامتحانات والاختبارات المرصودة ─── --}}
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl">
             <h2 class="font-black text-base text-white mb-4 flex items-center justify-between border-b border-slate-800 pb-3">

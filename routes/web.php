@@ -23,6 +23,10 @@ Route::prefix('parent')->group(function () {
     Route::get('/exams/{id}/start', [\App\Http\Controllers\OnlineExamController::class, 'start'])->name('parent.exams.start');
     Route::post('/exams/{id}/submit', [\App\Http\Controllers\OnlineExamController::class, 'submit'])->name('parent.exams.submit');
     Route::get('/exams/{id}/result', [\App\Http\Controllers\OnlineExamController::class, 'result'])->name('parent.exams.result');
+
+    // 📚 الواجبات والتكليفات المنزلية
+    Route::get('/homeworks/{id}', [\App\Http\Controllers\HomeworkPortalController::class, 'show'])->name('parent.homeworks.show');
+    Route::post('/homeworks/{id}/submit', [\App\Http\Controllers\HomeworkPortalController::class, 'submit'])->name('parent.homeworks.submit');
 });
 
 Route::middleware(['auth'])->group(function () {

@@ -100,6 +100,10 @@ class ParentPortalController extends Controller
             ->orderBy('date', 'desc')
             ->get();
 
+        // الواجبات والتكليفات المنزلية
+        $homeworkService = app(\App\Services\HomeworkService::class);
+        $homeworks = $homeworkService->getStudentHomeworks($student);
+
         // الملازم والمطبوعات المستلمة
         $materials = \App\Models\StudentMaterialDelivery::where('student_id', $student->id)
             ->with('studyMaterial')
@@ -131,6 +135,7 @@ class ParentPortalController extends Controller
             'attendances' => $attendances,
             'examResults' => $examResults,
             'onlineExams' => $onlineExams,
+            'homeworks' => $homeworks,
             'ledger' => $ledger,
             'materials' => $materials,
             'onlinePaymentRequests' => $onlinePaymentRequests,
