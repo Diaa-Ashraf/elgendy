@@ -39,7 +39,7 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/storage/{path}', function ($path) {
     $path1 = storage_path('app/public/' . $path);
     $path2 = storage_path('public/' . $path);
-    
+
     $fullPath = file_exists($path1) ? $path1 : (file_exists($path2) ? $path2 : null);
 
     if (! $fullPath) {
@@ -47,16 +47,3 @@ Route::get('/storage/{path}', function ($path) {
     }
     return response()->file($fullPath);
 })->where('path', '.*')->name('storage.local');
-
-// 🛠️ مسار سريع لتشغيل الميجريشن مباشرة على السيرفر في حال عدم توفر SSH
-Route::get('/run-migrations', function () {
-    try {
-        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-        $output = \Illuminate\Support\Facades\Artisan::output();
-        \Illuminate\Support\Facades\Artisan::call('optimize:clear');
-        return response("<pre style='direction:ltr;background:#1e293b;color:#10b981;padding:20px;border-radius:10px;'>Migrations ran successfully!\n\n{$output}\nCache cleared successfully!</pre>");
-    } catch (\Throwable $e) {
-        return response("<pre style='direction:ltr;background:#1e293b;color:#ef4444;padding:20px;border-radius:10px;'>Error running migrations:\n\n{$e->getMessage()}</pre>", 500);
-    }
-});
-

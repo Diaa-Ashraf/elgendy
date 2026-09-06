@@ -13,9 +13,30 @@
         <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
     @endif
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            teal: '#0D3B4C',
+                            'teal-dark': '#082531',
+                            coral: '#FF5E36',
+                            'coral-hover': '#F2481F',
+                            mint: '#10B981',
+                            amber: '#F59E0B',
+                            bg: '#F8FAFC',
+                            slate: '#0F172A',
+                            muted: '#64748B'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style> 
         body { font-family: 'IBM Plex Sans Arabic', sans-serif; } 
@@ -23,7 +44,7 @@
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen pb-24 selection:bg-sky-600 selection:text-white"
+<body class="bg-brand-bg text-brand-slate min-h-screen pb-24 selection:bg-brand-coral selection:text-white"
       x-data="examRunner({
           remainingSeconds: {{ $remainingSeconds ?? 'null' }},
           totalQuestions: {{ $questions->count() }}
@@ -31,23 +52,23 @@
       x-init="initTimer()">
 
     {{-- رأس الصفحة الثابت مع المؤقت --}}
-    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50 px-4 py-3 shadow-md">
+    <header class="bg-brand-teal border-b border-brand-teal-dark/50 sticky top-0 z-50 px-4 py-3 shadow-md shadow-brand-teal/10">
         <div class="max-w-4xl mx-auto flex items-center justify-between">
             <div class="space-y-0.5">
-                <h1 class="font-heading font-bold text-sm sm:text-base text-white truncate max-w-[200px] sm:max-w-md">{{ $exam->title }}</h1>
-                <span class="text-[11px] text-slate-400 font-medium">الطالب: <strong class="text-sky-400">{{ $student->name }}</strong></span>
+                <h1 class="font-heading font-black text-sm sm:text-base text-white truncate max-w-[200px] sm:max-w-md">{{ $exam->title }}</h1>
+                <span class="text-[11px] text-slate-300 font-medium">الطالب: <strong class="text-brand-coral">{{ $student->name }}</strong></span>
             </div>
 
             <div class="flex items-center gap-3">
                 @if($remainingSeconds !== null)
                     <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border font-mono font-bold text-sm"
-                         :class="remainingSeconds < 180 ? 'bg-rose-950/90 border-rose-600 text-rose-300 animate-pulse' : 'bg-slate-800 border-slate-700 text-amber-300'">
-                        <span class="text-xs text-slate-400 font-sans font-medium">الوقت المتبقي:</span>
+                         :class="remainingSeconds < 180 ? 'bg-rose-500/20 border-rose-400 text-rose-200 animate-pulse' : 'bg-white/10 border-white/20 text-amber-300'">
+                        <span class="text-xs text-slate-300 font-sans font-medium">الوقت المتبقي:</span>
                         <span x-text="formatTimer()"></span>
                     </div>
                 @endif
 
-                <button type="button" @click="openConfirmModal()" class="px-4 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-sm transition">
+                <button type="button" @click="openConfirmModal()" class="px-4 py-2 bg-gradient-to-r from-brand-coral to-[#FF7552] hover:from-brand-coral-hover hover:to-brand-coral text-white rounded-xl text-xs font-bold shadow-md shadow-brand-coral/25 transition">
                     تسليم الاختبار
                 </button>
             </div>
@@ -60,32 +81,32 @@
             @csrf
 
             @foreach($questions as $index => $question)
-                <div class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-5 sm:p-7 shadow-sm space-y-5">
+                <div class="bg-white border border-slate-200 rounded-3xl p-5 sm:p-7 shadow-sm space-y-5">
                     {{-- رأس السؤال --}}
-                    <div class="flex items-start justify-between gap-3 border-b border-slate-700 pb-4">
+                    <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
                         <div class="flex items-start gap-3">
-                            <span class="w-8 h-8 rounded-xl bg-slate-700 text-sky-300 border border-slate-600 flex items-center justify-center font-bold text-sm shrink-0">
+                            <span class="w-9 h-9 rounded-2xl bg-brand-teal/10 text-brand-teal border border-brand-teal/20 flex items-center justify-center font-black text-sm shrink-0">
                                 {{ $index + 1 }}
                             </span>
                             <div>
-                                <h3 class="font-heading font-bold text-sm sm:text-base text-white leading-relaxed whitespace-pre-line">{{ $question->question_text }}</h3>
+                                <h3 class="font-heading font-black text-sm sm:text-base text-brand-slate leading-relaxed whitespace-pre-line">{{ $question->question_text }}</h3>
                                 @if($question->topic)
-                                    <span class="inline-block text-[10px] font-semibold text-slate-400 bg-slate-900 px-2 py-0.5 rounded-md mt-1 border border-slate-700">
+                                    <span class="inline-block text-[10px] font-bold text-brand-teal bg-brand-teal/5 px-2.5 py-0.5 rounded-md mt-1.5 border border-brand-teal/10">
                                         الدرس: {{ $question->topic }}
                                     </span>
                                 @endif
                             </div>
                         </div>
 
-                        <span class="text-xs font-bold text-slate-300 bg-slate-900 px-2.5 py-1 rounded-xl border border-slate-700 shrink-0">
+                        <span class="text-xs font-bold text-brand-slate bg-slate-100 px-3 py-1 rounded-xl border border-slate-200 shrink-0">
                             {{ $question->pivot->marks ?? $question->default_marks }} درجات
                         </span>
                     </div>
 
                     {{-- صورة السؤال إن وجدت --}}
                     @if($question->question_image)
-                        <div class="rounded-xl overflow-hidden border border-slate-700 max-h-80 bg-slate-900 flex items-center justify-center p-2">
-                            <img src="{{ asset('storage/' . $question->question_image) }}" alt="صورة السؤال" class="max-h-72 object-contain rounded-lg">
+                        <div class="rounded-2xl overflow-hidden border border-slate-200 max-h-80 bg-slate-50 flex items-center justify-center p-2">
+                            <img src="{{ asset('storage/' . $question->question_image) }}" alt="صورة السؤال" class="max-h-72 object-contain rounded-xl">
                         </div>
                     @endif
 
@@ -97,21 +118,21 @@
                         @endphp
 
                         @foreach($options as $opt)
-                            <label class="flex items-center gap-3.5 p-3.5 sm:p-4 rounded-xl border border-slate-700 bg-slate-900/90 hover:bg-slate-750 hover:border-slate-600 cursor-pointer transition select-none group">
+                            <label class="flex items-center gap-3.5 p-4 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-white hover:border-brand-teal/40 cursor-pointer transition select-none group shadow-sm">
                                 @if($isMultiple)
                                     <input type="checkbox"
                                            name="answers[{{ $question->id }}][]"
                                            value="{{ $opt['key'] }}"
-                                           class="w-4 h-4 rounded text-sky-600 bg-slate-800 border-slate-600 focus:ring-sky-500">
+                                           class="w-4 h-4 rounded text-brand-coral bg-white border-slate-300 focus:ring-brand-coral">
                                 @else
                                     <input type="radio"
                                            name="answers[{{ $question->id }}]"
                                            value="{{ $opt['key'] }}"
-                                           class="w-4 h-4 text-sky-600 bg-slate-800 border-slate-600 focus:ring-sky-500">
+                                           class="w-4 h-4 text-brand-coral bg-white border-slate-300 focus:ring-brand-coral">
                                 @endif
 
-                                <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold text-slate-200 group-hover:text-white">
-                                    <span class="px-2 py-0.5 min-w-[28px] text-center rounded-lg bg-slate-800 text-slate-300 font-mono text-xs flex items-center justify-center border border-slate-700">
+                                <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold text-brand-slate">
+                                    <span class="px-2 py-0.5 min-w-[28px] text-center rounded-lg bg-white text-brand-teal font-mono text-xs font-black flex items-center justify-center border border-slate-200 shadow-sm">
                                         {{ $opt['key'] === 'true' ? 'صواب' : ($opt['key'] === 'false' ? 'خطأ' : $opt['key']) }}
                                     </span>
                                     <span>{{ $opt['text'] }}</span>
@@ -124,8 +145,8 @@
 
             {{-- زر التسليم بالأسفل --}}
             <div class="text-center pt-4">
-                <button type="button" @click="openConfirmModal()" class="w-full sm:w-auto px-12 py-3.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-sm sm:text-base font-bold shadow-md transition">
-                    إنهاء وتسليم الإجابات
+                <button type="button" @click="openConfirmModal()" class="w-full sm:w-auto px-12 py-4 bg-gradient-to-r from-brand-coral to-[#FF7552] hover:from-brand-coral-hover hover:to-brand-coral text-white rounded-2xl font-heading font-bold text-sm sm:text-base shadow-lg shadow-brand-coral/30 transition">
+                    إنهاء وتسليم الإجابات ➔
                 </button>
             </div>
         </form>
@@ -142,7 +163,7 @@
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
              @click="showModal = false"
-             class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm"></div>
+             class="fixed inset-0 bg-brand-slate/60 backdrop-blur-sm"></div>
 
         <div x-show="showModal"
              x-transition:enter="ease-out duration-200"
@@ -151,24 +172,24 @@
              x-transition:leave="ease-in duration-150"
              x-transition:leave-start="opacity-100 scale-100 translate-y-0"
              x-transition:leave-end="opacity-0 scale-95 translate-y-4"
-             class="bg-slate-900 border border-slate-700 rounded-2xl p-6 sm:p-8 max-w-md w-full relative z-10 shadow-2xl text-center space-y-5">
+             class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-md w-full relative z-10 shadow-2xl text-center space-y-5">
             
             <div class="space-y-2">
-                <h3 class="text-lg font-heading font-bold text-white">تأكيد تسليم الاختبار</h3>
-                <p class="text-xs text-slate-400 leading-relaxed">
+                <h3 class="text-lg font-heading font-black text-brand-slate">تأكيد تسليم الاختبار</h3>
+                <p class="text-xs text-brand-muted leading-relaxed">
                     بمجرد الضغط على تأكيد، سيتم رصد إجاباتك فوراً وتصحيحها أوتوماتيكياً ولن تتمكن من تعديل أي إجابة بعد ذلك.
                 </p>
             </div>
 
-            <div class="p-3 bg-slate-800/90 rounded-xl border border-slate-700 text-xs text-sky-300 font-medium text-center">
+            <div class="p-3 bg-brand-teal/5 rounded-2xl border border-brand-teal/15 text-xs text-brand-teal font-bold text-center">
                 ستظهر نتيجة الاختبار والتقرير النموذجي فور التسليم
             </div>
 
             <div class="grid grid-cols-2 gap-3 pt-2">
-                <button type="button" @click="showModal = false" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition border border-slate-700">
+                <button type="button" @click="showModal = false" class="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-brand-slate rounded-2xl text-xs font-bold transition border border-slate-200">
                     مراجعة الإجابات
                 </button>
-                <button type="button" @click="submitFinal()" class="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold shadow transition flex items-center justify-center gap-1.5">
+                <button type="button" @click="submitFinal()" class="px-5 py-3 bg-gradient-to-r from-brand-coral to-[#FF7552] hover:from-brand-coral-hover hover:to-brand-coral text-white rounded-2xl text-xs font-bold shadow-md shadow-brand-coral/25 transition flex items-center justify-center gap-1.5">
                     تأكيد التسليم
                 </button>
             </div>
