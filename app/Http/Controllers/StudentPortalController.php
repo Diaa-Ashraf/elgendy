@@ -26,49 +26,85 @@ class StudentPortalController extends Controller
     {
         $request->validate([
             'phone' => 'required|string',
-            'student_id' => 'required|numeric',
+            'student_id' => 'required|string',
         ], [
             'phone.required' => 'يرجى إدخال رقم هاتفك أو رقم هاتف ولي الأمر',
             'student_id.required' => 'يرجى إدخال كود الطالب الخاص بك',
-            'student_id.numeric' => 'كود الطالب يجب أن يكون أرقاماً فقط',
         ]);
 
-        $inputPhone = preg_replace('/[^0-9]/', '', $request->phone);
-        $studentId = (int) $request->student_id;
+        $toStandardDigits = function ($str) {
+            $arabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+            $persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+            $standard = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+            $str = str_replace($arabic, $standard, (string) $str);
+            return str_replace($persian, $standard, $str);
+        };
 
-        // 1. البحث عن الطالب بواسطة الكود
-        $student = Student::find($studentId);
+        $cleanPhone = preg_replace('/[^0-9]/', '', $toStandardDigits($request->phone));
+        $phoneLast9 = strlen($cleanPhone) >= 9 ? substr($cleanPhone, -9) : $cleanPhone;
 
-        if (! $student) {
+        $rawStudentCode = trim($toStandardDigits($request->student_id));
+        $numericStudentId = preg_replace('/[^0-9]/', '', $rawStudentCode);
+
+        // 1. البحث عن الطالب بواسطة الكود (ID أو qr_code)
+        $student = null;
+        if (!empty($numericStudentId) && is_numeric($numericStudentId)) {
+            $student = Student::find((int) $numericStudentId);
+        }
+
+        if (!$student && !empty($rawStudentCode)) {
+            $student = Student::where('qr_code', $rawStudentCode)
+                ->orWhere('qr_code', 'STD-' . $rawStudentCode)
+                ->first();
+        }
+
+        $matchesPhone = function ($phoneField, $inputDigits, $inputLast9) use ($toStandardDigits) {
+            if (empty($phoneField)) return false;
+            $dbDigits = preg_replace('/[^0-9]/', '', $toStandardDigits($phoneField));
+            if (empty($dbDigits)) return false;
+            if ($dbDigits === $inputDigits) return true;
+            if (!empty($inputLast9) && str_ends_with($dbDigits, $inputLast9)) return true;
+            if (strlen($dbDigits) >= 9 && !empty($inputDigits) && str_ends_with($inputDigits, substr($dbDigits, -9))) return true;
+            return false;
+        };
+
+        if ($student) {
+            $parentMatch = $matchesPhone($student->parent_phone, $cleanPhone, $phoneLast9);
+            $studentPhoneMatch = $matchesPhone($student->phone, $cleanPhone, $phoneLast9);
+
+            if ($parentMatch || $studentPhoneMatch) {
+                session(['student_portal_id' => $student->id]);
+                session(['parent_student_id' => $student->id]);
+                return redirect()->route('student.dashboard');
+            }
+
             return back()->withInput()->withErrors([
-                'error' => '❌ كود الطالب غير مسجل لدينا في السنتر. يرجى مراجعة الكود المطبوع على الكارنيه.'
+                'error' => "⚠️ كود الطالب صحيح لـ ({$student->name})، ولكن رقم الهاتف المدخل غير مطابق لرقمك أو رقم ولي أمرك المسجل بملفك."
             ]);
         }
 
-        // 2. التحقق من مطابقة الهاتف (هاتف الطالب أو هاتف ولي الأمر)
-        $studentPhone = preg_replace('/[^0-9]/', '', (string) $student->phone);
-        $parentPhone = preg_replace('/[^0-9]/', '', (string) $student->parent_phone);
-
-        $phoneMatches = false;
-
-        // مطابقة كاملة أو بآخر 9 أرقام
-        if ($inputPhone === $studentPhone || (!empty($studentPhone) && str_ends_with($studentPhone, substr($inputPhone, -9)))) {
-            $phoneMatches = true;
-        } elseif ($inputPhone === $parentPhone || (!empty($parentPhone) && str_ends_with($parentPhone, substr($inputPhone, -9)))) {
-            $phoneMatches = true;
+        // إذا لم يعثر على الطالب بالكود، نبحث بالهاتف
+        $studentsByPhone = collect();
+        if (!empty($phoneLast9)) {
+            $studentsByPhone = Student::where(function ($q) use ($cleanPhone, $phoneLast9, $request) {
+                $q->where('parent_phone', 'like', '%' . $phoneLast9)
+                  ->orWhere('phone', 'like', '%' . $phoneLast9)
+                  ->orWhere('parent_phone', $request->phone)
+                  ->orWhere('phone', $request->phone);
+            })->get();
         }
 
-        if (! $phoneMatches) {
+        if ($studentsByPhone->isNotEmpty()) {
+            $names = $studentsByPhone->pluck('name')->implode('، ');
+            $suggestedCode = $studentsByPhone->first()->id;
             return back()->withInput()->withErrors([
-                'error' => "⚠️ كود الطالب صحيح للـ ({$student->name})، ولكن رقم الهاتف المدخل غير مطابق لرقمك أو رقم ولي أمرك المسجل بملفك."
+                'error' => "⚠️ رقم الهاتف مسجل لدينا لـ ({$names})، ولكن كود الطالب المدخل غير صحيح (كود الطالب هو: #$suggestedCode)."
             ]);
         }
 
-        // تسجيل الدخول في الجلسة
-        session(['student_portal_id' => $student->id]);
-        session(['parent_student_id' => $student->id]); // لتمكين الاختبارات والواجبات المشتركة
-
-        return redirect()->route('student.dashboard');
+        return back()->withInput()->withErrors([
+            'error' => '❌ بيانات الدخول غير مسجلة لدينا. يرجى التثبت من رقم الهاتف وكود الطالب أو مراجعة إدارة السنتر.'
+        ]);
     }
 
     /**

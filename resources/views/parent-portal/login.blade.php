@@ -88,12 +88,12 @@
             @csrf
             <div>
                 <label class="block text-xs font-bold text-brand-slate mb-2">رقم هاتف ولي الأمر المسجل</label>
-                <input type="tel" name="parent_phone" required placeholder="01xxxxxxxxx" class="w-full px-4 py-3.5 bg-slate-50/80 border border-slate-200 rounded-2xl text-xs sm:text-sm font-semibold text-brand-slate placeholder:text-slate-400 focus:outline-none focus:border-brand-teal focus:bg-white focus:ring-4 focus:ring-brand-teal/10 transition" dir="ltr">
+                <input type="tel" name="parent_phone" value="{{ old('parent_phone') }}" required placeholder="01xxxxxxxxx" class="w-full px-4 py-3.5 bg-slate-50/80 border border-slate-200 rounded-2xl text-xs sm:text-sm font-semibold text-brand-slate placeholder:text-slate-400 focus:outline-none focus:border-brand-teal focus:bg-white focus:ring-4 focus:ring-brand-teal/10 transition" dir="ltr">
             </div>
 
             <div>
                 <label class="block text-xs font-bold text-brand-slate mb-2">كود الطالب الأكاديمي (#ID)</label>
-                <input type="number" name="student_id" required placeholder="مثال: 104" class="w-full px-4 py-3.5 bg-slate-50/80 border border-slate-200 rounded-2xl text-xs sm:text-sm font-semibold text-brand-slate placeholder:text-slate-400 focus:outline-none focus:border-brand-teal focus:bg-white focus:ring-4 focus:ring-brand-teal/10 transition" dir="ltr">
+                <input type="text" inputmode="numeric" name="student_id" value="{{ old('student_id') }}" required placeholder="مثال: 104" class="w-full px-4 py-3.5 bg-slate-50/80 border border-slate-200 rounded-2xl text-xs sm:text-sm font-semibold text-brand-slate placeholder:text-slate-400 focus:outline-none focus:border-brand-teal focus:bg-white focus:ring-4 focus:ring-brand-teal/10 transition" dir="ltr">
             </div>
 
             <button type="submit" class="w-full py-4 bg-gradient-to-r from-brand-coral to-[#FF7552] hover:from-brand-coral-hover hover:to-[#FF5E36] text-white rounded-2xl font-heading font-bold text-xs sm:text-sm transition-all duration-300 shadow-lg shadow-brand-coral/25 hover:shadow-xl hover:shadow-brand-coral/35 flex items-center justify-center gap-2 mt-3 transform active:scale-[0.99]">

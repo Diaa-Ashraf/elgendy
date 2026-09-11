@@ -93,7 +93,7 @@
 
             <div>
                 <label class="block text-xs font-bold text-brand-slate mb-2">كود الطالب الأكاديمي (#ID)</label>
-                <input type="number" name="student_id" value="{{ old('student_id') }}" required placeholder="مثال: 104" class="w-full px-4 py-3.5 bg-slate-50/80 border border-slate-200 rounded-2xl text-xs sm:text-sm font-semibold text-brand-slate placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition" dir="ltr">
+                <input type="text" inputmode="numeric" name="student_id" value="{{ old('student_id') }}" required placeholder="مثال: 104" class="w-full px-4 py-3.5 bg-slate-50/80 border border-slate-200 rounded-2xl text-xs sm:text-sm font-semibold text-brand-slate placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition" dir="ltr">
             </div>
 
             <button type="submit" class="w-full py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl font-heading font-bold text-xs sm:text-sm transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/35 flex items-center justify-center gap-2 mt-3 transform active:scale-[0.99]">
