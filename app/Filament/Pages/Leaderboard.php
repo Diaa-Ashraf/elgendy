@@ -26,6 +26,17 @@ class Leaderboard extends Page
 
     protected $memoizedTopStudents = null;
 
+    public function updatedSelectedStage(): void
+    {
+        $this->selectedGroup = null;
+        $this->memoizedTopStudents = null;
+    }
+
+    public function updatedSelectedGroup(): void
+    {
+        $this->memoizedTopStudents = null;
+    }
+
     public function getTopStudentsProperty()
     {
         if ($this->memoizedTopStudents !== null) {
@@ -38,7 +49,6 @@ class Leaderboard extends Page
             limit: 20
         );
     }
-
 
     public function getStagesProperty()
     {
@@ -61,4 +71,12 @@ class Leaderboard extends Page
         });
     }
 
+    protected function getViewData(): array
+    {
+        return [
+            'topStudents' => $this->topStudents,
+            'stages' => $this->stages,
+            'groups' => $this->groups,
+        ];
+    }
 }

@@ -128,7 +128,7 @@ class MonthlyReportService
 
         // ─── 4. الموقف المالي للمدفوعات ───
         $payments = StudentPayment::where('student_id', $student->id)
-            ->whereBetween('payment_date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->whereBetween('paid_at', [$startDate->toDateString(), $endDate->toDateString()])
             ->get();
 
         $paidAmount = $payments->sum('amount');

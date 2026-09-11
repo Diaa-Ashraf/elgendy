@@ -193,6 +193,12 @@ class StudentResource extends Resource
                     ->color('warning')
                     ->url(fn (Student $record): string => route('student.card.print', $record->id))
                     ->openUrlInNewTab(),
+                Tables\Actions\Action::make('printCertificate')
+                    ->label('شهادة التقدير')
+                    ->icon('heroicon-o-academic-cap')
+                    ->color('amber')
+                    ->url(fn (Student $record): string => route('student.certificate.print', $record->id))
+                    ->openUrlInNewTab(),
                 Tables\Actions\Action::make('monthlyReport')
                     ->label('تقرير الأداء الشهري')
                     ->icon('heroicon-o-document-chart-bar')

@@ -27,7 +27,6 @@ class LeaderboardService
                     'attendances:id,student_id,status',
                 ]);
 
-
             if ($stageId) {
                 $query->where('stage_id', $stageId);
             }
@@ -79,7 +78,9 @@ class LeaderboardService
                 $totalPoints = round(($examPercentage * 0.75) + ($attendanceRate * 0.25) + ($examsCount * 2), 1);
 
                 return [
-                    'student' => $student,
+                    'student_id' => $student->id,
+                    'student_name' => $student->name,
+                    'qr_code' => $student->qr_code,
                     'total_points' => $totalPoints,
                     'exam_average' => round($examPercentage, 1),
                     'exams_count' => $examsCount,
@@ -97,14 +98,13 @@ class LeaderboardService
                 ->map(function ($item, $index) {
                     $item['rank'] = $index + 1;
                     $item['badge'] = match ($index + 1) {
-                        1 => ' المركز الأول (الذهبي)',
-                        2 => '🥈 المركز الثاني (الفضي)',
-                        3 => '🥉 المركز الثالث (البرونزي)',
-                        default => ' المركز ' . ($index + 1),
+                        1 => 'المركز الأول (الذهبي)',
+                        2 => 'المركز الثاني (الفضي)',
+                        3 => 'المركز الثالث (البرونزي)',
+                        default => 'المركز ' . ($index + 1),
                     };
                     return $item;
                 });
         });
     }
 }
-
