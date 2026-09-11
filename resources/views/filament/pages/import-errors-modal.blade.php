@@ -39,7 +39,7 @@
         </div>
     @elseif(empty($import->error_message))
         <p class="text-center text-sm text-gray-500 py-4">
-            لا توجد أخطاء مسجلة لهذه العملية 🎉
+            لا توجد أخطاء مسجلة لهذه العملية 
         </p>
     @endif
 </div>

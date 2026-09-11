@@ -158,10 +158,10 @@ class StudentPaymentResource extends Resource
                                         : $discount->value;
 
                                     $finalPrice = max(0, $basePrice - $discountAmount);
-                                    return "💡 المبلغ الأصلي: {$basePrice} ج.م | الخصم المطبق: {$discount->title} ({$discount->value}" . ($discount->type === 'percentage' ? '%' : ' ج.م') . ") = خصم {$discountAmount} ج.م";
+                                    return " المبلغ الأصلي: {$basePrice} ج.م | الخصم المطبق: {$discount->title} ({$discount->value}" . ($discount->type === 'percentage' ? '%' : ' ج.م') . ") = خصم {$discountAmount} ج.م";
                                 }
 
-                                return "💡 السعر الأساسي للمجموعة: {$basePrice} ج.م (لا يوجد خصم لهذا الطالب)";
+                                return " السعر الأساسي للمجموعة: {$basePrice} ج.م (لا يوجد خصم لهذا الطالب)";
                             }),
 
                         Forms\Components\DatePicker::make('paid_at')

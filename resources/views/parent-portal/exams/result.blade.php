@@ -140,7 +140,7 @@
                         {{-- الشرح والتفسير العلمي --}}
                         @if(!empty($ans['explanation']))
                             <div class="bg-amber-50/80 border border-amber-200 p-4 rounded-2xl text-xs space-y-1">
-                                <span class="font-bold text-amber-900 block">💡 التفسير والشرح النموذجي:</span>
+                                <span class="font-bold text-amber-900 block"> التفسير والشرح النموذجي:</span>
                                 <p class="text-amber-800 leading-relaxed font-medium">{{ $ans['explanation'] }}</p>
                             </div>
                         @endif

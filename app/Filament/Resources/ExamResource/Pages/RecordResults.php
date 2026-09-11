@@ -102,7 +102,22 @@ class RecordResults extends Page implements HasTable
             ])
             ->defaultSort('name')
             ->striped()
-            ->paginated([10, 25, 50])
+            ->paginated([15, 30, 50, 100])
+            ->filters([
+                Tables\Filters\SelectFilter::make('status')
+                    ->label('حالة أداء الامتحان')
+                    ->options([
+                        'attended' => 'تم رصد الدرجة (أدوا الامتحان) ✅',
+                        'absent' => 'لم يؤدِ الامتحان (غائب) ❌',
+                    ])
+                    ->query(function (Builder $query, array $data) {
+                        if (($data['value'] ?? null) === 'attended') {
+                            $query->whereHas('examResults', fn ($q) => $q->where('exam_id', $this->exam->id));
+                        } elseif (($data['value'] ?? null) === 'absent') {
+                            $query->whereDoesntHave('examResults', fn ($q) => $q->where('exam_id', $this->exam->id));
+                        }
+                    }),
+            ])
             ->actions([
                 Tables\Actions\Action::make('recordMark')
                     ->label('رصد الدرجة')
@@ -152,6 +167,47 @@ class RecordResults extends Page implements HasTable
                     })
                     ->modalHeading(fn (Student $record) => "رصد درجة: {$record->name}")
                     ->modalWidth('md'),
+
+                Tables\Actions\Action::make('sendWhatsApp')
+                    ->label(function (Student $record): string {
+                        $hasResult = ExamResult::where('exam_id', $this->exam->id)->where('student_id', $record->id)->exists();
+                        return $hasResult ? 'إرسال النتيجة 💬' : 'تنبيه غياب 💬';
+                    })
+                    ->icon('heroicon-o-chat-bubble-left-right')
+                    ->color(function (Student $record): string {
+                        $hasResult = ExamResult::where('exam_id', $this->exam->id)->where('student_id', $record->id)->exists();
+                        return $hasResult ? 'success' : 'danger';
+                    })
+                    ->url(function (Student $record): ?string {
+                        $parentPhone = $record->parent_phone ?? $record->phone;
+                        if (empty($parentPhone)) {
+                            return null;
+                        }
+
+                        $centerName = app(\App\Services\SettingService::class)->get('center_name', 'المنظومة التعليمية');
+                        $subjectName = $this->exam->subject?->name ?? 'المادة';
+                        $examDate = $this->exam->date ? \Carbon\Carbon::parse($this->exam->date)->format('Y-m-d') : now()->toDateString();
+                        $result = ExamResult::where('exam_id', $this->exam->id)->where('student_id', $record->id)->first();
+
+                        if ($result) {
+                            $total = $this->exam->total_marks ?? 100;
+                            $pct = round(($result->marks_obtained / $total) * 100, 1);
+                            $msg = "السلام عليكم ورحمة الله، المكرم ولي أمر الطالب/ة: {$record->name} 📊\n"
+                                . "نرسل لكم بطاقة نتيجة امتحان ({$this->exam->title}) في مادة ({$subjectName}):\n\n"
+                                . "▪️ الدرجة: {$result->marks_obtained} من {$total}\n"
+                                . "▪️ النسبة: {$pct}%\n"
+                                . "▪️ ملاحظات: " . ($result->notes ?: 'مستوى طيب ومستمر') . "\n\n"
+                                . "— {$centerName}";
+                        } else {
+                            $msg = "السلام عليكم ورحمة الله، المكرم ولي أمر الطالب/ة: {$record->name} ⚠️\n"
+                                . "نحيطكم علماً بأن الطالب تغيب عن أداء امتحان ({$this->exam->title}) في مادة ({$subjectName}) بتاريخ: {$examDate}.\n"
+                                . "يرجى التواصل معنا لتحديد موعد الإعادة للاطمئنان على مستوى الطالب.\n\n"
+                                . "— {$centerName}";
+                        }
+
+                        return \App\Services\WhatsAppNotificationService::getWhatsAppUrl($parentPhone, $msg);
+                    })
+                    ->openUrlInNewTab(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkAction::make('bulkRecordMarks')
@@ -197,12 +253,72 @@ class RecordResults extends Page implements HasTable
 
     protected function getHeaderActions(): array
     {
-        return [
-            Actions\Action::make('backToExams')
-                ->label('الرجوع لقائمة الامتحانات')
-                ->icon('heroicon-o-arrow-right')
-                ->url(ExamResource::getUrl('index'))
-                ->color('gray'),
+        $actions = [
+            Actions\Action::make('notifyAbsenteesPortal')
+                ->label('📢 إشعار بوابة ولي الأمر للغائبين')
+                ->icon('heroicon-o-bell-alert')
+                ->color('danger')
+                ->action(function (ExamService $examService): void {
+                    $count = $examService->notifyBulkParentPortalForExam($this->exam->id, 'absent');
+                    Notification::make()
+                        ->title("تم إرسال {$count} تنبيه غياب لبوابة ولي الأمر بنجاح")
+                        ->success()
+                        ->send();
+                }),
         ];
+
+        if (\App\Services\WhatsAppNotificationService::isBulkEnabled()) {
+            $actions[] = Actions\Action::make('sendBulkWhatsAppAbsentees')
+                ->label('💬 واتساب لجميع الغائبين')
+                ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                ->color('warning')
+                ->requiresConfirmation()
+                ->modalHeading('تأكيد إرسال رسائل تذكير غياب الامتحان')
+                ->modalDescription('سيتم إرسال رسائل تنبيه لجميع أولياء أمور الطلاب الذين لم يؤدوا الامتحان بعد.')
+                ->action(function (ExamService $examService): void {
+                    $res = $examService->sendBulkWhatsAppForExam($this->exam->id, 'absent');
+                    Notification::make()
+                        ->title("تم إرسال {$res['success']} رسالة تذكير للغائبين بنجاح")
+                        ->success()
+                        ->send();
+                });
+        }
+
+        $actions[] = Actions\Action::make('notifyAttendeesPortal')
+            ->label('📢 إرسال النتائج للبوابة للجميع')
+            ->icon('heroicon-o-paper-airplane')
+            ->color('primary')
+            ->action(function (ExamService $examService): void {
+                $count = $examService->notifyBulkParentPortalForExam($this->exam->id, 'results');
+                Notification::make()
+                    ->title("تم إرسال {$count} بطاقة نتيجة لبوابة ولي الأمر بنجاح")
+                    ->success()
+                    ->send();
+            });
+
+        if (\App\Services\WhatsAppNotificationService::isBulkEnabled()) {
+            $actions[] = Actions\Action::make('sendBulkWhatsAppResults')
+                ->label('💬 إرسال النتائج واتساب للجميع')
+                ->icon('heroicon-o-trophy')
+                ->color('success')
+                ->requiresConfirmation()
+                ->modalHeading('تأكيد إرسال كشف الدرجات بالواتساب')
+                ->modalDescription('سيتم إرسال بطاقة النتيجة والترتيب والتقدير لجميع الطلاب الذين رُصدت لهم درجات.')
+                ->action(function (ExamService $examService): void {
+                    $res = $examService->sendBulkWhatsAppForExam($this->exam->id, 'results');
+                    Notification::make()
+                        ->title("تم إرسال {$res['success']} كشف نتيجة عبر الواتساب بنجاح")
+                        ->success()
+                        ->send();
+                });
+        }
+
+        $actions[] = Actions\Action::make('backToExams')
+            ->label('الرجوع للامتحانات')
+            ->icon('heroicon-o-arrow-right')
+            ->url(ExamResource::getUrl('index'))
+            ->color('gray');
+
+        return $actions;
     }
 }

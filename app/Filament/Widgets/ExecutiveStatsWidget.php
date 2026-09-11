@@ -6,9 +6,11 @@ use App\Models\Attendance;
 use App\Models\Expense;
 use App\Models\Salary;
 use App\Models\Student;
+use App\Models\StudentApplication;
 use App\Models\StudentPayment;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\Cache;
 
 class ExecutiveStatsWidget extends BaseWidget
 {
@@ -17,76 +19,86 @@ class ExecutiveStatsWidget extends BaseWidget
     protected function getStats(): array
     {
         $today = now()->toDateString();
+        $year = now()->year;
+        $month = now()->month;
 
-        // 1. الطلاب
-        $totalStudents = Student::count();
+        $statsData = Cache::remember("executive_stats_widget_data_{$today}", 60, function () use ($today, $year, $month) {
+            // 1. الطلاب
+            $totalStudents = Student::count();
 
-        // 2. الحضور اليوم عبر علاقة الجلسة (whereHas groupSession)
-        $todayPresent = Attendance::whereHas('groupSession', function ($query) use ($today) {
-            $query->whereDate('date', $today);
-        })->where('status', 'present')->count();
+            // 2. الحضور والغياب اليوم عبر علاقة الجلسة (whereHas groupSession)
+            $todayAttendance = Attendance::whereHas('groupSession', function ($query) use ($today) {
+                $query->whereDate('date', $today);
+            })
+            ->selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
 
-        // 3. المدفوع هذا الشهر
-        $paidThisMonth = StudentPayment::whereYear('paid_at', now()->year)
-            ->whereMonth('paid_at', now()->month)
-            ->sum('amount');
+            $todayPresent = $todayAttendance['present'] ?? 0;
+            $todayAbsent = $todayAttendance['absent'] ?? 0;
 
-        // 4. المصروفات والرواتب هذا الشهر
-        $expensesThisMonth = Expense::whereYear('date', now()->year)
-            ->whereMonth('date', now()->month)
-            ->sum('amount');
-        $salariesThisMonth = Salary::whereYear('paid_at', now()->year)
-            ->whereMonth('paid_at', now()->month)
-            ->sum('amount_paid');
-        $totalOutflow = $expensesThisMonth + $salariesThisMonth;
+            // 3. المدفوع هذا الشهر
+            $paidThisMonth = (float) StudentPayment::whereYear('paid_at', $year)
+                ->whereMonth('paid_at', $month)
+                ->sum('amount');
 
-        // 5. غياب اليوم
-        $todayAbsent = Attendance::whereHas('groupSession', function ($query) use ($today) {
-            $query->whereDate('date', $today);
-        })->where('status', 'absent')->count();
+            // 4. المصروفات والرواتب هذا الشهر
+            $expensesThisMonth = (float) Expense::whereYear('date', $year)
+                ->whereMonth('date', $month)
+                ->sum('amount');
 
-        // 6. الطلاب المتأخرين في الدفع
-        $paidStudentIds = StudentPayment::whereYear('paid_at', now()->year)
-            ->whereMonth('paid_at', now()->month)
-            ->pluck('student_id')
-            ->unique();
-        
-        $unpaidStudentsCount = Student::whereNotIn('id', $paidStudentIds)->count();
+            $salariesThisMonth = (float) Salary::whereYear('paid_at', $year)
+                ->whereMonth('paid_at', $month)
+                ->sum('amount_paid');
 
-        // 7. طلبات التقديم أونلاين المعلقة
-        $pendingApplicationsCount = \App\Models\StudentApplication::where('status', 'pending')->count();
+            $totalOutflow = $expensesThisMonth + $salariesThisMonth;
+
+            // 5. طلبات التقديم أونلاين المعلقة
+            $pendingApplicationsCount = StudentApplication::where('status', 'pending')->count();
+
+            return [
+                'pendingApplicationsCount' => $pendingApplicationsCount,
+                'totalStudents' => $totalStudents,
+                'todayPresent' => $todayPresent,
+                'todayAbsent' => $todayAbsent,
+                'paidThisMonth' => $paidThisMonth,
+                'totalOutflow' => $totalOutflow,
+            ];
+        });
 
         return [
-            Stat::make('طلبات التقديم أونلاين', number_format($pendingApplicationsCount))
+            Stat::make('طلبات التقديم أونلاين', number_format($statsData['pendingApplicationsCount']))
                 ->description('طلبات جديدة تحتاج مراجعة وقبول')
                 ->descriptionIcon('heroicon-m-document-check')
                 ->color('warning')
                 ->url(url('/admin/student-applications')),
 
-            Stat::make('الطلاب المقيدين', number_format($totalStudents))
+            Stat::make('الطلاب المقيدين', number_format($statsData['totalStudents']))
                 ->description('إجمالي الطلاب المسجلين بالسنتر')
                 ->descriptionIcon('heroicon-m-users')
                 ->color('info'),
 
-            Stat::make('الحضور اليوم', "حضر {$todayPresent}")
-                ->description("غائب {$todayAbsent} طالب")
+            Stat::make('الحضور اليوم', "حضر {$statsData['todayPresent']}")
+                ->description("غائب {$statsData['todayAbsent']} طالب")
                 ->descriptionIcon('heroicon-m-check-badge')
                 ->color('success'),
 
-            Stat::make('المتحصلات (المدفوع)', number_format($paidThisMonth, 0) . ' ج.م')
-                ->description('إيرادات الشهر الحالي')
+            Stat::make('المتحصلات (المدفوع)', number_format($statsData['paidThisMonth'], 0) . ' ج.م')
+                ->description(now()->translatedFormat('F Y'))
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('emerald'),
 
-            Stat::make('المصروفات والرواتب', number_format($totalOutflow, 0) . ' ج.م')
+            Stat::make('المصروفات والرواتب', number_format($statsData['totalOutflow'], 0) . ' ج.م')
                 ->description('مصروفات الشهر الحالي')
                 ->descriptionIcon('heroicon-m-arrow-trending-down')
                 ->color('danger'),
 
-            Stat::make('غياب اليوم', number_format($todayAbsent) . ' طالب')
+            Stat::make('غياب اليوم', number_format($statsData['todayAbsent']) . ' طالب')
                 ->description('يحتاجون متابعة ولي الأمر')
                 ->descriptionIcon('heroicon-m-user-minus')
                 ->color('purple'),
         ];
     }
 }
+

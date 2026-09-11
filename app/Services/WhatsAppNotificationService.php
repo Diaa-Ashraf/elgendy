@@ -9,6 +9,19 @@ use Illuminate\Support\Facades\Log;
 class WhatsAppNotificationService
 {
     /**
+     * التحقق مما إذا كانت بوابة الواتساب التلقائية مفعلة ومضبوطة في الإعدادات
+     */
+    public static function isBulkEnabled(): bool
+    {
+        $settingService = app(\App\Services\SettingService::class);
+        $enabled = (bool) $settingService->get('whatsapp_gateway_enabled', false);
+        $apiUrl = $settingService->get('whatsapp_api_url');
+        $apiKey = $settingService->get('whatsapp_api_key');
+
+        return $enabled && !empty($apiUrl) && !empty($apiKey);
+    }
+
+    /**
      * إرسال رسالة واتساب
      */
     public function sendMessage(string $phone, string $message): bool
@@ -25,7 +38,7 @@ class WhatsAppNotificationService
         $instanceId = $settingService->get('whatsapp_instance_id');
 
         if (! $apiUrl || ! $apiKey) {
-            Log::info("WhatsApp API non configured. Message to {$cleanPhone}: {$message}");
+            Log::info("WhatsApp API not configured. Message to {$cleanPhone}: {$message}");
             return false;
         }
 
@@ -44,6 +57,27 @@ class WhatsAppNotificationService
             Log::error("WhatsApp Notification Exception: " . $e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * إرسال رسالة واتساب يدوية
+     */
+    public function sendManualMessage(string $to, string $message): bool
+    {
+        return $this->sendMessage($to, $message);
+    }
+
+    /**
+     * توليد رابط واتساب المباشر المجاني (wa.me)
+     */
+    public static function getWhatsAppUrl(string $phone, string $message): string
+    {
+        $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
+        if (str_starts_with($cleanPhone, '01')) {
+            $cleanPhone = '2' . $cleanPhone;
+        }
+
+        return 'https://wa.me/' . $cleanPhone . '?text=' . urlencode($message);
     }
 
     /**
@@ -69,7 +103,7 @@ class WhatsAppNotificationService
     public function notifyExamResult(string $parentPhone, string $studentName, string $examTitle, float $mark, float $totalMarks): bool
     {
         $percentage = round(($mark / max($totalMarks, 1)) * 100, 1);
-        $rating = $percentage >= 85 ? 'ممتاز ⭐⭐⭐' : ($percentage >= 70 ? 'جيد جداً 👍' : 'يحتاج لمتابعة 📝');
+        $rating = $percentage >= 85 ? 'ممتاز ' : ($percentage >= 70 ? 'جيد جداً 👍' : 'يحتاج لمتابعة 📝');
 
         $msg = "ولي أمر الطالب/ة: {$studentName}\n";
         $msg .= "نتيجة اختبار: {$examTitle}\n";
@@ -125,5 +159,66 @@ class WhatsAppNotificationService
 
         return $this->sendMessage($parentPhone, $msg);
     }
-}
 
+    /**
+     * إشعار حضور/غياب تلقائي عند مسح QR (مع Rate Limiting)
+     * يرسل رسالة واحدة لكل طالب لكل حصة فقط لمنع البلوك
+     */
+    public function sendAttendanceNotification(
+        \App\Models\Student $student,
+        \App\Models\GroupSession $session,
+        string $status = 'present'
+    ): bool {
+        // Rate Limiting: رسالة واحدة لكل طالب لكل حصة
+        $cacheKey = "wa_attendance_{$student->id}_{$session->id}";
+        if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+            return false; // تم الإرسال مسبقاً
+        }
+
+        $phone = $student->parent_phone;
+        if (empty($phone)) {
+            return false;
+        }
+
+        $settingService = app(SettingService::class);
+        $centerName = $settingService->get('center_name', 'المنظومة التعليمية');
+        $groupName = $session->group?->name ?? 'غير محدد';
+        $date = now()->format('Y-m-d');
+        $time = now()->format('h:i A');
+
+        if ($status === 'present') {
+            $msg = "السلام عليكم ورحمة الله ✅\n\n";
+            $msg .= "ولي أمر الطالب/ة: *{$student->name}*\n";
+            $msg .= "نفيدكم بأن ابنكم قد حضر الحصة بنجاح.\n\n";
+            $msg .= "📚 المجموعة: {$groupName}\n";
+            $msg .= "📅 التاريخ: {$date}\n";
+            $msg .= "⏰ وقت الحضور: {$time}\n\n";
+            $msg .= "— {$centerName}";
+        } else {
+            $msg = "السلام عليكم ورحمة الله ⚠️\n\n";
+            $msg .= "ولي أمر الطالب/ة: *{$student->name}*\n";
+            $msg .= "نود إحاطتكم بأن ابنكم لم يحضر حصة اليوم.\n\n";
+            $msg .= "📚 المجموعة: {$groupName}\n";
+            $msg .= "📅 التاريخ: {$date}\n\n";
+            $msg .= "يرجى التواصل معنا في حالة وجود عذر.\n";
+            $msg .= "— {$centerName}";
+        }
+
+        // Rate Limit: تأخير بين الرسائل (3 ثوان بين كل رسالة)
+        $globalKey = 'wa_last_sent_at';
+        $lastSent = \Illuminate\Support\Facades\Cache::get($globalKey, 0);
+        $now = microtime(true);
+        $diff = $now - $lastSent;
+        if ($diff < 3) {
+            usleep((int) ((3 - $diff) * 1000000));
+        }
+
+        $result = $this->sendMessage($phone, $msg);
+
+        // تسجيل الإرسال لمنع التكرار (صالح لمدة 24 ساعة)
+        \Illuminate\Support\Facades\Cache::put($cacheKey, true, now()->addHours(24));
+        \Illuminate\Support\Facades\Cache::put($globalKey, microtime(true), now()->addMinutes(5));
+
+        return $result;
+    }
+}

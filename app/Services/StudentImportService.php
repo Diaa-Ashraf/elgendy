@@ -350,7 +350,7 @@ class StudentImportService
                 $user = \App\Models\User::find($import->user_id);
                 if ($user) {
                     $title = $finalStatus === 'completed'
-                        ? "اكتمل استيراد الطلاب بنجاح 🎉 ({$succeededCount} طالب)"
+                        ? "اكتمل استيراد الطلاب بنجاح  ({$succeededCount} طالب)"
                         : ($finalStatus === 'completed_with_errors'
                             ? "اكتمل الاستيراد مع وجود أخطاء ({$succeededCount} ناجح / {$failedCount} مرفوض)"
                             : "فشل استيراد ملف الطلاب: {$import->file_name}");

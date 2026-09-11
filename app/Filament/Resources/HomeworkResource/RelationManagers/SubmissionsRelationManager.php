@@ -116,10 +116,37 @@ class SubmissionsRelationManager extends RelationManager
                     ->url(fn (HomeworkSubmission $record) => asset('storage/' . $record->attachment))
                     ->openUrlInNewTab(),
 
+                Tables\Actions\Action::make('sendWhatsApp')
+                    ->label('واتساب لولي الأمر 💬')
+                    ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                    ->color('success')
+                    ->url(function (HomeworkSubmission $record) use ($homework): ?string {
+                        $parentPhone = $record->student?->parent_phone ?? $record->student?->phone;
+                        if (! $parentPhone) {
+                            return null;
+                        }
+
+                        $centerName = app(\App\Services\SettingService::class)->get('center_name', 'المنظومة التعليمية');
+                        $name = $record->student?->name ?? 'طالب';
+                        $score = $record->score;
+                        $totalMarks = (float) $homework->total_marks;
+                        $percentage = $score !== null && $totalMarks > 0 ? round(($score / $totalMarks) * 100, 1) : null;
+                        $scoreText = $score !== null ? "{$score} من {$totalMarks} ({$percentage}%)" : 'قيد المراجعة';
+
+                        $msg = "السلام عليكم ورحمة الله، المكرم ولي أمر الطالب/ة: {$name} 📝\n"
+                            . "نحيطكم علماً بنتيجة تصحيح واجب ({$homework->title}):\n"
+                            . "▪️ الدرجة: {$scoreText}\n"
+                            . ($record->teacher_feedback ? "▪️ ملاحظات المدرس: {$record->teacher_feedback}\n" : "")
+                            . "\n— {$centerName}";
+
+                        return \App\Services\WhatsAppNotificationService::getWhatsAppUrl($parentPhone, $msg);
+                    })
+                    ->openUrlInNewTab(),
+
                 Tables\Actions\EditAction::make()
                     ->label('رصد الدرجة وملاحظات')
                     ->icon('heroicon-o-pencil-square')
-                    ->color('success')
+                    ->color('primary')
                     ->mutateRecordDataUsing(function (array $data): array {
                         $data['status'] = $data['status'] === 'submitted' ? 'graded' : $data['status'];
                         return $data;

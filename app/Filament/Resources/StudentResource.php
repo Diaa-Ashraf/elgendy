@@ -137,8 +137,9 @@ class StudentResource extends Resource
 
                 Tables\Columns\TextColumn::make('phone')
                     ->label('هاتف الطالب')
+                    ->placeholder('-')
                     ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->copyable(),
 
                 Tables\Columns\TextColumn::make('gender')
                     ->label('النوع')
@@ -187,10 +188,16 @@ class StudentResource extends Resource
             ])
             ->actions([
                 Tables\Actions\Action::make('printCard')
-                    ->label('كارنيه الطالب 🎴')
+                    ->label('كارنيه الطالب')
                     ->icon('heroicon-o-qr-code')
                     ->color('warning')
                     ->url(fn (Student $record): string => route('student.card.print', $record->id))
+                    ->openUrlInNewTab(),
+                Tables\Actions\Action::make('monthlyReport')
+                    ->label('تقرير الأداء الشهري')
+                    ->icon('heroicon-o-document-chart-bar')
+                    ->color('success')
+                    ->url(fn (Student $record): string => route('student.monthly-report.pdf', $record->id))
                     ->openUrlInNewTab(),
                 Tables\Actions\Action::make('ledger')
                     ->label('كشف الحساب')

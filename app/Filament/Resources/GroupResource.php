@@ -217,26 +217,54 @@ class GroupResource extends Resource
                     ->form([
                         Forms\Components\DatePicker::make('from_date')
                             ->label('من تاريخ')
-                            ->default(now())
-                            ->required(),
+                            ->default(now()->startOfMonth())
+                            ->required()
+                            ->native(false),
 
                         Forms\Components\DatePicker::make('to_date')
                             ->label('إلى تاريخ')
-                            ->default(now()->addMonth())
-                            ->required(),
+                            ->default(now()->addMonth()->endOfMonth())
+                            ->required()
+                            ->native(false),
                     ])
                     ->action(function (Group $record, array $data, \App\Services\AttendanceService $attendanceService): void {
+                        $schedulesCount = $record->schedules()->count();
+                        if ($schedulesCount === 0) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('تنبيه: لا يوجد جدول مواعيد لهذه المجموعة!')
+                                ->body('يرجى تعديل المجموعة أولاً وإضافة أيام الحصص (مثل الأحد، الثلاثاء...) من قسم "مواعيد الحصص".')
+                                ->warning()
+                                ->persistent()
+                                ->send();
+                            return;
+                        }
+
                         $createdCount = $attendanceService->generateSessions(
                             $record->id,
                             $data['from_date'],
                             $data['to_date']
                         );
 
-                        \Filament\Notifications\Notification::make()
-                            ->title("تم توليد {$createdCount} حصة لهذه المجموعة بنجاح")
-                            ->success()
-                            ->send();
+                        if ($createdCount > 0) {
+                            \Filament\Notifications\Notification::make()
+                                ->title("تم توليد {$createdCount} حصة بنجاح لهذه المجموعة")
+                                ->body("تم إنشاء الحصص في الفترة من {$data['from_date']} إلى {$data['to_date']}.")
+                                ->success()
+                                ->send();
+                        } else {
+                            \Filament\Notifications\Notification::make()
+                                ->title('لم يتم توليد حصص جديدة (موجودة مسبقاً)')
+                                ->body('جميع حصص هذه المجموعة في الفترة المحددة مطابقة للجدول وتم توليدها مسبقاً.')
+                                ->info()
+                                ->send();
+                        }
                     }),
+                Tables\Actions\Action::make('printBatchCards')
+                    ->label('طباعة كارنيهات المجموعة')
+                    ->icon('heroicon-o-printer')
+                    ->color('info')
+                    ->url(fn (Group $record) => route('group.cards.print', $record->id))
+                    ->openUrlInNewTab(),
                 Tables\Actions\EditAction::make()->label('تعديل'),
                 Tables\Actions\DeleteAction::make()->label('حذف'),
             ])

@@ -152,25 +152,249 @@ class HomeworkService
     }
 
     /**
-     * إحصائيات تسليمات واجب معين.
+     * جلب الطلاب المستهدفين للواجب (المجموعة المحددة أو جميع طلاب المرحلة)
+     */
+    public function getTargetStudents(Homework $homework): Collection
+    {
+        if ($homework->group_id) {
+            $group = $homework->group ?: \App\Models\Group::find($homework->group_id);
+            if ($group) {
+                $students = $group->students()->wherePivot('status', 'active')->get();
+                if ($students->isNotEmpty()) {
+                    return $students;
+                }
+                return $group->students()->get();
+            }
+        }
+
+        return Student::where('stage_id', $homework->stage_id)->get();
+    }
+
+    /**
+     * إحصائيات تسليمات وأداء واجب معين.
      */
     public function getSubmissionStats(Homework $homework): array
     {
-        $submissions = $homework->submissions()->get();
+        return $this->getHomeworkStats($homework->id);
+    }
 
-        $total = $submissions->count();
-        $submitted = $submissions->whereIn('status', ['submitted', 'graded', 'returned'])->count();
-        $graded = $submissions->whereIn('status', ['graded', 'returned'])->count();
-        $late = $submissions->where('is_late', true)->count();
-        $avgScore = $submissions->whereNotNull('score')->avg('score');
+    /**
+     * حساب إحصائيات متكاملة للواجب والطلاب المسلّمين والمقصرين.
+     */
+    public function getHomeworkStats(int $homeworkId): array
+    {
+        $homework = Homework::with(['group', 'educationalStage', 'subject'])->findOrFail($homeworkId);
+        $targetStudents = $this->getTargetStudents($homework);
+        $totalTarget = $targetStudents->count();
+
+        $submissions = HomeworkSubmission::where('homework_id', $homeworkId)->get();
+        $submittedStudentIds = $submissions->whereIn('status', ['submitted', 'graded', 'returned'])
+            ->pluck('student_id')
+            ->unique()
+            ->toArray();
+
+        $submittedCount = count($submittedStudentIds);
+        $missingCount = max(0, $totalTarget - $submittedCount);
+        $submissionRate = $totalTarget > 0 ? round(($submittedCount / $totalTarget) * 100, 1) : 0;
+
+        $gradedSubmissions = $submissions->whereNotNull('score');
+        $gradedCount = $gradedSubmissions->count();
+        $avgScore = $gradedSubmissions->avg('score');
+        $highestScore = $gradedSubmissions->max('score');
+        $lowestScore = $gradedSubmissions->min('score');
 
         return [
-            'total_submissions' => $total,
-            'submitted_count' => $submitted,
-            'graded_count' => $graded,
-            'late_count' => $late,
-            'average_score' => $avgScore ? round($avgScore, 1) : null,
-            'pending_grading' => $submitted - $graded,
+            'total_target_students' => $totalTarget,
+            'submitted_count' => $submittedCount,
+            'missing_count' => $missingCount,
+            'submission_rate' => $submissionRate,
+            'graded_count' => $gradedCount,
+            'pending_grading' => max(0, $submittedCount - $gradedCount),
+            'average_score' => $avgScore ? round((float) $avgScore, 1) : 0,
+            'highest_score' => $highestScore !== null ? (float) $highestScore : 0,
+            'lowest_score' => $lowestScore !== null ? (float) $lowestScore : 0,
+        ];
+    }
+
+    /**
+     * الحصول على قائمة الطلاب الذين لم يسلموا الواجب (المقصرين)
+     *
+     * @return Collection<int, array{id: int, name: string, code: string, phone: ?string, parent_phone: ?string, stage_name: string, group_name: string, is_overdue: bool}>
+     */
+    public function getHomeworkMissingStudents(int $homeworkId): Collection
+    {
+        $homework = Homework::with(['group', 'educationalStage'])->findOrFail($homeworkId);
+        $targetStudents = $this->getTargetStudents($homework);
+
+        $submittedStudentIds = HomeworkSubmission::where('homework_id', $homeworkId)
+            ->whereIn('status', ['submitted', 'graded', 'returned'])
+            ->pluck('student_id')
+            ->unique()
+            ->toArray();
+
+        $stageName = $homework->educationalStage?->name ?? 'المرحلة';
+        $groupName = $homework->group?->name ?? 'جميع المجموعات';
+        $isOverdue = $homework->isOverdue();
+
+        return $targetStudents
+            ->whereNotIn('id', $submittedStudentIds)
+            ->map(function ($student) use ($stageName, $groupName, $isOverdue) {
+                return [
+                    'id' => $student->id,
+                    'name' => $student->name,
+                    'code' => $student->qr_code ?: ('STD-' . $student->id),
+                    'phone' => $student->phone,
+                    'parent_phone' => $student->parent_phone ?? $student->phone,
+                    'stage_name' => $stageName,
+                    'group_name' => $groupName,
+                    'is_overdue' => $isOverdue,
+                ];
+            })
+            ->values();
+    }
+
+    /**
+     * الحصول على قائمة الطلاب الذين سلّموا الواجب مع درجاتهم وتقييماتهم
+     *
+     * @return Collection<int, array{id: int, student_id: int, name: string, code: string, phone: ?string, parent_phone: ?string, submitted_at: ?string, is_late: bool, status: string, score: ?float, total_marks: float, percentage: ?float, feedback: ?string, attachment: ?string}>
+     */
+    public function getHomeworkSubmittedStudents(int $homeworkId): Collection
+    {
+        $homework = Homework::findOrFail($homeworkId);
+        $totalMarks = (float) $homework->total_marks;
+
+        $submissions = HomeworkSubmission::where('homework_id', $homeworkId)
+            ->with(['student.educationalStage'])
+            ->orderByRaw('score DESC NULLS LAST, submitted_at ASC')
+            ->get();
+
+        return $submissions->map(function ($sub, $idx) use ($totalMarks) {
+            $student = $sub->student;
+            $score = $sub->score !== null ? (float) $sub->score : null;
+            $percentage = $score !== null && $totalMarks > 0 ? round(($score / $totalMarks) * 100, 1) : null;
+
+            return [
+                'id' => $sub->id,
+                'student_id' => $student?->id,
+                'name' => $student?->name ?? 'طالب',
+                'code' => $student?->qr_code ?: ('STD-' . ($student?->id ?? 0)),
+                'phone' => $student?->phone,
+                'parent_phone' => $student?->parent_phone ?? $student?->phone,
+                'submitted_at' => $sub->submitted_at ? \Carbon\Carbon::parse($sub->submitted_at)->format('Y-m-d h:i A') : null,
+                'is_late' => (bool) $sub->is_late,
+                'status' => $sub->status,
+                'score' => $score,
+                'total_marks' => $totalMarks,
+                'percentage' => $percentage,
+                'feedback' => $sub->teacher_feedback,
+                'attachment' => $sub->attachment,
+                'rank' => $idx + 1,
+            ];
+        })->values();
+    }
+
+    /**
+     * إرسال إشعارات جماعية لبوابة ولي الأمر للواجب (تنبيه بعدم التسليم أو إشعار اعتماد النتيجة)
+     */
+    public function notifyBulkParentPortalForHomework(int $homeworkId, string $target = 'missing'): int
+    {
+        $homework = Homework::with(['group', 'educationalStage', 'subject'])->findOrFail($homeworkId);
+        $dueDate = $homework->due_date ? \Carbon\Carbon::parse($homework->due_date)->format('Y-m-d h:i A') : '';
+        $subjectName = $homework->subject?->name ?? 'المادة';
+        $count = 0;
+
+        if ($target === 'missing') {
+            $missing = $this->getHomeworkMissingStudents($homeworkId);
+            foreach ($missing as $item) {
+                \App\Models\ParentNotification::create([
+                    'student_id' => $item['id'],
+                    'type' => 'warning',
+                    'title' => "⚠️ تنبيه عدم تسليم واجب: {$homework->title}",
+                    'message' => "نحيطكم علماً بأن الطالب ({$item['name']}) لم يقم بتسليم الواجب المطلوب في مادة ({$subjectName}) والذي موعد تسليمه النهائي: {$dueDate}. يرجى حث الطالب على سرعة التسليم.",
+                    'action_url' => '/parent/dashboard',
+                ]);
+                $count++;
+            }
+        } else {
+            $submitted = $this->getHomeworkSubmittedStudents($homeworkId);
+            foreach ($submitted as $item) {
+                if ($item['score'] !== null) {
+                    \App\Models\ParentNotification::create([
+                        'student_id' => $item['student_id'],
+                        'type' => 'homework',
+                        'title' => "✅ تم تصحيح واجب: {$homework->title}",
+                        'message' => "تم اعتماد درجة وتقييم الطالب ({$item['name']}) في واجب مادة ({$subjectName}): حصل على {$item['score']} من {$item['total_marks']} ({$item['percentage']}%).",
+                        'action_url' => '/parent/dashboard',
+                    ]);
+                    $count++;
+                }
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * إرسال رسائل واتساب جماعية للواجب (للذين لم يسلموا أو للمسلّمين)
+     *
+     * @return array{success: int, failed: int, total: int}
+     */
+    public function sendBulkWhatsAppForHomework(int $homeworkId, string $target = 'missing', ?string $customMessage = null): array
+    {
+        $homework = Homework::with(['group', 'educationalStage', 'subject'])->findOrFail($homeworkId);
+        $centerName = app(SettingService::class)->get('center_name', 'المنظومة التعليمية');
+        $subjectName = $homework->subject?->name ?? 'المادة';
+        $dueDate = $homework->due_date ? \Carbon\Carbon::parse($homework->due_date)->format('Y-m-d h:i A') : '';
+        $whatsappService = app(WhatsAppNotificationService::class);
+
+        $students = $target === 'missing'
+            ? $this->getHomeworkMissingStudents($homeworkId)
+            : $this->getHomeworkSubmittedStudents($homeworkId);
+
+        $success = 0;
+        $failed = 0;
+
+        foreach ($students as $item) {
+            $phone = $item['parent_phone'];
+            if (empty($phone)) {
+                $failed++;
+                continue;
+            }
+
+            if (! empty($customMessage)) {
+                $message = str_replace(
+                    ['{name}', '{student_name}', '{homework}', '{subject}', '{due_date}', '{center}'],
+                    [$item['name'], $item['name'], $homework->title, $subjectName, $dueDate, $centerName],
+                    $customMessage
+                );
+            } elseif ($target === 'missing') {
+                $message = "السلام عليكم ورحمة الله، المكرم ولي أمر الطالب/ة: {$item['name']} ⚠️\n"
+                    . "نود تذكيركم بأن الطالب لم يقم بعد بتسليم واجب ({$homework->title}) في مادة ({$subjectName}).\n"
+                    . "⏰ آخر موعد للتسليم: {$dueDate}\n"
+                    . "يرجى حث الطالب على حل الواجب وتسليمه عبر بوابة الطالب للاستفادة الكاملة.\n\n"
+                    . "— {$centerName}";
+            } else {
+                $scoreText = $item['score'] !== null ? "{$item['score']} من {$item['total_marks']} ({$item['percentage']}%)" : 'قيد المراجعة';
+                $message = "السلام عليكم ورحمة الله، المكرم ولي أمر الطالب/ة: {$item['name']} 📝\n"
+                    . "نحيطكم علماً بأنه تم استلام وتصحيح واجب ({$homework->title}) في مادة ({$subjectName}):\n"
+                    . "▪️ الدرجة: {$scoreText}\n"
+                    . ($item['feedback'] ? "▪️ ملاحظات المدرس: {$item['feedback']}\n" : "")
+                    . "\n— {$centerName}";
+            }
+
+            $sent = $whatsappService->sendMessage($phone, $message);
+            if ($sent) {
+                $success++;
+            } else {
+                $failed++;
+            }
+        }
+
+        return [
+            'success' => $success,
+            'failed' => $failed,
+            'total' => count($students),
         ];
     }
 }
+

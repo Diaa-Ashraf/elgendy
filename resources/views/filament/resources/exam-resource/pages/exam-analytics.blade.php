@@ -19,7 +19,7 @@
             </div>
 
             <div class="bg-gray-900/80 dark:bg-gray-900 border border-gray-800 rounded-2xl p-5 shadow-lg backdrop-blur-sm relative overflow-hidden">
-                <div class="absolute -right-2 -bottom-2 opacity-10 text-emerald-500 text-6xl select-none">🏆</div>
+                <div class="absolute -right-2 -bottom-2 opacity-10 text-emerald-500 text-6xl select-none"></div>
                 <div class="text-xs font-bold text-gray-400 mb-1">نسبة النجاح العامة</div>
                 <div class="text-3xl font-black text-emerald-400">{{ $analytics['pass_rate'] ?? 0 }}%</div>
             </div>
@@ -46,7 +46,7 @@
             <div class="bg-gray-900/90 border border-gray-800 rounded-2xl p-6 shadow-xl space-y-4">
                 <div class="flex items-center justify-between border-b border-gray-800 pb-3">
                     <h3 class="font-black text-base text-white flex items-center gap-2">
-                        <span class="text-lg">🎯</span> تشخيص استيعاب الدروس والمفاهيم (Topics Mastery)
+                        <span class="text-lg"></span> تشخيص استيعاب الدروس والمفاهيم (Topics Mastery)
                     </h3>
                     <span class="text-xs text-gray-400">مقياس إتقان موضوعات الاختبار</span>
                 </div>

@@ -117,7 +117,7 @@ class OnlineExamController extends Controller
         $gradedAttempt = $examService->submitAttempt($attempt, (array) $submittedAnswers);
 
         return redirect()->route('parent.exams.result', ['id' => $exam->id])
-            ->with('success', 'تم تسليم الامتحان وتصحيحه تلقائياً بنجاح! 🎉');
+            ->with('success', 'تم تسليم الامتحان وتصحيحه تلقائياً بنجاح! ');
     }
 
     /**

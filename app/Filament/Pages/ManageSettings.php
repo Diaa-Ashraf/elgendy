@@ -110,6 +110,7 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
             // ─── 6. الإيصالات والواتساب ───
             'default_session_capacity' => $s->get('default_session_capacity', '25'),
             'receipt_footer_notes' => $s->get('receipt_footer_notes', 'شكراً لتعاملكم معنا - يرجى الاحتفاظ بالوصل سارياً'),
+            'whatsapp_gateway_enabled' => (bool) $s->get('whatsapp_gateway_enabled', false),
             'whatsapp_api_url' => $s->get('whatsapp_api_url', ''),
             'whatsapp_api_key' => $s->get('whatsapp_api_key', ''),
             'whatsapp_instance_id' => $s->get('whatsapp_instance_id', ''),
@@ -400,20 +401,31 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
                                             ->columnSpanFull(),
                                     ]),
 
-                                Forms\Components\Section::make('إعدادات إشعارات الواتساب (WhatsApp Gateway)')
+                                Forms\Components\Section::make('إعدادات إشعارات الواتساب التلقائية (WhatsApp Gateway)')
+                                    ->description('التحكم في تفعيل أو تعطيل الإرسال التلقائي للرسائل في الخلفية عبر مزودي خدمة الـ API')
                                     ->schema([
+                                        Forms\Components\Toggle::make('whatsapp_gateway_enabled')
+                                            ->label('تفعيل بوابة الإرسال التلقائي للواتساب (API Gateway)')
+                                            ->helperText('عند التعطيل، يتم إخفاء أزرار الإرسال الجماعي التلقائي في النظام والاعتماد على أزرار فتح الواتساب المباشرة فقط.')
+                                            ->default(false)
+                                            ->reactive()
+                                            ->columnSpanFull(),
+
                                         Forms\Components\TextInput::make('whatsapp_api_url')
                                             ->label('رابط خدمة الـ API (Gateway URL)')
-                                            ->placeholder('https://api.ultramsg.com/instance...'),
+                                            ->placeholder('https://api.ultramsg.com/instance...')
+                                            ->visible(fn (Forms\Get $get) => (bool) $get('whatsapp_gateway_enabled')),
 
                                         Forms\Components\TextInput::make('whatsapp_instance_id')
                                             ->label('معرف الجلسة (Instance ID)')
-                                            ->placeholder('instance12345'),
+                                            ->placeholder('instance12345')
+                                            ->visible(fn (Forms\Get $get) => (bool) $get('whatsapp_gateway_enabled')),
 
                                         Forms\Components\TextInput::make('whatsapp_api_key')
                                             ->label('مفتاح الوصول (API Key / Token)')
                                             ->password()
-                                            ->columnSpanFull(),
+                                            ->columnSpanFull()
+                                            ->visible(fn (Forms\Get $get) => (bool) $get('whatsapp_gateway_enabled')),
                                     ])
                                     ->columns(2),
                             ]),

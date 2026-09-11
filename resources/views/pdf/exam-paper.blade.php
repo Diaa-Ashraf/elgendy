@@ -2,9 +2,15 @@
 <html dir="rtl" lang="ar">
 <head>
     <meta charset="utf-8">
-    <title>{{ $exam->title }} - ورقة الامتحان</title>
+    <title>{{ $exam->title }} - نماذج الامتحان والطباعة</title>
     @php
         $faviconUrl = app(\App\Services\SettingService::class)->url('site_favicon');
+        $siteSettings = app(\App\Services\SettingService::class);
+        $centerName = $siteSettings->get('center_name', 'المنظومة التعليمية');
+        $teacherName = $siteSettings->get('teacher_name', 'أ / محمد الجندي');
+        $teacherSubject = $siteSettings->get('teacher_subject', 'مادة الفيزياء والكيمياء');
+        $logoUrl = $siteSettings->url('site_logo');
+        $headerNotes = $siteSettings->get('exam_header_notes', 'اقرأ الأسئلة بعناية قبل الإجابة، واستعن بالله');
     @endphp
     @if($faviconUrl)
         <link rel="icon" href="{{ $faviconUrl }}">
@@ -13,7 +19,7 @@
     <style>
         @page {
             size: A4;
-            margin: 12mm 12mm 12mm 12mm;
+            margin: 10mm 12mm 10mm 12mm;
         }
         * {
             box-sizing: border-box;
@@ -24,30 +30,93 @@
             font-family: 'Cairo', sans-serif;
             direction: rtl;
             text-align: right;
-            background: #f8fafc;
+            background: #f1f5f9;
             color: #0f172a;
             margin: 0;
-            padding: 20px;
+            padding: 20px 10px;
             font-size: 13px;
             line-height: 1.6;
         }
 
+        /* ─── شريط أدوات التحكم والطباعة ─── */
+        .controls-toolbar {
+            max-width: 900px;
+            margin: 0 auto 20px auto;
+            background: #0f172a;
+            color: #ffffff;
+            padding: 14px 20px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.3);
+        }
+        .controls-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 15px;
+        }
+        .controls-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn-toolbar {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: none;
+            border: none;
+            transition: all 0.2s;
+            font-family: 'Cairo', sans-serif;
+        }
+        .btn-print {
+            background: #10b981;
+            color: #ffffff;
+        }
+        .btn-print:hover {
+            background: #059669;
+        }
+        .btn-mode {
+            background: #334155;
+            color: #f8fafc;
+        }
+        .btn-mode.active, .btn-mode:hover {
+            background: #f59e0b;
+            color: #0f172a;
+        }
+
+        /* ─── ورقة الامتحان ─── */
         .paper-container {
-            max-width: 850px;
-            margin: 0 auto;
+            max-width: 880px;
+            margin: 0 auto 30px auto;
             background: #ffffff;
             padding: 24px;
             border-radius: 16px;
             box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.08);
             border: 1px solid #e2e8f0;
+            page-break-after: always;
         }
-        
+        .paper-container:last-child {
+            page-break-after: auto;
+        }
+
         /* ─── ترويسة الامتحان ─── */
         .exam-header {
             border: 2px solid #0f172a;
             border-radius: 12px;
             padding: 12px 18px;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
             background: #f8fafc;
             display: flex;
             justify-content: space-between;
@@ -72,17 +141,27 @@
             gap: 15px;
         }
         .header-side {
-            width: 150px;
+            width: 160px;
             font-size: 11.5px;
             font-weight: 700;
             color: #334155;
             line-height: 1.5;
         }
+        .model-badge {
+            display: inline-block;
+            background: #0f172a;
+            color: #ffffff;
+            font-weight: 900;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-top: 4px;
+        }
         .student-box {
             border: 1.5px dashed #94a3b8;
             border-radius: 10px;
             padding: 8px 14px;
-            margin-bottom: 18px;
+            margin-bottom: 16px;
             background: #ffffff;
             display: flex;
             justify-content: space-between;
@@ -93,7 +172,7 @@
         .student-box .dots {
             border-bottom: 1px dotted #64748b;
             display: inline-block;
-            width: 160px;
+            width: 140px;
             height: 14px;
         }
 
@@ -101,12 +180,12 @@
         .questions-container {
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 12px;
         }
         .question-card {
             border: 1px solid #cbd5e1;
             border-radius: 12px;
-            padding: 14px 16px;
+            padding: 12px 14px;
             background: #ffffff;
             page-break-inside: avoid;
         }
@@ -115,18 +194,18 @@
             align-items: flex-start;
             justify-content: space-between;
             gap: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             border-bottom: 1px solid #f1f5f9;
-            padding-bottom: 8px;
+            padding-bottom: 6px;
         }
         .question-number {
             background: #0f172a;
             color: #ffffff;
             font-weight: 900;
-            font-size: 12.5px;
-            width: 26px;
-            height: 26px;
-            border-radius: 7px;
+            font-size: 12px;
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -134,251 +213,279 @@
             margin-left: 8px;
         }
         .question-title {
-            font-size: 14px;
+            font-size: 13.5px;
             font-weight: 800;
             color: #0f172a;
             margin: 0;
             flex-grow: 1;
-            line-height: 1.6;
+            line-height: 1.5;
         }
         .question-marks {
             background: #f1f5f9;
             color: #475569;
             border: 1px solid #e2e8f0;
             border-radius: 6px;
-            padding: 3px 9px;
-            font-size: 11px;
+            padding: 2px 8px;
+            font-size: 10.5px;
             font-weight: 800;
             white-space: nowrap;
         }
         .question-img-wrap {
             text-align: center;
-            margin: 10px 0;
+            margin: 8px 0;
         }
         .question-img-wrap img {
-            max-height: 160px;
+            max-height: 150px;
             max-width: 100%;
             border-radius: 8px;
             border: 1px solid #e2e8f0;
         }
+
+        /* ─── شبكة الخيارات ─── */
         .options-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 8px 14px;
+            gap: 8px;
             margin-top: 8px;
         }
         .option-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 7px 10px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 13px;
+            gap: 8px;
+            font-size: 12.5px;
             font-weight: 700;
             color: #1e293b;
-            padding: 7px 12px;
-            background: #f8fafc;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
         }
         .option-checkbox {
             width: 16px;
             height: 16px;
-            border: 1.5px solid #64748b;
+            border: 1.5px solid #94a3b8;
             border-radius: 4px;
             display: inline-block;
             flex-shrink: 0;
             background: #ffffff;
         }
         .option-badge {
+            background: #e2e8f0;
+            color: #0f172a;
             font-weight: 900;
-            font-size: 11.5px;
-            color: #2563eb;
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            padding: 1px 7px;
+            padding: 1px 6px;
             border-radius: 5px;
+            font-size: 11px;
             flex-shrink: 0;
         }
 
-        /* ─── الفوتر ─── */
+        /* ─── التذييل ─── */
         .exam-footer {
-            margin-top: 24px;
-            padding-top: 12px;
-            border-top: 2px dashed #cbd5e1;
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1.5px solid #e2e8f0;
             text-align: center;
-            font-size: 11.5px;
+            font-size: 11px;
             font-weight: 700;
             color: #64748b;
         }
 
-        /* ─── زر الطباعة عند الفتح في المتصفح ─── */
-        .no-print-bar {
-            max-width: 850px;
-            margin: 0 auto 16px auto;
+        /* ─── جدول مفتاح الإجابة للمعلم ─── */
+        .answer-key-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 12px;
+        }
+        .answer-key-table th, .answer-key-table td {
+            border: 1px solid #cbd5e1;
+            padding: 8px 10px;
+            text-align: center;
+        }
+        .answer-key-table th {
             background: #0f172a;
             color: #ffffff;
-            padding: 12px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.3);
+            font-weight: 800;
         }
-        .print-btn {
-            background: #2563eb;
-            color: #ffffff;
-            border: none;
-            padding: 9px 22px;
-            border-radius: 8px;
-            font-family: 'Cairo', sans-serif;
-            font-weight: 900;
-            font-size: 13.5px;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
-            transition: all 0.2s;
+        .answer-key-table tr:nth-child(even) {
+            background: #f8fafc;
         }
-        .print-btn:hover {
-            background: #1d4ed8;
-        }
+
         @media print {
-            .no-print-bar {
-                display: none !important;
-            }
             body {
                 background: #ffffff;
                 padding: 0;
             }
+            .controls-toolbar {
+                display: none !important;
+            }
             .paper-container {
-                padding: 0;
                 box-shadow: none;
                 border: none;
+                padding: 0;
+                margin: 0 0 20px 0;
             }
         }
     </style>
 </head>
 <body>
 
-    <div class="no-print-bar">
-        <div style="font-weight: 800; font-size: 14px;">
-            📄 <strong>معاينة طباعة ورقة الاختبار</strong> — {{ $exam->title }}
+    {{-- شريط التحكم والخيارات العلوية --}}
+    <div class="controls-toolbar">
+        <div class="controls-title">
+            <span>طباعة نماذج الامتحان: {{ $exam->title }}</span>
         </div>
-        <button class="print-btn" onclick="window.print()">🖨️ طباعة الآن أو حفظ كـ PDF</button>
+        <div class="controls-actions">
+            <span style="font-size: 12px; color: #94a3b8;">النماذج المتاحة:</span>
+            <a href="?models_count=1&include_answer_key={{ $includeAnswerKey ? 1 : 0 }}" class="btn-toolbar btn-mode {{ $modelsCount == 1 ? 'active' : '' }}">
+                نموذج واحد (أ)
+            </a>
+            <a href="?models_count=2&include_answer_key={{ $includeAnswerKey ? 1 : 0 }}" class="btn-toolbar btn-mode {{ $modelsCount == 2 ? 'active' : '' }}">
+                نموذجان (أ / ب) لمنع الغش
+            </a>
+            <a href="?models_count=3&include_answer_key={{ $includeAnswerKey ? 1 : 0 }}" class="btn-toolbar btn-mode {{ $modelsCount == 3 ? 'active' : '' }}">
+                3 نماذج (أ / ب / ج)
+            </a>
+
+            <a href="?models_count={{ $modelsCount }}&include_answer_key={{ $includeAnswerKey ? 0 : 1 }}" class="btn-toolbar btn-mode {{ $includeAnswerKey ? 'active' : '' }}">
+                {{ $includeAnswerKey ? 'نموذج الإجابة مفعّل' : 'بدون نموذج إجابة' }}
+            </a>
+
+            <button onclick="window.print()" class="btn-toolbar btn-print">
+                <span>طباعة النماذج الآن</span>
+            </button>
+        </div>
     </div>
 
-    @php
-        $teacherName = app(\App\Services\SettingService::class)->get('teacher_name', 'الأستاذ');
-        $centerName = app(\App\Services\SettingService::class)->get('center_name', 'المنظومة التعليمية');
-    @endphp
+    {{-- طباعة كل نموذج --}}
+    @foreach($models as $model)
+        <div class="paper-container">
+            {{-- ترويسة الامتحان --}}
+            <div class="exam-header">
+                <div class="header-side text-right">
+                    <div>{{ $centerName }}</div>
+                    <div style="color: #64748b;">{{ $teacherSubject }}</div>
+                    <div>{{ $teacherName }}</div>
+                </div>
 
-    <div class="paper-container">
-        {{-- ترويسة الاختبار --}}
-        <div class="exam-header">
-            <div class="header-side" style="text-align: right;">
-                <div>{{ $centerName }}</div>
-                <div>المادة: <strong>{{ $exam->subject?->name ?? 'عام' }}</strong></div>
-                <div>المرحلة: <strong>{{ $exam->educationalStage?->name ?? '-' }}</strong></div>
-            </div>
+                <div class="header-center">
+                    <h1>{{ $exam->title }}</h1>
+                    <div class="sub-info">
+                        <span>المرحلة: <strong>{{ $exam->educationalStage?->name }}</strong></span>
+                        <span>المادة: <strong>{{ $exam->subject?->name }}</strong></span>
+                        <span>الزمن: <strong>{{ $exam->duration_minutes ?? 45 }} دقيقة</strong></span>
+                        <span>الدرجة الكلية: <strong>{{ $exam->total_marks }} درجة</strong></span>
+                    </div>
+                    <div>
+                        <span class="model-badge">نموذج ( {{ $model['model_code'] }} )</span>
+                    </div>
+                </div>
 
-            <div class="header-center">
-                <h1>{{ $exam->title }}</h1>
-                <div class="sub-info">
-                    <span>⏱️ زمن الاختبار: <strong>{{ $exam->duration_minutes ? $exam->duration_minutes . ' دقيقة' : 'مفتوح' }}</strong></span>
-                    <span>🎯 الدرجة الكلية: <strong>{{ $exam->total_marks }} درجة</strong></span>
-                    <span>❓ عدد الأسئلة: <strong>{{ $exam->questions->count() }} سؤال</strong></span>
+                <div class="header-side text-left" style="text-align: left;">
+                    <div>تاريخ: {{ $exam->date?->format('Y-m-d') ?? date('Y-m-d') }}</div>
+                    <div style="font-size: 10.5px; color: #64748b;">عدد الأسئلة: {{ $model['questions_count'] }}</div>
+                    <div style="font-size: 10px; color: #94a3b8;">{{ $headerNotes }}</div>
                 </div>
             </div>
 
-            <div class="header-side" style="text-align: left;">
-                <div>التاريخ: <strong>{{ \Carbon\Carbon::parse($exam->date)->format('Y/m/d') }}</strong></div>
-                <div>النوع: <strong>{{ $exam->is_online ? 'إلكتروني & ورقي' : 'ورقي' }}</strong></div>
+            {{-- خانة بيانات الطالب للاختبار الورقي --}}
+            <div class="student-box">
+                <div>اسم الطالب: <span class="dots"></span></div>
+                <div>المجموعة: <span class="dots" style="width: 120px;"></span></div>
+                <div>رقم الجلوس / الكود: <span class="dots" style="width: 80px;"></span></div>
+                <div>الدرجة: [ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; / {{ $exam->total_marks }} ]</div>
+            </div>
+
+            {{-- الأسئلة --}}
+            <div class="questions-container">
+                @forelse($model['questions'] as $q)
+                    <div class="question-card">
+                        <div class="question-head">
+                            <div style="display: flex; align-items: flex-start; flex-grow: 1;">
+                                <span class="question-number">{{ $q['number'] }}</span>
+                                <h3 class="question-title">{{ $q['question_text'] }}</h3>
+                            </div>
+                            <span class="question-marks">{{ $q['marks'] }} درجات</span>
+                        </div>
+
+                        @if($q['question_image'])
+                            <div class="question-img-wrap">
+                                <img src="{{ asset('storage/' . $q['question_image']) }}" alt="شكل توضيحي">
+                            </div>
+                        @endif
+
+                        @if(!empty($q['options']) && count($q['options']) > 0)
+                            <div class="options-grid" style="{{ count($q['options']) == 2 ? 'grid-template-columns: repeat(2, 1fr);' : '' }}">
+                                @foreach($q['options'] as $opt)
+                                    <div class="option-item">
+                                        <span class="option-checkbox"></span>
+                                        <span class="option-badge">({{ $opt['key'] }})</span>
+                                        <span>{{ $opt['text'] }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                @empty
+                    <div style="text-align: center; padding: 40px; color: #64748b; font-weight: bold;">
+                        لا توجد أسئلة مضافة لهذا الامتحان حتى الآن.
+                    </div>
+                @endforelse
+            </div>
+
+            <div class="exam-footer">
+                مع تمنياتنا لجميع أبنائنا الطلاب بدوام التفوق والنجاح — {{ $teacherName }}
             </div>
         </div>
+    @endforeach
 
-        {{-- خانة بيانات الطالب للاختبار الورقي --}}
-        <div class="student-box">
-            <div>اسم الطالب: <span class="dots"></span></div>
-            <div>المجموعة: <span class="dots" style="width: 130px;"></span></div>
-            <div>رقم الجلوس / الكود: <span class="dots" style="width: 90px;"></span></div>
-            <div>الدرجة: [ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; / {{ $exam->total_marks }} ]</div>
-        </div>
+    {{-- صفحة مفتاح الإجابة للمعلم (Answer Key) --}}
+    @if($includeAnswerKey)
+        <div class="paper-container" style="background: #ffffff; border: 2px solid #0f172a;">
+            <div style="text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 15px;">
+                <span style="font-size: 20px; font-weight: 900; color: #0f172a;">مفتاح الإجابة النموذجي وتوزيع الدرجات للمعلم والمساعدين</span>
+                <div style="font-size: 13px; font-weight: 700; color: #475569; margin-top: 4px;">
+                    امتحان: {{ $exam->title }} — مادة: {{ $exam->subject?->name }} ({{ $exam->educationalStage?->name }})
+                </div>
+            </div>
 
-        {{-- الأسئلة --}}
-        <div class="questions-container">
-            @php
-                $arabicLetters = ['أ', 'ب', 'ج', 'د', 'هـ', 'و'];
-            @endphp
-
-            @forelse($exam->questions as $index => $q)
-                <div class="question-card">
-                    <div class="question-head">
-                        <div style="display: flex; align-items: flex-start; flex-grow: 1;">
-                            <span class="question-number">{{ $index + 1 }}</span>
-                            <h3 class="question-title">{{ $q->question_text }}</h3>
-                        </div>
-                        <span class="question-marks">{{ $q->pivot->marks ?? $q->default_marks }} درجات</span>
+            @foreach($models as $model)
+                <div style="margin-bottom: 25px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; background: #f1f5f9; padding: 8px 14px; border-radius: 8px; font-weight: 900; margin-bottom: 8px;">
+                        <span style="font-size: 15px; color: #0f172a;">مفتاح إجابة: نموذج ( {{ $model['model_code'] }} )</span>
+                        <span style="color: #64748b; font-size: 12px;">إجمالي الأسئلة: {{ $model['questions_count'] }} | الدرجة: {{ $model['total_marks'] }}</span>
                     </div>
 
-                    @if($q->question_image)
-                        <div class="question-img-wrap">
-                            <img src="{{ asset('storage/' . $q->question_image) }}" alt="شكل توضيحي">
-                        </div>
-                    @endif
-
-                    @php
-                        $opts = $q->options;
-                        if (is_string($opts)) {
-                            $opts = json_decode($opts, true) ?? [];
-                        }
-                        $opts = is_array($opts) ? $opts : [];
-                    @endphp
-
-                    @if(count($opts) > 0)
-                        <div class="options-grid" style="{{ count($opts) == 2 ? 'grid-template-columns: repeat(2, 1fr);' : '' }}">
-                            @foreach($opts as $i => $opt)
-                                @php
-                                    // إذا كان الخيار عبارة عن مصفوفة (key, text) أو نص عادي
-                                    if (is_array($opt)) {
-                                        $rawKey = $opt['key'] ?? ($i + 1);
-                                        $optText = $opt['text'] ?? ($opt['option_text'] ?? json_encode($opt, JSON_UNESCAPED_UNICODE));
-                                    } else {
-                                        $rawKey = $i + 1;
-                                        $optText = $opt;
-                                    }
-
-                                    // تحويل المفتاح لرمز عربي أنيق
-                                    if ($rawKey === 'true' || $rawKey === true) {
-                                        $badge = '✔ صواب';
-                                    } elseif ($rawKey === 'false' || $rawKey === false) {
-                                        $badge = '✖ خطأ';
-                                    } elseif (is_numeric($rawKey)) {
-                                        $badge = '(' . ($arabicLetters[(int)$rawKey - 1] ?? $rawKey) . ')';
-                                    } elseif (in_array(strtoupper($rawKey), ['A', 'B', 'C', 'D', 'E'])) {
-                                        $map = ['A' => 'أ', 'B' => 'ب', 'C' => 'ج', 'D' => 'د', 'E' => 'هـ'];
-                                        $badge = '(' . ($map[strtoupper($rawKey)] ?? $rawKey) . ')';
-                                    } else {
-                                        $badge = '(' . $rawKey . ')';
-                                    }
-                                @endphp
-
-                                <div class="option-item">
-                                    <span class="option-checkbox"></span>
-                                    <span class="option-badge">{{ $badge }}</span>
-                                    <span>{{ $optText }}</span>
-                                </div>
+                    <table class="answer-key-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">رقم السؤال</th>
+                                <th style="width: 100px;">رمز الإجابة</th>
+                                <th>نص الإجابة النموذجية</th>
+                                <th style="width: 80px;">الدرجة</th>
+                                <th>الدرس / الموضوع</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($model['answer_key'] as $ak)
+                                <tr>
+                                    <td style="font-weight: 900;">#{{ $ak['number'] }}</td>
+                                    <td style="font-weight: 900; color: #10b981; font-size: 14px;">({{ $ak['correct_keys'] }})</td>
+                                    <td style="text-align: right; font-weight: 700;">{{ $ak['correct_text'] }}</td>
+                                    <td style="font-weight: 800;">{{ $ak['marks'] }}</td>
+                                    <td style="color: #64748b; font-size: 11px;">{{ $ak['topic'] ?? '—' }}</td>
+                                </tr>
                             @endforeach
-                        </div>
-                    @endif
+                        </tbody>
+                    </table>
                 </div>
-            @empty
-                <div style="text-align: center; padding: 40px; color: #64748b; font-weight: bold;">
-                    لا توجد أسئلة مضافة لهذا الامتحان حتى الآن.
-                </div>
-            @endforelse
-        </div>
+            @endforeach
 
-        <div class="exam-footer">
-            مع تمنياتنا لجميع أبنائنا الطلاب بدوام التفوق والنجاح ✨ — {{ $teacherName }}
+            <div class="exam-footer">
+                سري خاص بالمعلم والمساعدين فقط — {{ $teacherName }}
+            </div>
         </div>
-    </div>
+    @endif
 
 </body>
 </html>

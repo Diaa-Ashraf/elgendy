@@ -130,6 +130,15 @@ class ParentPortalController extends Controller
             'instructions' => $settingService->get('online_payment_instructions', 'يرجى إرسال المبلغ ثم إرفاق صورة إشعار التحويل لتأكيد السداد.'),
         ];
 
+        // تحليلات الأداء ولوحة الشرف والإشعارات
+        $performanceService = app(\App\Services\StudentPerformanceService::class);
+        $analytics = $performanceService->getStudentAnalytics($student);
+
+        $notifications = \App\Models\ParentNotification::where('student_id', $student->id)
+            ->orderBy('id', 'desc')
+            ->take(10)
+            ->get();
+
         return view('parent-portal.dashboard', [
             'student' => $student,
             'attendances' => $attendances,
@@ -140,6 +149,8 @@ class ParentPortalController extends Controller
             'materials' => $materials,
             'onlinePaymentRequests' => $onlinePaymentRequests,
             'paymentSettings' => $paymentSettings,
+            'analytics' => $analytics,
+            'notifications' => $notifications,
         ]);
     }
 
@@ -201,9 +212,44 @@ class ParentPortalController extends Controller
             ->with('payment_success', 'تم إرسال إيصال التحويل بنجاح! سيتم مراجعة الإيصال من إدارة السنتر وتأكيد نزول المبلغ في حساب الطالب فوراً مع إرسال إشعار واتساب لكم.');
     }
 
+    public function markAllNotificationsAsRead()
+    {
+        $studentId = session('parent_student_id');
+        if (! $studentId) {
+            return response()->json(['success' => false, 'message' => 'غير مصرح'], 401);
+        }
+
+        \App\Models\ParentNotification::where('student_id', $studentId)
+            ->where('is_read', false)
+            ->update([
+                'is_read' => true,
+                'read_at' => now(),
+            ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function markNotificationAsRead(int $id)
+    {
+        $studentId = session('parent_student_id');
+        if (! $studentId) {
+            return response()->json(['success' => false, 'message' => 'غير مصرح'], 401);
+        }
+
+        \App\Models\ParentNotification::where('student_id', $studentId)
+            ->where('id', $id)
+            ->update([
+                'is_read' => true,
+                'read_at' => now(),
+            ]);
+
+        return response()->json(['success' => true]);
+    }
+
     public function logout()
     {
         session()->forget('parent_student_id');
+
         return redirect()->route('parent.login');
     }
 }

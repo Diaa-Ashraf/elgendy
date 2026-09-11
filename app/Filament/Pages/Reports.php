@@ -9,6 +9,7 @@ use App\Models\Student;
 use App\Models\StudentPayment;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class Reports extends Page
 {
@@ -53,64 +54,76 @@ class Reports extends Page
         }
     }
 
+    protected ?array $memoizedAnalytics = null;
+
     public function getAnalyticsData(): array
     {
+        if ($this->memoizedAnalytics !== null) {
+            return $this->memoizedAnalytics;
+        }
+
         $from = $this->from_date ?? now()->startOfMonth()->toDateString();
         $to = $this->to_date ?? now()->toDateString();
 
-        // 1. حساب الإيرادات الفعلية من قاعدة البيانات
-        $revenue = (float) StudentPayment::whereBetween('paid_at', [$from, $to])->sum('amount');
+        $cacheKey = "admin_reports_analytics_{$from}_{$to}";
 
-        // 2. حساب المصروفات والرواتب الفعلية من قاعدة البيانات
-        $expenses = (float) Expense::whereBetween('date', [$from, $to])->sum('amount');
-        $salaries = (float) Salary::whereBetween('paid_at', [$from, $to])->sum('amount_paid');
-        $totalExpenses = $expenses + $salaries;
+        return $this->memoizedAnalytics = Cache::remember($cacheKey, 60, function () use ($from, $to) {
+            // 1. حساب الإيرادات الفعلية مع select محدد
+            $revenue = (float) StudentPayment::whereBetween('paid_at', [$from, $to])->sum('amount');
 
-        // 3. حساب صافي الربح الحقيقي
-        $netProfit = $revenue - $totalExpenses;
 
-        // 4. حساب إجمالي الطلاب المسجلين بالسيستم
-        $totalStudents = Student::count();
+            // 2. حساب المصروفات والرواتب الفعلية
+            $expenses = (float) Expense::whereBetween('date', [$from, $to])->sum('amount');
+            $salaries = (float) Salary::whereBetween('paid_at', [$from, $to])->sum('amount_paid');
+            $totalExpenses = $expenses + $salaries;
 
-        // 5. حساب الحضور اليومي / خلال الفترة
-        $todayPresent = Attendance::whereHas('groupSession', function ($q) use ($from, $to) {
-            $q->whereBetween('date', [$from, $to]);
-        })->where('status', 'present')->count();
+            // 3. صافي الربح
+            $netProfit = $revenue - $totalExpenses;
 
-        $totalAttendanceRecords = Attendance::whereHas('groupSession', function ($q) use ($from, $to) {
-            $q->whereBetween('date', [$from, $to]);
-        })->count();
+            // 4. إجمالي الطلاب المسجلين بالسيستم
+            $totalStudents = Student::count();
 
-        $attendanceRate = $totalAttendanceRecords > 0 
-            ? round(($todayPresent / $totalAttendanceRecords) * 100, 1) 
-            : 0;
+            // 5. حساب الحضور مع eager loading و select محددين
+            $todayPresent = Attendance::whereHas('groupSession', function ($q) use ($from, $to) {
+                $q->whereBetween('date', [$from, $to]);
+            })->where('status', 'present')->count();
 
-        // 6. حساب متوسط الرسوم ومعدل السداد ديناميكياً
-        $avgFee = $totalStudents > 0 ? round($revenue / max($totalStudents, 1), 2) : 0;
-        
-        $paidStudentIds = StudentPayment::whereBetween('paid_at', [$from, $to])
-            ->pluck('student_id')
-            ->unique();
-        
-        $paidStudentsCount = $paidStudentIds->count();
-        $lateStudentsCount = max(0, $totalStudents - $paidStudentsCount);
-        $paymentRate = $totalStudents > 0 ? round(($paidStudentsCount / $totalStudents) * 100, 1) : 0;
+            $totalAttendanceRecords = Attendance::whereHas('groupSession', function ($q) use ($from, $to) {
+                $q->whereBetween('date', [$from, $to]);
+            })->count();
 
-        // 7. إجمالي العمليات المعاملات المالية
-        $totalTransactions = StudentPayment::whereBetween('paid_at', [$from, $to])->count() 
-            + Expense::whereBetween('date', [$from, $to])->count();
+            $attendanceRate = $totalAttendanceRecords > 0 
+                ? round(($todayPresent / $totalAttendanceRecords) * 100, 1) 
+                : 0;
 
-        return [
-            'revenue' => $revenue,
-            'expenses' => $totalExpenses,
-            'net_profit' => $netProfit,
-            'total_students' => $totalStudents,
-            'today_present' => $todayPresent,
-            'attendance_rate' => $attendanceRate,
-            'avg_fee' => $avgFee,
-            'payment_rate' => $paymentRate,
-            'late_students' => $lateStudentsCount,
-            'total_transactions' => $totalTransactions,
-        ];
+            // 6. متوسط الرسوم ومعدل السداد
+            $avgFee = $totalStudents > 0 ? round($revenue / max($totalStudents, 1), 2) : 0;
+            
+            $paidStudentIds = StudentPayment::whereBetween('paid_at', [$from, $to])
+                ->select('student_id')
+                ->pluck('student_id')
+                ->unique();
+            
+            $paidStudentsCount = $paidStudentIds->count();
+            $lateStudentsCount = max(0, $totalStudents - $paidStudentsCount);
+            $paymentRate = $totalStudents > 0 ? round(($paidStudentsCount / $totalStudents) * 100, 1) : 0;
+
+            // 7. إجمالي العمليات المعاملات المالية
+            $totalTransactions = StudentPayment::whereBetween('paid_at', [$from, $to])->count() 
+                + Expense::whereBetween('date', [$from, $to])->count();
+
+            return [
+                'revenue' => $revenue,
+                'expenses' => $totalExpenses,
+                'net_profit' => $netProfit,
+                'total_students' => $totalStudents,
+                'today_present' => $todayPresent,
+                'attendance_rate' => $attendanceRate,
+                'avg_fee' => $avgFee,
+                'payment_rate' => $paymentRate,
+                'late_students' => $lateStudentsCount,
+                'total_transactions' => $totalTransactions,
+            ];
+        });
     }
 }

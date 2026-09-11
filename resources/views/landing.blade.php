@@ -179,12 +179,15 @@
 
             {{-- Action Buttons & Mobile Hamburger --}}
             <div class="flex items-center gap-2 sm:gap-2.5">
-                <a href="{{ route('parent.login') }}" class="px-3 sm:px-4 py-2 bg-brand-teal/10 hover:bg-brand-teal/15 border border-brand-teal/20 rounded-xl text-xs sm:text-sm font-bold text-brand-teal transition flex items-center gap-1.5 shadow-sm">
-                    <span>👨‍👩‍👦</span>
-                    <span class="hidden xs:inline sm:inline">بوابة ولي الأمر</span>
-                    <span class="inline xs:hidden sm:hidden">البوابة</span>
+                <a href="{{ route('student.login') }}" class="px-3 sm:px-3.5 py-2 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl text-xs sm:text-sm font-bold text-blue-800 transition flex items-center gap-1.5 shadow-sm">
+                    <span>🎓</span>
+                    <span>بوابة الطالب</span>
                 </a>
-                <a href="/admin" class="hidden sm:flex px-3.5 sm:px-4 py-2 bg-brand-teal hover:bg-brand-teal-dark border border-brand-teal-dark rounded-xl text-xs sm:text-sm font-bold text-white transition items-center gap-1.5 shadow-md shadow-brand-teal/20">
+                <a href="{{ route('parent.login') }}" class="px-3 sm:px-3.5 py-2 bg-brand-teal/10 hover:bg-brand-teal/15 border border-brand-teal/20 rounded-xl text-xs sm:text-sm font-bold text-brand-teal transition flex items-center gap-1.5 shadow-sm">
+                    <span>👨‍👩‍👦</span>
+                    <span class="hidden md:inline">بوابة ولي الأمر</span>
+                </a>
+                <a href="/admin" class="hidden lg:flex px-3.5 sm:px-4 py-2 bg-brand-teal hover:bg-brand-teal-dark border border-brand-teal-dark rounded-xl text-xs sm:text-sm font-bold text-white transition items-center gap-1.5 shadow-md shadow-brand-teal/20">
                     <span>لوحة التحكم</span>
                     <span class="text-xs opacity-75">➔</span>
                 </a>
@@ -203,6 +206,16 @@
 
         {{-- Mobile Drawer Menu --}}
         <div id="mobileMenu" class="hidden lg:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-5 space-y-2 shadow-xl transition-all">
+            <div class="grid grid-cols-2 gap-2 pb-2 mb-2 border-b border-slate-100">
+                <a href="{{ route('student.login') }}" class="px-3 py-2.5 bg-blue-50 border border-blue-200 rounded-xl text-xs font-bold text-blue-800 text-center flex items-center justify-center gap-1.5">
+                    <span>🎓</span>
+                    <span>بوابة الطالب</span>
+                </a>
+                <a href="{{ route('parent.login') }}" class="px-3 py-2.5 bg-brand-teal/10 border border-brand-teal/20 rounded-xl text-xs font-bold text-brand-teal text-center flex items-center justify-center gap-1.5">
+                    <span>👨‍👩‍👦</span>
+                    <span>بوابة ولي الأمر</span>
+                </a>
+            </div>
             <a href="#about-teacher" onclick="closeMobileMenu()" class="block px-3 py-2.5 rounded-xl font-bold text-slate-800 hover:bg-slate-100 transition text-sm">
                  عن {{ $settings['teacher_name'] }}
             </a>
@@ -614,6 +627,48 @@
             </div>
         </div>
     </section>
+
+    {{-- ─── HONOR BOARD / LEADERBOARD (لوحة الشرف للأوائل) ─── --}}
+    @if(isset($topStudents) && $topStudents->isNotEmpty())
+    <section id="honor-board" class="py-14 sm:py-20 bg-gradient-to-b from-slate-900 to-brand-teal-dark text-white border-b border-slate-800 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
+                <span class="academic-badge bg-amber-400/20 text-amber-300 border border-amber-400/30 mb-2 sm:mb-3"> لوحة الشرف والتفوق</span>
+                <h2 class="font-heading text-xl sm:text-3xl lg:text-4xl font-black text-white">أوائل المنظومة والمتفوقين</h2>
+                <p class="text-slate-300 text-xs sm:text-sm md:text-base mt-2">نحتفي بطلابنا المتميزين الحاصلين على أعلى الدرجات والملتزمين بالمواظبة والامتحانات.</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach($topStudents as $st)
+                    <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-3xl p-6 relative hover:border-amber-400/50 transition duration-300">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="px-3 py-1 rounded-full text-xs font-black {{ $st['rank'] === 1 ? 'bg-amber-400 text-slate-950 shadow-md' : ($st['rank'] === 2 ? 'bg-slate-300 text-slate-900' : 'bg-amber-700 text-white') }}">
+                                {{ $st['badge'] }}
+                            </span>
+                            <span class="text-2xl">
+                                @if($st['rank'] === 1)  @elseif($st['rank'] === 2) 🥈 @elseif($st['rank'] === 3) 🥉 @else  @endif
+                            </span>
+                        </div>
+
+                        <h3 class="text-lg font-black text-white mb-1">{{ $st['student']->name }}</h3>
+                        <p class="text-xs text-slate-300 mb-4">{{ $st['stage_name'] }} • {{ $st['group_name'] }}</p>
+
+                        <div class="grid grid-cols-2 gap-2 bg-black/20 rounded-2xl p-3 text-xs">
+                            <div>
+                                <span class="text-slate-400 block mb-0.5">متوسط الامتحانات</span>
+                                <span class="text-base font-black text-emerald-400">{{ $st['exam_average'] }}%</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 block mb-0.5">نسبة الحضور</span>
+                                <span class="text-base font-black text-blue-400">{{ $st['attendance_rate'] }}%</span>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </section>
+    @endif
 
     {{-- ─── ENROLLMENT APPLICATION FORM (Touch-Friendly Responsive Form) ─── --}}
     <section id="enroll" class="py-14 sm:py-20 bg-white border-b border-slate-200">

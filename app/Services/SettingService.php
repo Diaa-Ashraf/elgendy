@@ -7,23 +7,35 @@ use Illuminate\Support\Facades\Cache;
 
 class SettingService
 {
+    protected static ?array $cachedSettings = null;
+
     /**
-     * Get setting value by key with cache.
+     * Load all settings at once into memory + Cache (Fastest execution)
+     */
+    protected function loadSettings(): array
+    {
+        if (static::$cachedSettings !== null) {
+            return static::$cachedSettings;
+        }
+
+        static::$cachedSettings = Cache::remember('all_app_settings_map', 86400, function () {
+            try {
+                return Setting::pluck('value', 'key')->toArray();
+            } catch (\Throwable $e) {
+                return [];
+            }
+        });
+
+        return static::$cachedSettings;
+    }
+
+    /**
+     * Get setting value by key with memory cache.
      */
     public function get(string $key, mixed $default = null): mixed
     {
-        try {
-            if (! \Illuminate\Support\Facades\Schema::hasTable('settings')) {
-                return $default;
-            }
-        } catch (\Throwable $e) {
-            return $default;
-        }
-
-        return Cache::remember("settings:{$key}", 86400, function () use ($key, $default) {
-            $setting = Setting::where('key', $key)->first();
-            return $setting ? $setting->value : $default;
-        });
+        $settings = $this->loadSettings();
+        return $settings[$key] ?? $default;
     }
 
     /**
@@ -36,7 +48,8 @@ class SettingService
             ['value' => $value]
         );
 
-        Cache::forget("settings:{$key}");
+        static::$cachedSettings = null;
+        Cache::forget('all_app_settings_map');
     }
 
     /**
@@ -65,9 +78,10 @@ class SettingService
      */
     public function allWithDefaults(array $defaults): array
     {
+        $settings = $this->loadSettings();
         $result = [];
         foreach ($defaults as $key => $default) {
-            $result[$key] = $this->get($key, $default);
+            $result[$key] = $settings[$key] ?? $default;
         }
 
         return $result;
@@ -79,7 +93,14 @@ class SettingService
     public function setMany(array $settings): void
     {
         foreach ($settings as $key => $value) {
-            $this->set($key, $value);
+            Setting::updateOrCreate(
+                ['key' => $key],
+                ['value' => $value]
+            );
         }
+
+        static::$cachedSettings = null;
+        Cache::forget('all_app_settings_map');
     }
 }
+

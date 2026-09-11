@@ -60,4 +60,9 @@ class Student extends Model
     {
         return $this->hasMany(HomeworkSubmission::class);
     }
+
+    public function parentNotifications()
+    {
+        return $this->hasMany(ParentNotification::class);
+    }
 }

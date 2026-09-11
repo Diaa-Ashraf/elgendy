@@ -187,10 +187,22 @@ class ExamResource extends Resource
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('results_summary')
-                    ->label('النتائج')
-                    ->state(function (Exam $record): string {
-                        $count = $record->examResults()->count();
-                        return $count > 0 ? "تم رصد {$count} طالب" : 'لم تُرصد النتائج';
+                    ->label('حالة الامتحان')
+                    ->state(function (Exam $record, ExamService $examService): string {
+                        $stats = $examService->getExamStats($record->id);
+                        $attended = $stats['attended_count'];
+                        $absent = $stats['absent_count'];
+
+                        if ($attended === 0 && $absent === 0) {
+                            return 'لا يوجد طلاب بالمرحلة';
+                        }
+
+                        return "{$attended} ممتحن / {$absent} غائب";
+                    })
+                    ->badge()
+                    ->color(function (Exam $record, ExamService $examService): string {
+                        $stats = $examService->getExamStats($record->id);
+                        return $stats['attended_count'] > 0 ? 'success' : 'warning';
                     }),
             ])
             ->defaultSort('date', 'desc')
@@ -207,25 +219,148 @@ class ExamResource extends Resource
                     ->label('اختبار أونلاين'),
             ])
             ->actions([
-                Tables\Actions\Action::make('printPdf')
-                    ->label('طباعة PDF 📄')
-                    ->icon('heroicon-o-printer')
-                    ->color('gray')
-                    ->url(fn (Exam $record): string => route('exam.pdf.print', ['record' => $record->id]))
-                    ->openUrlInNewTab(),
+                Tables\Actions\Action::make('viewExamResults')
+                    ->label('النتائج والأوائل')
+                    ->icon('heroicon-o-trophy')
+                    ->color('success')
+                    ->modalHeading(fn (Exam $record) => "كشف نتائج ومتفوقين امتحان: {$record->title}")
+                    ->modalContent(function (Exam $record, ExamService $examService) {
+                        $attendees = $examService->getExamAttendees($record->id);
+                        $stats = $examService->getExamStats($record->id);
 
-                Tables\Actions\Action::make('analytics')
-                    ->label('تحليل نقاط الضعف 🎯')
-                    ->icon('heroicon-o-chart-pie')
-                    ->color('warning')
-                    ->visible(fn (Exam $record): bool => (bool) $record->is_online)
-                    ->url(fn (Exam $record): string => static::getUrl('analytics', ['record' => $record])),
+                        return view('filament.modals.exam-results-list', [
+                            'attendees' => $attendees,
+                            'exam' => $record,
+                            'stats' => $stats,
+                        ]);
+                    })
+                    ->extraModalFooterActions(function (Tables\Actions\Action $action): array {
+                        $actions = [
+                            $action->makeModalSubmitAction('notifyResultsPortal', ['target' => 'results_portal'])
+                                ->label('إشعار بوابة ولي الأمر بالدرجات')
+                                ->color('primary'),
+                        ];
+
+                        if (\App\Services\WhatsAppNotificationService::isBulkEnabled()) {
+                            $actions[] = $action->makeModalSubmitAction('sendBulkWhatsAppResults', ['target' => 'results_whatsapp'])
+                                ->label('إرسال كشف الدرجات واتساب للجميع')
+                                ->color('success');
+                        }
+
+                        return $actions;
+                    })
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('إغلاق')
+                    ->action(function (Exam $record, array $arguments, ExamService $examService): void {
+                        $target = $arguments['target'] ?? null;
+                        if ($target === 'results_portal') {
+                            $count = $examService->notifyBulkParentPortalForExam($record->id, 'results');
+                            Notification::make()
+                                ->title("تم إرسال {$count} بطاقة نتيجة لبوابة ولي الأمر بنجاح")
+                                ->success()
+                                ->send();
+                        } elseif ($target === 'results_whatsapp') {
+                            $result = $examService->sendBulkWhatsAppForExam($record->id, 'results');
+                            Notification::make()
+                                ->title("تم إرسال {$result['success']} رسالة نتيجة عبر الواتساب بنجاح")
+                                ->success()
+                                ->send();
+                        }
+                    }),
+
+                Tables\Actions\Action::make('viewExamAbsentees')
+                    ->label('الغائبين والتنبيه')
+                    ->icon('heroicon-o-user-minus')
+                    ->color('danger')
+                    ->modalHeading(fn (Exam $record) => "قائمة الطلاب الغائبين عن امتحان: {$record->title}")
+                    ->modalContent(function (Exam $record, ExamService $examService) {
+                        $absentees = $examService->getExamAbsentees($record->id);
+                        $stats = $examService->getExamStats($record->id);
+
+                        return view('filament.modals.exam-absentees-list', [
+                            'absentees' => $absentees,
+                            'exam' => $record,
+                            'stats' => $stats,
+                        ]);
+                    })
+                    ->extraModalFooterActions(function (Tables\Actions\Action $action): array {
+                        $actions = [
+                            $action->makeModalSubmitAction('notifyAbsenteesPortal', ['target' => 'absentees_portal'])
+                                ->label('إشعار تنبيه غياب لبوابة ولي الأمر للكل')
+                                ->color('danger'),
+                        ];
+
+                        if (\App\Services\WhatsAppNotificationService::isBulkEnabled()) {
+                            $actions[] = $action->makeModalSubmitAction('sendBulkWhatsAppAbsentees', ['target' => 'absentees_whatsapp'])
+                                ->label('إرسال رسائل تذكير واتساب لجميع الغائبين')
+                                ->color('success');
+                        }
+
+                        return $actions;
+                    })
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('إغلاق')
+                    ->action(function (Exam $record, array $arguments, ExamService $examService): void {
+                        $target = $arguments['target'] ?? null;
+                        if ($target === 'absentees_portal') {
+                            $count = $examService->notifyBulkParentPortalForExam($record->id, 'absent');
+                            Notification::make()
+                                ->title("تم إرسال {$count} تنبيه غياب لبوابة ولي الأمر بنجاح")
+                                ->success()
+                                ->send();
+                        } elseif ($target === 'absentees_whatsapp') {
+                            $result = $examService->sendBulkWhatsAppForExam($record->id, 'absent');
+                            Notification::make()
+                                ->title("تم إرسال {$result['success']} رسالة تذكير للغائبين عبر الواتساب")
+                                ->success()
+                                ->send();
+                        }
+                    }),
 
                 Tables\Actions\Action::make('recordResults')
                     ->label('رصد يدوي')
                     ->icon('heroicon-o-pencil-square')
                     ->color('info')
                     ->url(fn (Exam $record): string => static::getUrl('record-results', ['record' => $record])),
+
+                Tables\Actions\Action::make('printPdf')
+                    ->label('طباعة نماذج الامتحان (أ / ب)')
+                    ->icon('heroicon-o-printer')
+                    ->color('gray')
+                    ->modalHeading(fn (Exam $record) => "طباعة نماذج امتحان: {$record->title}")
+                    ->modalDescription('اختر عدد النماذج المطلوبة لطباعتها وخيار تضمين نموذج الإجابة النموذجي للمعلم.')
+                    ->modalSubmitActionLabel('فتح ومعاينة الطباعة')
+                    ->form([
+                        Forms\Components\Select::make('models_count')
+                            ->label('عدد النماذج المطبوعة')
+                            ->options([
+                                1 => 'نموذج واحد (نموذج أ)',
+                                2 => 'نموذجان (أ / ب) بترتيب مختلف لمنع الغش',
+                                3 => '3 نماذج (أ / ب / ج)',
+                            ])
+                            ->default(2)
+                            ->required(),
+
+                        Forms\Components\Toggle::make('include_answer_key')
+                            ->label('تضمين مفتاح الإجابة وتوزيع الدرجات للمعلم')
+                            ->default(true),
+                    ])
+                    ->action(function (Exam $record, array $data, $livewire) {
+                        $url = route('exam.pdf.print', [
+                            'record' => $record->id,
+                            'models_count' => $data['models_count'] ?? 1,
+                            'include_answer_key' => !empty($data['include_answer_key']) ? 1 : 0,
+                        ]);
+
+                        $livewire->js("window.open('{$url}', '_blank')");
+                    }),
+
+                Tables\Actions\Action::make('analytics')
+                    ->label('تحليل نقاط الضعف')
+                    ->icon('heroicon-o-chart-pie')
+                    ->color('warning')
+                    ->visible(fn (Exam $record): bool => (bool) $record->is_online)
+                    ->url(fn (Exam $record): string => static::getUrl('analytics', ['record' => $record])),
 
                 Tables\Actions\EditAction::make()->label('تعديل'),
                 Tables\Actions\DeleteAction::make()->label('حذف'),

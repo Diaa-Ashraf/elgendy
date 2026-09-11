@@ -54,7 +54,27 @@
         }
     </style>
 </head>
-<body class="bg-brand-bg text-brand-slate min-h-screen pb-16 selection:bg-brand-coral selection:text-white" x-data="{ showPayModal: false, activeMethod: 'vodafone_cash' }">
+<body class="bg-brand-bg text-brand-slate min-h-screen pb-16 selection:bg-brand-coral selection:text-white" 
+    x-data="{ 
+        showPayModal: false, 
+        showNotifModal: false, 
+        unreadCount: {{ (isset($notifications) ? $notifications->where('is_read', false)->count() : 0) }}, 
+        activeMethod: 'vodafone_cash',
+        markAllAsRead() {
+            fetch('{{ route('parent.notifications.read-all') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            }).then(res => res.json()).then(data => {
+                if(data.success) {
+                    this.unreadCount = 0;
+                    document.querySelectorAll('.notif-unread-badge').forEach(el => el.remove());
+                }
+            });
+        }
+    }">
 
     {{-- الشريط العلوي الفخم بأسلوب Aegean Teal Glass --}}
     <header class="bg-brand-teal border-b border-brand-teal-dark/50 sticky top-0 z-50 px-4 py-3.5 shadow-md shadow-brand-teal/10 backdrop-blur-md">
@@ -74,6 +94,16 @@
             </div>
 
             <div class="flex items-center gap-2">
+                {{-- زر الإشعارات الذكي بجرس وتنبيه نابض --}}
+                <button @click="showNotifModal = true" 
+                    class="relative px-3 py-2 bg-white/10 hover:bg-white/20 text-white border border-white/15 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                    <span class="text-sm">🔔</span>
+                    <span class="hidden sm:inline">الإشعارات</span>
+                    <template x-if="unreadCount > 0">
+                        <span class="px-1.5 py-0.5 bg-brand-coral text-white rounded-full text-[10px] font-black border border-brand-teal animate-pulse" x-text="unreadCount"></span>
+                    </template>
+                </button>
+
                 @if($paymentSettings['enabled'])
                     <button @click="showPayModal = true" class="px-3.5 py-2 bg-gradient-to-r from-brand-coral to-[#FF784B] hover:from-brand-coral-hover hover:to-brand-coral text-white rounded-xl text-xs font-bold shadow-md shadow-brand-coral/25 transition flex items-center gap-1.5">
                         <span>💳</span>
@@ -89,6 +119,78 @@
             </div>
         </div>
     </header>
+
+    {{-- نافذة الإشعارات المنبثقة (Slideover / Modal) --}}
+    <div x-show="showNotifModal" x-cloak 
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all"
+        @click.self="showNotifModal = false"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0">
+        
+        <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
+            {{-- رأس نافذة الإشعارات --}}
+            <div class="px-5 py-4 bg-gradient-to-r from-brand-teal to-[#164E63] text-white flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="text-lg">🔔</span>
+                    <div>
+                        <h3 class="font-heading font-bold text-sm text-white">إشعارات وتنبيهات المنظومة</h3>
+                        <p class="text-[11px] text-slate-300">سجل الرسائل والتنبيهات المباشرة للطالب</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button x-show="unreadCount > 0" @click="markAllAsRead()" 
+                        class="px-2.5 py-1 bg-white/15 hover:bg-white/25 text-white rounded-lg text-[11px] font-bold transition border border-white/20">
+                        قراءة الكل ✅
+                    </button>
+                    <button @click="showNotifModal = false" class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-sm font-black transition">
+                        ✕
+                    </button>
+                </div>
+            </div>
+
+            {{-- قائمة الإشعارات القابلة للتمرير --}}
+            <div class="p-4 overflow-y-auto space-y-2.5 flex-1 divide-y divide-slate-100">
+                @if(isset($notifications) && $notifications->isNotEmpty())
+                    @foreach($notifications as $notif)
+                        <div class="pt-2.5 first:pt-0 p-3 rounded-2xl border text-xs flex items-start gap-3 transition-all {{ ! $notif->is_read ? 'bg-amber-50/70 border-amber-200 shadow-sm' : 'bg-slate-50/70 border-slate-200/80 opacity-80' }}">
+                            <div class="w-8 h-8 rounded-xl flex items-center justify-center text-sm shadow-inner shrink-0 {{ $notif->type === 'warning' ? 'bg-amber-100 text-amber-800' : ($notif->type === 'attendance' ? 'bg-emerald-100 text-emerald-800' : ($notif->type === 'exam' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800')) }}">
+                                {{ $notif->type === 'warning' ? '⚠️' : ($notif->type === 'attendance' ? '✅' : ($notif->type === 'exam' ? '📝' : '📢')) }}
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between gap-2 mb-0.5">
+                                    <div class="flex items-center gap-1.5">
+                                        <h4 class="font-bold text-sm text-brand-slate">{{ $notif->title }}</h4>
+                                        @if(! $notif->is_read)
+                                            <span class="notif-unread-badge w-2 h-2 rounded-full bg-brand-coral shrink-0"></span>
+                                        @endif
+                                    </div>
+                                    <span class="text-[10px] text-slate-400 font-mono">{{ $notif->created_at->diffForHumans() }}</span>
+                                </div>
+                                <p class="leading-relaxed text-slate-700 font-medium">{{ $notif->message }}</p>
+                            </div>
+                        </div>
+                    @endforeach
+                @else
+                    <div class="py-12 text-center text-slate-400">
+                        <span class="text-3xl block mb-2">🎉</span>
+                        <p class="font-bold text-sm text-slate-600">لا توجد إشعارات حالياً</p>
+                        <p class="text-xs text-slate-400 mt-1">سيتم تنبيهك هنا بأي غياب، درجات امتحانات، أو واجبات جديدة.</p>
+                    </div>
+                @endif
+            </div>
+
+            {{-- تذييل النافذة --}}
+            <div class="p-3 bg-slate-50 border-t border-slate-100 text-center">
+                <button @click="showNotifModal = false" class="px-5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold transition">
+                    إغلاق النافذة
+                </button>
+            </div>
+        </div>
+    </div>
 
     <div class="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
 
@@ -109,6 +211,51 @@
                 @foreach($errors->all() as $err)
                     <div>• {{ $err }}</div>
                 @endforeach
+            </div>
+        @endif
+
+        {{-- شريط تنبيه سريع ومختصر إن وجد إشعار غير مقروء --}}
+        @if(isset($notifications) && $notifications->where('is_read', false)->isNotEmpty())
+            @php
+                $latestUnread = $notifications->where('is_read', false)->first();
+            @endphp
+            <div class="p-3.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 rounded-2xl text-xs flex items-center justify-between gap-3 shadow-sm">
+                <div class="flex items-center gap-2.5 overflow-hidden">
+                    <span class="w-7 h-7 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-sm shrink-0">⚠️</span>
+                    <div class="truncate">
+                        <strong class="text-amber-950 font-bold ml-1">{{ $latestUnread->title }}:</strong>
+                        <span class="text-amber-800 font-medium">{{ \Illuminate\Support\Str::limit($latestUnread->message, 70) }}</span>
+                    </div>
+                </div>
+                <button @click="showNotifModal = true" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-[11px] font-bold shrink-0 transition shadow-sm">
+                    عرض الإشعارات
+                </button>
+            </div>
+        @endif
+
+        {{-- كارت مؤشر أداء الطالب والشهادة التقديرية --}}
+        @if(isset($analytics))
+            <div class="bg-gradient-to-r from-brand-teal to-[#164E63] text-white p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-4 text-right">
+                        <div class="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-3xl border border-white/20">
+                            
+                        </div>
+                        <div>
+                            <span class="text-xs text-white/80 font-bold block mb-0.5">مؤشر وتقييم أداء الطالب العام</span>
+                            <h3 class="text-xl font-heading font-black text-white">{{ $analytics['overall']['grade']['label'] }}</h3>
+                            <p class="text-xs text-slate-200 mt-1">معدل مركب: <strong class="text-amber-300 text-sm font-mono">{{ $analytics['overall']['score'] }}%</strong> (امتحانات + حضور + واجبات)</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <a href="{{ route('parent.monthly-report.pdf') }}" target="_blank" class="px-4 py-2.5 bg-white/20 hover:bg-white/30 text-white border border-white/30 rounded-xl text-xs font-black shadow-md transition inline-flex items-center gap-1.5">
+                            <span>تقرير الأداء الشهري (PDF)</span>
+                        </a>
+                        <a href="{{ route('student.certificate.print', ['record' => $student->id]) }}" target="_blank" class="px-4 py-2.5 bg-amber-400 hover:bg-amber-500 text-amber-950 rounded-xl text-xs font-black shadow-md transition inline-flex items-center gap-1.5">
+                            <span>شهادة التقدير</span>
+                        </a>
+                    </div>
+                </div>
             </div>
         @endif
 
@@ -341,20 +488,43 @@
 
             <div class="space-y-2.5">
                 @forelse($attendances as $att)
-                    <div class="flex items-center justify-between p-3.5 bg-slate-50/70 border border-slate-200 rounded-2xl text-xs hover:border-slate-300 transition">
-                        <div>
-                            <span class="font-bold block text-brand-slate text-sm mb-0.5">{{ $att->groupSession?->group?->name ?? 'حصة عامة' }}</span>
-                            <span class="text-[11px] font-semibold text-slate-400">تاريخ الحصة: {{ \Carbon\Carbon::parse($att->groupSession?->date)->format('Y-m-d') }}</span>
+                    <div class="p-3.5 bg-slate-50/70 border border-slate-200 rounded-2xl text-xs hover:border-slate-300 transition space-y-2">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="font-bold block text-brand-slate text-sm mb-0.5">{{ $att->groupSession?->group?->name ?? 'حصة عامة' }}</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[11px] font-semibold text-slate-400">تاريخ الحصة: {{ \Carbon\Carbon::parse($att->groupSession?->date)->format('Y-m-d') }}</span>
+                                    @if($att->whatsapp_sent_at)
+                                        <span class="inline-flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-100/70 border border-emerald-200 px-2 py-0.5 rounded-md font-bold">
+                                            <span>📱 تم إرسال إشعار واتساب</span>
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                            <div>
+                                @if($att->status === 'present')
+                                    <span class="px-3 py-1 bg-emerald-100/70 border border-emerald-200 text-emerald-800 rounded-xl font-bold text-xs">حضر</span>
+                                @elseif($att->status === 'late')
+                                    <span class="px-3 py-1 bg-amber-100/70 border border-amber-200 text-amber-800 rounded-xl font-bold text-xs">متأخر</span>
+                                @else
+                                    <span class="px-3 py-1 bg-rose-100/70 border border-rose-200 text-rose-800 rounded-xl font-bold text-xs">غائب</span>
+                                @endif
+                            </div>
                         </div>
-                        <div>
-                            @if($att->status === 'present')
-                                <span class="px-3 py-1 bg-emerald-100/70 border border-emerald-200 text-emerald-800 rounded-xl font-bold text-xs">حضر</span>
-                            @elseif($att->status === 'late')
-                                <span class="px-3 py-1 bg-amber-100/70 border border-amber-200 text-amber-800 rounded-xl font-bold text-xs">متأخر</span>
-                            @else
-                                <span class="px-3 py-1 bg-rose-100/70 border border-rose-200 text-rose-800 rounded-xl font-bold text-xs">غائب</span>
-                            @endif
-                        </div>
+
+                        @if($att->groupSession?->topic || $att->groupSession?->notes || $att->groupSession?->homework_notes)
+                            <div class="pt-2 border-t border-slate-200/60 text-[11px] space-y-1 bg-white/60 p-2.5 rounded-xl">
+                                @if($att->groupSession->topic)
+                                    <div><strong class="text-brand-teal">موضوع الحصة:</strong> {{ $att->groupSession->topic }}</div>
+                                @endif
+                                @if($att->groupSession->notes)
+                                    <div><strong class="text-amber-800">ملاحظات المستر:</strong> {{ $att->groupSession->notes }}</div>
+                                @endif
+                                @if($att->groupSession->homework_notes)
+                                    <div><strong class="text-purple-800">المطلوب للواجب القادم:</strong> {{ $att->groupSession->homework_notes }}</div>
+                                @endif
+                            </div>
+                        @endif
                     </div>
                 @empty
                     <p class="text-xs text-slate-400 text-center py-6">لا توجد سجلات حضور مسجلة حالياً</p>
@@ -491,7 +661,7 @@
         <div class="bento-card p-5 sm:p-7 shadow-sm">
             <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
                 <div class="flex items-center gap-2.5">
-                    <span class="w-8 h-8 rounded-xl bg-brand-teal/10 text-brand-teal flex items-center justify-center font-bold text-sm">🏆</span>
+                    <span class="w-8 h-8 rounded-xl bg-brand-teal/10 text-brand-teal flex items-center justify-center font-bold text-sm"></span>
                     <h2 class="font-heading font-black text-base text-brand-slate">
                         سجل درجات الامتحانات والتقييمات
                     </h2>
@@ -582,7 +752,7 @@
                     <span class="font-bold">📱 فودافون كاش / محفظة</span>
                 </button>
                 <button type="button" @click="activeMethod = 'instapay'" :class="activeMethod === 'instapay' ? 'border-brand-teal bg-brand-teal/10 text-brand-teal font-bold shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-600 font-medium'" class="p-3 rounded-2xl border text-xs flex flex-col items-center justify-center gap-1.5 transition">
-                    <span class="font-bold">⚡ انستاباي (InstaPay)</span>
+                    <span class="font-bold"> انستاباي (InstaPay)</span>
                 </button>
             </div>
 

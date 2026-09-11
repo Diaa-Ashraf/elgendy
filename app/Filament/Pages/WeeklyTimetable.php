@@ -29,30 +29,48 @@ class WeeklyTimetable extends Page
         return (bool) Auth::user();
     }
 
+    protected ?array $memoizedTimetable = null;
+
     public function getTimetableData(): array
     {
-        $days = [
-            'sat' => 'السبت',
-            'sun' => 'الأحد',
-            'mon' => 'الإثنين',
-            'tue' => 'الثلاثاء',
-            'wed' => 'الأربعاء',
-            'thu' => 'الخميس',
-            'fri' => 'الجمعة',
-        ];
+        if ($this->memoizedTimetable !== null) {
+            return $this->memoizedTimetable;
+        }
 
-        $query = GroupSchedule::whereHas('group', function ($q) {
-            if ($this->selected_stage_id) {
-                $q->where('stage_id', $this->selected_stage_id);
-            }
-        })->with(['group.subject', 'group.educationalStage']);
+        $stageId = $this->selected_stage_id;
+        $cacheKey = 'weekly_timetable_' . ($stageId ?? 'all');
 
-        $schedules = $query->get()->groupBy('day_of_week');
+        return $this->memoizedTimetable = \Illuminate\Support\Facades\Cache::remember($cacheKey, 60, function () use ($stageId) {
+            $days = [
+                'sat' => 'السبت',
+                'sun' => 'الأحد',
+                'mon' => 'الإثنين',
+                'tue' => 'الثلاثاء',
+                'wed' => 'الأربعاء',
+                'thu' => 'الخميس',
+                'fri' => 'الجمعة',
+            ];
 
-        return [
-            'days' => $days,
-            'schedules' => $schedules,
-            'stages' => EducationalStage::pluck('name', 'id'),
-        ];
+            $query = GroupSchedule::whereHas('group', function ($q) use ($stageId) {
+                if ($stageId) {
+                    $q->where('stage_id', $stageId);
+                }
+            })
+            ->select('id', 'group_id', 'day_of_week', 'time', 'room')
+            ->with([
+                'group:id,name,stage_id,subject_id',
+                'group.subject:id,name',
+                'group.educationalStage:id,name',
+            ]);
+
+            $schedules = $query->get()->groupBy('day_of_week');
+
+            return [
+                'days' => $days,
+                'schedules' => $schedules,
+                'stages' => EducationalStage::pluck('name', 'id')->toArray(),
+            ];
+        });
     }
 }
+

@@ -210,11 +210,34 @@ class HomeworkResource extends Resource
                     ->label('الدرجة')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('submissions_count')
-                    ->label('التسليمات')
-                    ->counts('submissions')
+                Tables\Columns\TextColumn::make('submissions_summary')
+                    ->label('ملخص التسليمات')
+                    ->state(function (Homework $record, \App\Services\HomeworkService $homeworkService): string {
+                        $stats = $homeworkService->getHomeworkStats($record->id);
+                        $submitted = $stats['submitted_count'];
+                        $total = $stats['total_target_students'];
+
+                        if ($total === 0) {
+                            return 'لا يوجد طلاب';
+                        }
+
+                        if ($submitted === 0) {
+                            return "لم يُسلّم أحد (0 / {$total})";
+                        }
+
+                        return "{$submitted} سلموا / {$stats['missing_count']} لم يسلموا";
+                    })
                     ->badge()
-                    ->color('info'),
+                    ->color(function (Homework $record, \App\Services\HomeworkService $homeworkService): string {
+                        $stats = $homeworkService->getHomeworkStats($record->id);
+                        $submitted = $stats['submitted_count'];
+                        $total = $stats['total_target_students'];
+
+                        if ($total === 0) return 'gray';
+                        if ($submitted === $total && $total > 0) return 'success';
+                        if ($submitted > 0) return 'warning';
+                        return 'danger';
+                    }),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
@@ -235,6 +258,104 @@ class HomeworkResource extends Resource
                     ]),
             ])
             ->actions([
+                Tables\Actions\Action::make('viewSubmissions')
+                    ->label('التسليمات والنتائج 📥')
+                    ->icon('heroicon-o-clipboard-document-check')
+                    ->color('success')
+                    ->modalHeading(fn (Homework $record) => "تسليمات ونتائج واجب: {$record->title}")
+                    ->modalContent(function (Homework $record, \App\Services\HomeworkService $homeworkService) {
+                        $stats = $homeworkService->getHomeworkStats($record->id);
+                        $submissions = $homeworkService->getHomeworkSubmittedStudents($record->id);
+
+                        return view('filament.modals.homework-submissions-list', [
+                            'submissions' => $submissions,
+                            'homework' => $record,
+                            'stats' => $stats,
+                        ]);
+                    })
+                    ->extraModalFooterActions(function (Tables\Actions\Action $action): array {
+                        $actions = [
+                            $action->makeModalSubmitAction('notifySubmittedPortal', ['target' => 'submitted_portal'])
+                                ->label('📢 إشعار بوابة أولياء الأمور بالنتائج')
+                                ->color('primary'),
+                        ];
+
+                        if (\App\Services\WhatsAppNotificationService::isBulkEnabled()) {
+                            $actions[] = $action->makeModalSubmitAction('sendBulkWhatsAppSubmitted', ['target' => 'submitted_whatsapp'])
+                                ->label('💬 إرسال واتساب لجميع المسلّمين')
+                                ->color('success');
+                        }
+
+                        return $actions;
+                    })
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('إغلاق')
+                    ->action(function (Homework $record, array $arguments, \App\Services\HomeworkService $homeworkService): void {
+                        $target = $arguments['target'] ?? null;
+                        if ($target === 'submitted_portal') {
+                            $count = $homeworkService->notifyBulkParentPortalForHomework($record->id, 'submitted');
+                            Notification::make()
+                                ->title("تم إرسال {$count} إشعار بنتيجة الواجب عبر بوابة أولياء الأمور")
+                                ->success()
+                                ->send();
+                        } elseif ($target === 'submitted_whatsapp') {
+                            $result = $homeworkService->sendBulkWhatsAppForHomework($record->id, 'submitted');
+                            Notification::make()
+                                ->title("تم إرسال {$result['success']} رسالة واتساب لجميع الطلاب المسلّمين بنجاح")
+                                ->success()
+                                ->send();
+                        }
+                    }),
+
+                Tables\Actions\Action::make('viewMissingStudents')
+                    ->label('الطلاب الذين لم يسلموا ⚠️')
+                    ->icon('heroicon-o-user-minus')
+                    ->color('danger')
+                    ->modalHeading(fn (Homework $record) => "الطلاب الذين لم يسلموا واجب: {$record->title}")
+                    ->modalContent(function (Homework $record, \App\Services\HomeworkService $homeworkService) {
+                        $stats = $homeworkService->getHomeworkStats($record->id);
+                        $missing = $homeworkService->getHomeworkMissingStudents($record->id);
+
+                        return view('filament.modals.homework-missing-list', [
+                            'missingStudents' => $missing,
+                            'homework' => $record,
+                            'stats' => $stats,
+                        ]);
+                    })
+                    ->extraModalFooterActions(function (Tables\Actions\Action $action): array {
+                        $actions = [
+                            $action->makeModalSubmitAction('notifyMissingPortal', ['target' => 'missing_portal'])
+                                ->label('📢 تنبيه عبر بوابة أولياء الأمور للجميع')
+                                ->color('danger'),
+                        ];
+
+                        if (\App\Services\WhatsAppNotificationService::isBulkEnabled()) {
+                            $actions[] = $action->makeModalSubmitAction('sendBulkWhatsAppMissing', ['target' => 'missing_whatsapp'])
+                                ->label('💬 إرسال واتساب لجميع الذين لم يسلموا')
+                                ->color('success');
+                        }
+
+                        return $actions;
+                    })
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('إغلاق')
+                    ->action(function (Homework $record, array $arguments, \App\Services\HomeworkService $homeworkService): void {
+                        $target = $arguments['target'] ?? null;
+                        if ($target === 'missing_portal') {
+                            $count = $homeworkService->notifyBulkParentPortalForHomework($record->id, 'missing');
+                            Notification::make()
+                                ->title("تم إرسال {$count} إشعار تنبيه عبر بوابة أولياء الأمور")
+                                ->success()
+                                ->send();
+                        } elseif ($target === 'missing_whatsapp') {
+                            $result = $homeworkService->sendBulkWhatsAppForHomework($record->id, 'missing');
+                            Notification::make()
+                                ->title("تم إرسال {$result['success']} رسالة تذكير بالواتساب بنجاح")
+                                ->success()
+                                ->send();
+                        }
+                    }),
+
                 Tables\Actions\Action::make('publish')
                     ->label('نشر الآن')
                     ->icon('heroicon-o-paper-airplane')
@@ -258,7 +379,7 @@ class HomeworkResource extends Resource
                 Tables\Actions\Action::make('close')
                     ->label('إغلاق')
                     ->icon('heroicon-o-lock-closed')
-                    ->color('danger')
+                    ->color('gray')
                     ->visible(fn (Homework $record): bool => $record->status === 'published')
                     ->requiresConfirmation()
                     ->action(function (Homework $record): void {

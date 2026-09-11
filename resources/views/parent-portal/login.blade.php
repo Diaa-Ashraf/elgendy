@@ -53,16 +53,16 @@
     <div class="fixed top-0 right-1/4 w-96 h-96 bg-brand-teal/5 rounded-full blur-3xl pointer-events-none -z-10"></div>
     <div class="fixed bottom-0 left-1/4 w-96 h-96 bg-brand-coral/5 rounded-full blur-3xl pointer-events-none -z-10"></div>
 
-    {{-- زر العودة للرئيسية --}}
+    {{-- زر العودة للرئيسية والتبديل لبوابة الطالب --}}
     <div class="max-w-md mx-auto w-full pt-2 sm:pt-4 flex justify-between items-center relative z-10">
         <a href="{{ route('home') }}" class="inline-flex items-center gap-2 text-xs font-bold text-brand-muted hover:text-brand-teal transition bg-white/90 backdrop-blur-sm px-4 py-2 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md">
             <span>←</span>
-            <span>العودة للموقع الرئيسي</span>
+            <span>الموقع الرئيسي</span>
         </a>
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-brand-teal/10 text-brand-teal border border-brand-teal/15">
-            <span class="w-2 h-2 rounded-full bg-brand-coral animate-pulse"></span>
-            بوابة المتابعة الأكاديمية
-        </span>
+        <a href="{{ route('student.login') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-bold bg-white/90 hover:bg-white text-blue-700 border border-slate-200 shadow-sm transition">
+            <span>🎓</span>
+            <span>بوابة الطالب</span>
+        </a>
     </div>
 
     {{-- كارت تسجيل الدخول --}}
@@ -103,7 +103,7 @@
         </form>
 
         <div class="mt-6 pt-5 border-t border-slate-100 flex items-center justify-center gap-2 text-center text-xs text-brand-muted leading-relaxed">
-            <span>💡</span>
+            <span></span>
             <span>كود الطالب مطبوع على كارنيه الطالب أو من خلال مسؤولي السنتر.</span>
         </div>
     </div>

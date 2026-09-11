@@ -51,7 +51,7 @@
                             @empty
                                 <tr>
                                     <td colspan="5" class="p-6 text-center text-gray-400">
-                                        لا توجد حصص مجدولة اليوم 🎉
+                                        لا توجد حصص مجدولة اليوم 
                                     </td>
                                 </tr>
                             @endforelse
@@ -95,7 +95,7 @@
                         </div>
                     @empty
                         <div class="p-6 text-center text-gray-400 font-bold text-xs">
-                            🎉 لا توجد إشعارات جديدة حالياً.. جميع الأنشطة هادئة ومنتظمة!
+                             لا توجد إشعارات جديدة حالياً.. جميع الأنشطة هادئة ومنتظمة!
                         </div>
                     @endforelse
                 </div>
@@ -104,13 +104,43 @@
 
         {{-- العمود الأيسر: الطلاب المتأخرون في الدفع وطلبات التقديم أونلاين --}}
         <div class="space-y-6">
+            {{-- تنبيه: حصص سابقة تنتظر رصد وتسجيل الحضور --}}
+            @if(isset($unrecordedSessions) && $unrecordedSessions->isNotEmpty())
+            <x-filament::section>
+                <x-slot name="heading">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 font-bold text-base text-amber-500">
+                            <x-heroicon-o-clock class="w-5 h-5 text-amber-500 animate-pulse" />
+                            <span>تنبيه: حصص لم يتم رصد حضورها ⏰</span>
+                        </div>
+                        <a href="{{ url('/admin/group-sessions') }}" class="text-xs text-primary-600 font-bold hover:underline">عرض الكل</a>
+                    </div>
+                </x-slot>
+
+                <div class="space-y-3">
+                    @foreach($unrecordedSessions as $sess)
+                        <div class="flex items-center justify-between p-3 bg-amber-500/10 rounded-xl border border-amber-500/30">
+                            <div>
+                                <h4 class="font-bold text-sm text-gray-900 dark:text-white">{{ $sess->group?->name ?? 'حصة' }}</h4>
+                                <p class="text-xs text-amber-600 dark:text-amber-400 font-bold mt-0.5">تاريخ: {{ $sess->date }} ({{ $sess->group?->subject?->name }})</p>
+                            </div>
+                            <a href="{{ url('/admin/group-sessions') }}"
+                               class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-gray-950 font-black rounded-lg text-xs transition">
+                                رصد الآن ➔
+                            </a>
+                        </div>
+                    @endforeach
+                </div>
+            </x-filament::section>
+            @endif
+
             {{-- طلبات التقديم أونلاين الجديدة --}}
             <x-filament::section>
                 <x-slot name="heading">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2 font-bold text-base text-gray-900 dark:text-white">
                             <x-heroicon-o-document-check class="w-5 h-5 text-amber-500" />
-                            <span>طلبات التقديم أونلاين الحديثة 🌐</span>
+                            <span>طلبات التقديم أونلاين 🌐</span>
                         </div>
                         <a href="{{ url('/admin/student-applications') }}" class="text-xs text-primary-600 font-bold hover:underline">عرض الكل</a>
                     </div>
@@ -129,10 +159,70 @@
                             </a>
                         </div>
                     @empty
-                        <p class="text-xs text-center text-gray-400 py-4 font-bold">لا توجد طلبات تقديم معلقة حالياً 🎉</p>
+                        <p class="text-xs text-center text-gray-400 py-4 font-bold">لا توجد طلبات تقديم معلقة حالياً </p>
                     @endforelse
                 </div>
             </x-filament::section>
+
+            {{-- طلبات السداد الإلكتروني المعلقة --}}
+            @if(isset($pendingPayments) && $pendingPayments->isNotEmpty())
+            <x-filament::section>
+                <x-slot name="heading">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 font-bold text-base text-gray-900 dark:text-white">
+                            <x-heroicon-o-credit-card class="w-5 h-5 text-emerald-500" />
+                            <span>إيصالات سداد تنتظر الاعتماد 💳</span>
+                        </div>
+                        <a href="{{ url('/admin/online-payment-requests') }}" class="text-xs text-primary-600 font-bold hover:underline">عرض الكل</a>
+                    </div>
+                </x-slot>
+
+                <div class="space-y-3">
+                    @foreach($pendingPayments as $pay)
+                        <div class="flex items-center justify-between p-3 bg-emerald-50/60 dark:bg-emerald-950/30 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                            <div>
+                                <h4 class="font-bold text-sm text-gray-900 dark:text-white">{{ $pay->student?->name ?? 'طالب' }}</h4>
+                                <p class="text-xs text-emerald-700 dark:text-emerald-400 font-black mt-0.5">{{ number_format($pay->amount) }} ج.م ({{ $pay->payment_method }})</p>
+                            </div>
+                            <a href="{{ url('/admin/online-payment-requests/' . $pay->id . '/edit') }}"
+                               class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition">
+                                مراجعة واعتماد
+                            </a>
+                        </div>
+                    @endforeach
+                </div>
+            </x-filament::section>
+            @endif
+
+            {{-- تنبيهات الغياب المتكرر --}}
+            @if(isset($frequentAbsentees) && $frequentAbsentees->isNotEmpty())
+            <x-filament::section>
+                <x-slot name="heading">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 font-bold text-base text-gray-900 dark:text-white">
+                            <x-heroicon-o-user-minus class="w-5 h-5 text-rose-500" />
+                            <span>تنبيه: طلاب متكررو الغياب 🚨</span>
+                        </div>
+                    </div>
+                </x-slot>
+
+                <div class="space-y-3">
+                    @foreach($frequentAbsentees as $st)
+                        <div class="flex items-center justify-between p-3 bg-rose-50/50 dark:bg-rose-950/20 rounded-xl border border-rose-200 dark:border-rose-900">
+                            <div>
+                                <h4 class="font-bold text-sm text-gray-900 dark:text-white">{{ $st->name }}</h4>
+                                <p class="text-xs text-rose-600 dark:text-rose-400 font-bold mt-0.5">غائب أكثر من حصتين</p>
+                            </div>
+                            <a href="https://wa.me/2{{ $st->parent_phone }}?text={{ urlencode('تحذير من إدارة السنتر: لوحظ تكرار غياب الطالب ' . $st->name . ' يرجى التواصل معنا للاطمئنان.') }}" 
+                               target="_blank"
+                               class="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition">
+                                💬 تواصل
+                            </a>
+                        </div>
+                    @endforeach
+                </div>
+            </x-filament::section>
+            @endif
 
             {{-- الطلاب المتأخرون عن الدفع --}}
             <x-filament::section>

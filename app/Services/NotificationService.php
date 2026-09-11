@@ -171,5 +171,53 @@ class NotificationService
             $url
         );
     }
+
+    /**
+     * إرسال إشعار لولي الأمر داخل لوحة ولي الأمر (Parent Portal)
+     */
+    public static function notifyParent(int $studentId, string $type, string $title, string $message, ?string $actionUrl = null): ?\App\Models\ParentNotification
+    {
+        try {
+            return \App\Models\ParentNotification::create([
+                'student_id' => $studentId,
+                'type' => $type, // attendance, exam, payment, homework, warning, general
+                'title' => $title,
+                'message' => $message,
+                'is_read' => false,
+                'action_url' => $actionUrl,
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('ParentNotification Error: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * إشعار بتسجيل حضور أو غياب طالب 📋 (للنظام الداخلي وبوابة ولي الأمر)
+     */
+    public static function notifyAttendance(string $studentName, string $groupName, string $datetime, string $status, ?int $studentId = null): void
+    {
+        $statusText = $status === 'present' ? 'حاضر ✅' : ($status === 'late' ? 'متأخر ⏰' : 'غائب ❌');
+        $type = $status === 'present' ? 'success' : ($status === 'late' ? 'warning' : 'danger');
+
+        self::sendSystemNotification(
+            "تسجيل {$statusText} ({$studentName})",
+            "تم تسجيل حالة ({$statusText}) للطالب ({$studentName}) في مجموعة ({$groupName}) بتاريخ ووقت: {$datetime}.",
+            $type,
+            url('/admin/attendances')
+        );
+
+        if ($studentId) {
+            $parentTitle = $status === 'present' ? 'تسجيل حضور الحصة ✅' : ($status === 'late' ? 'تسجيل حضور متأخر ⏰' : 'تنبيه غياب عن الحصة ❌');
+            $parentMessage = $status === 'present'
+                ? "تم تسجيل حضور الطالب ({$studentName}) في حصة مجموعة ({$groupName}) بنجاح في تمام {$datetime}."
+                : ($status === 'late'
+                    ? "تم تسجيل حضور الطالب ({$studentName}) متأخراً عن حصة ({$groupName}) في تمام {$datetime}."
+                    : "نحيطكم علماً بغياب الطالب ({$studentName}) عن حصة مجموعة ({$groupName}) المقررة في {$datetime}.");
+
+            self::notifyParent($studentId, 'attendance', $parentTitle, $parentMessage, '/parent/dashboard');
+        }
+    }
 }
+
 

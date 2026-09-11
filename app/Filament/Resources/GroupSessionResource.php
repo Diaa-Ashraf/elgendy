@@ -64,6 +64,18 @@ class GroupSessionResource extends Resource
                             ->default('scheduled')
                             ->required()
                             ->native(false),
+
+                        Forms\Components\Textarea::make('notes')
+                            ->label('ملاحظات الحصة والشرح لولي الأمر')
+                            ->placeholder('اكتب ما تم شرحه أو تنبيهات للطلاب...')
+                            ->rows(2)
+                            ->columnSpanFull(),
+
+                        Forms\Components\Textarea::make('homework_notes')
+                            ->label('المطلوب والتكليفات للحصة القادمة')
+                            ->placeholder('مثال: حل صفحة 20 إلى 25 من المذكرة وتجهيز امتحان الفصل...')
+                            ->rows(2)
+                            ->columnSpanFull(),
                     ])
                     ->columns(2),
             ]);
@@ -109,12 +121,47 @@ class GroupSessionResource extends Resource
                 Tables\Columns\TextColumn::make('attendances_summary')
                     ->label('ملخص الحضور')
                     ->state(function (GroupSession $record): string {
-                        $total = $record->attendances()->count();
-                        if ($total === 0) {
+                        $totalGroupStudents = $record->group?->students()->wherePivot('status', 'active')->count() 
+                            ?? $record->group?->students()->count() 
+                            ?? 0;
+
+                        if ($totalGroupStudents === 0) {
+                            return 'لا يوجد طلاب بالمجموعة';
+                        }
+
+                        $present = $record->attendances()->whereIn('status', ['present', 'late'])->count();
+
+                        if ($record->attendances()->count() === 0 && $record->status === 'scheduled') {
                             return 'لم يسجل بعد';
                         }
-                        $present = $record->attendances()->where('status', 'present')->count();
-                        return "حضر {$present} من أصل {$total}";
+
+                        return "حضر {$present} من أصل {$totalGroupStudents}";
+                    })
+                    ->badge()
+                    ->color(function (GroupSession $record): string {
+                        $totalGroupStudents = $record->group?->students()->wherePivot('status', 'active')->count() 
+                            ?? $record->group?->students()->count() 
+                            ?? 0;
+
+                        if ($totalGroupStudents === 0) {
+                            return 'gray';
+                        }
+
+                        if ($record->attendances()->count() === 0 && $record->status === 'scheduled') {
+                            return 'gray';
+                        }
+
+                        $present = $record->attendances()->whereIn('status', ['present', 'late'])->count();
+
+                        if ($present === $totalGroupStudents && $totalGroupStudents > 0) {
+                            return 'success';
+                        }
+
+                        if ($present > 0) {
+                            return 'warning';
+                        }
+
+                        return 'danger';
                     }),
             ])
             ->defaultSort('date', 'desc')
@@ -137,6 +184,18 @@ class GroupSessionResource extends Resource
                     ->label('تسجيل الحضور')
                     ->icon('heroicon-o-check-badge')
                     ->color('success')
+                    ->disabled(fn (GroupSession $record): bool => \Carbon\Carbon::parse($record->date)->startOfDay()->isFuture())
+                    ->tooltip(fn (GroupSession $record): ?string => \Carbon\Carbon::parse($record->date)->startOfDay()->isFuture() ? 'لا يمكن تسجيل الحضور لحصة في تاريخ مستقبلي' : null)
+                    ->before(function (GroupSession $record, Tables\Actions\Action $action): void {
+                        if (\Carbon\Carbon::parse($record->date)->startOfDay()->isFuture()) {
+                            Notification::make()
+                                ->title('تنبيه!')
+                                ->body("لا يمكن تسجيل الحضور لحصة مجدولة في تاريخ مستقبلي ({$record->date}).")
+                                ->warning()
+                                ->send();
+                            $action->halt();
+                        }
+                    })
                     ->fillForm(function (GroupSession $record): array {
                         // Fetch all active students in the group
                         $activeStudents = $record->group->students()
@@ -200,24 +259,99 @@ class GroupSessionResource extends Resource
                             ->send();
                     }),
 
+                Tables\Actions\Action::make('viewAttendees')
+                    ->label('عرض الحاضرين 👥')
+                    ->icon('heroicon-o-users')
+                    ->color('success')
+                    ->modalHeading(fn (GroupSession $record) => "قائمة الطلاب الحاضرين في حصة: {$record->group?->name}")
+                    ->modalContent(function (GroupSession $record, AttendanceService $attendanceService) {
+                        $attendees = $attendanceService->getAttendeesForSession($record->id);
+
+                        return view('filament.modals.attendees-list', [
+                            'attendees' => $attendees,
+                            'session' => $record,
+                        ]);
+                    })
+                    ->extraModalFooterActions(function (Tables\Actions\Action $action): array {
+                        $actions = [
+                            $action->makeModalSubmitAction('notifyAttendeesPortal', ['target' => 'attendees_portal'])
+                                ->label('📢 إشعار بوابة ولي الأمر للحاضرين')
+                                ->color('primary'),
+                        ];
+
+                        if (\App\Services\WhatsAppNotificationService::isBulkEnabled()) {
+                            $actions[] = $action->makeModalSubmitAction('sendBulkWhatsAppAttendees', ['target' => 'attendees_whatsapp'])
+                                ->label('💬 إرسال واتساب لجميع الحاضرين')
+                                ->color('success');
+                        }
+
+                        return $actions;
+                    })
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('إغلاق')
+                    ->action(function (GroupSession $record, array $arguments, AttendanceService $attendanceService): void {
+                        $target = $arguments['target'] ?? null;
+                        if ($target === 'attendees_portal') {
+                            $count = $attendanceService->notifyBulkParentPortal($record->id, 'present');
+                            Notification::make()
+                                ->title("تم إرسال {$count} إشعار للحاضرين عبر بوابة ولي الأمر")
+                                ->success()
+                                ->send();
+                        } elseif ($target === 'attendees_whatsapp') {
+                            $result = $attendanceService->sendBulkWhatsApp($record->id, 'present');
+                            Notification::make()
+                                ->title("تم إرسال {$result['success']} رسالة واتساب للحاضرين بنجاح")
+                                ->success()
+                                ->send();
+                        }
+                    }),
+
                 Tables\Actions\Action::make('viewAbsentees')
                     ->label('عرض الغائبين ❌')
                     ->icon('heroicon-o-user-minus')
                     ->color('danger')
                     ->modalHeading(fn (GroupSession $record) => "قائمة الطلاب الغائبين في حصة: {$record->group?->name}")
-                    ->modalContent(function (GroupSession $record) {
-                        $absentAttendances = Attendance::where('group_session_id', $record->id)
-                            ->where('status', 'absent')
-                            ->with('student')
-                            ->get();
+                    ->modalContent(function (GroupSession $record, AttendanceService $attendanceService) {
+                        $absentees = $attendanceService->getAbsenteesForSession($record->id);
 
                         return view('filament.modals.absentees-list', [
-                            'absentees' => $absentAttendances,
+                            'absentees' => $absentees,
                             'session' => $record,
                         ]);
                     })
+                    ->extraModalFooterActions(function (Tables\Actions\Action $action): array {
+                        $actions = [
+                            $action->makeModalSubmitAction('notifyAbsenteesPortal', ['target' => 'absentees_portal'])
+                                ->label('📢 إشعار بوابة ولي الأمر للغائبين')
+                                ->color('danger'),
+                        ];
+
+                        if (\App\Services\WhatsAppNotificationService::isBulkEnabled()) {
+                            $actions[] = $action->makeModalSubmitAction('sendBulkWhatsAppAbsentees', ['target' => 'absentees_whatsapp'])
+                                ->label('💬 إرسال واتساب لجميع الغائبين')
+                                ->color('success');
+                        }
+
+                        return $actions;
+                    })
                     ->modalSubmitAction(false)
-                    ->modalCancelActionLabel('إغلاق'),
+                    ->modalCancelActionLabel('إغلاق')
+                    ->action(function (GroupSession $record, array $arguments, AttendanceService $attendanceService): void {
+                        $target = $arguments['target'] ?? null;
+                        if ($target === 'absentees_portal') {
+                            $count = $attendanceService->notifyBulkParentPortal($record->id, 'absent');
+                            Notification::make()
+                                ->title("تم إرسال {$count} إشعار غياب عبر بوابة ولي الأمر")
+                                ->success()
+                                ->send();
+                        } elseif ($target === 'absentees_whatsapp') {
+                            $result = $attendanceService->sendBulkWhatsApp($record->id, 'absent');
+                            Notification::make()
+                                ->title("تم إرسال {$result['success']} رسالة واتساب للغائبين بنجاح")
+                                ->success()
+                                ->send();
+                        }
+                    }),
 
                 Tables\Actions\Action::make('postponeSession')
                     ->label('تأجيل الحصة ⏰')
@@ -270,6 +404,13 @@ class GroupSessionResource extends Resource
                             ->warning()
                             ->send();
                     }),
+
+                Tables\Actions\Action::make('printAttendance')
+                    ->label('طباعة كشف الحضور')
+                    ->icon('heroicon-o-printer')
+                    ->color('info')
+                    ->url(fn (GroupSession $record) => route('session.attendance.print', $record->id))
+                    ->openUrlInNewTab(),
 
                 Tables\Actions\EditAction::make()->label('تعديل'),
                 Tables\Actions\DeleteAction::make()->label('حذف'),

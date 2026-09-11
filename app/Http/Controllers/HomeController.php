@@ -87,7 +87,9 @@ class HomeController extends Controller
             ->where('status', 'active')
             ->get();
 
-        return view('landing', compact('settings', 'stages', 'groups'));
+        $topStudents = app(\App\Services\LeaderboardService::class)->getTopStudents(limit: 6);
+
+        return view('landing', compact('settings', 'stages', 'groups', 'topStudents'));
     }
 
     public function submitEnrollment(Request $request)

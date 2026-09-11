@@ -40,16 +40,34 @@ class ListGroupSessions extends ListRecords
                         ->native(false),
                 ])
                 ->action(function (array $data, AttendanceService $attendanceService): void {
+                    $group = \App\Models\Group::find((int) $data['group_id']);
+                    if (!$group || $group->schedules()->count() === 0) {
+                        Notification::make()
+                            ->title('تنبيه: لا يوجد جدول مواعيد لهذه المجموعة!')
+                            ->body('يرجى تعديل المجموعة وإضافة مواعيد الحصص الأسبوعية أولاً.')
+                            ->warning()
+                            ->send();
+                        return;
+                    }
+
                     $createdCount = $attendanceService->generateSessions(
                         (int) $data['group_id'],
                         $data['from_date'],
                         $data['to_date']
                     );
 
-                    Notification::make()
-                        ->title("تم توليد {$createdCount} جلسة جديدة بنجاح وفق جدول المجموعة")
-                        ->success()
-                        ->send();
+                    if ($createdCount > 0) {
+                        Notification::make()
+                            ->title("تم توليد {$createdCount} جلسة جديدة بنجاح وفق جدول المجموعة")
+                            ->success()
+                            ->send();
+                    } else {
+                        Notification::make()
+                            ->title('لم يتم توليد جلسات جديدة (موجودة مسبقاً)')
+                            ->body('جميع حصص هذه المجموعة في الفترة المحددة مطابقة للجدول وتم توليدها مسبقاً.')
+                            ->info()
+                            ->send();
+                    }
                 }),
 
             Actions\CreateAction::make()
