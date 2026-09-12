@@ -1,11 +1,12 @@
 @php
     $__settingService = app(\App\Services\SettingService::class);
     $__favicon = $__settingService->url('site_favicon') ?: $__settingService->url('center_logo') ?: asset('favicon.ico');
+    $__v = substr(md5($__favicon ?? '1'), 0, 8);
 @endphp
 @if($__favicon)
-    <link rel="icon" type="image/png" href="{{ $__favicon }}">
-    <link rel="shortcut icon" href="{{ $__favicon }}">
-    <link rel="apple-touch-icon" href="{{ $__favicon }}">
+    <link rel="icon" href="{{ $__favicon }}?v={{ $__v }}">
+    <link rel="shortcut icon" href="{{ $__favicon }}?v={{ $__v }}">
+    <link rel="apple-touch-icon" href="{{ $__favicon }}?v={{ $__v }}">
 @endif
 
 <style>

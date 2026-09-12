@@ -176,17 +176,34 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
                                     ->schema([
                                         Forms\Components\FileUpload::make('center_logo')
                                             ->label('شعار السنتر / اللوجو الرئيسي (Logo)')
-                                            ->image()
                                             ->directory('settings')
-                                            ->maxSize(2048)
+                                            ->acceptedFileTypes([
+                                                'image/png',
+                                                'image/jpeg',
+                                                'image/jpg',
+                                                'image/svg+xml',
+                                                'image/webp',
+                                                'image/x-icon',
+                                            ])
+                                            ->maxSize(10240)
                                             ->imageEditor(),
 
                                         Forms\Components\FileUpload::make('site_favicon')
-                                            ->label('أيقونة المتصفح العلوي (Favicon .ico/.png)')
-                                            ->image()
+                                            ->label('أيقونة المتصفح العلوي (Favicon .ico/.png/.svg/.webp)')
                                             ->directory('settings')
-                                            ->maxSize(1024)
-                                            ->helperText('تظهر في أعلى تبويب المتصفح بجوار العنوان'),
+                                            ->acceptedFileTypes([
+                                                'image/x-icon',
+                                                'image/vnd.microsoft.icon',
+                                                'image/ico',
+                                                'image/icon',
+                                                'image/png',
+                                                'image/jpeg',
+                                                'image/jpg',
+                                                'image/svg+xml',
+                                                'image/webp',
+                                            ])
+                                            ->maxSize(5120)
+                                            ->helperText('يقبل ملفات .ico و .png و .svg و .webp و .jpg (تظهر في أعلى تبويب المتصفح بجوار العنوان)'),
                                     ])
                                     ->columns(2),
                             ]),
