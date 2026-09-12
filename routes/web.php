@@ -59,6 +59,38 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/sessions/{record}/attendance/print', [StudentPdfController::class, 'printAttendanceSheet'])->name('session.attendance.print');
     Route::get('/admin/students/{record}/certificate/print', [StudentPdfController::class, 'printCertificate'])->name('student.certificate.print');
     Route::get('/admin/students/{record}/monthly-report/pdf', [StudentPdfController::class, 'printMonthlyReport'])->name('student.monthly-report.pdf');
+    Route::post('/admin/homework/submissions/{id}/grade', function (int $id, \Illuminate\Http\Request $request, \App\Services\HomeworkService $homeworkService) {
+        $validated = $request->validate([
+            'score' => 'required|numeric|min:0',
+            'feedback' => 'nullable|string|max:1000',
+        ]);
+
+        try {
+            $submission = $homeworkService->gradeSubmission(
+                $id,
+                (float) $validated['score'],
+                $validated['feedback'] ?? null
+            );
+
+            $totalMarks = (float) ($submission->homework->total_marks ?? 10);
+            $percentage = $totalMarks > 0 ? round(($submission->score / $totalMarks) * 100, 1) : 0;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'تم رصد وتصحيح الواجب بنجاح! ✅',
+                'score' => (float) $submission->score,
+                'total_marks' => $totalMarks,
+                'percentage' => $percentage,
+                'feedback' => $submission->teacher_feedback,
+                'status' => $submission->status,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    })->name('admin.homework.submissions.grade');
 });
 
 // 🖼️ مسار قراءة ملفات الميديا والصور احتياطياً لاستضافات cPanel و Hostinger

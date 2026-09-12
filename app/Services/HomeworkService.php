@@ -152,6 +152,28 @@ class HomeworkService
     }
 
     /**
+     * رصد وتصحيح درجة تسليم الواجب يدوياً من قبل المدرس
+     */
+    public function gradeSubmission(int $submissionId, float $score, ?string $feedback = null, string $status = 'graded'): HomeworkSubmission
+    {
+        $submission = HomeworkSubmission::with('homework')->findOrFail($submissionId);
+        $totalMarks = (float) ($submission->homework->total_marks ?? 10);
+
+        if ($score < 0 || $score > $totalMarks) {
+            throw new \InvalidArgumentException("الدرجة المرصودة يجب أن تكون بين 0 و {$totalMarks}");
+        }
+
+        $submission->update([
+            'score' => $score,
+            'teacher_feedback' => $feedback,
+            'status' => $status,
+            'graded_at' => now(),
+        ]);
+
+        return $submission->fresh(['student', 'homework']);
+    }
+
+    /**
      * جلب الطلاب المستهدفين للواجب (المجموعة المحددة أو جميع طلاب المرحلة)
      */
     public function getTargetStudents(Homework $homework): Collection
