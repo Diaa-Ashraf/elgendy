@@ -1,240 +1,688 @@
 <x-filament-panels::page>
     @php
-    $data = $this->getAnalyticsData();
+        $data = $this->getAnalyticsData();
     @endphp
 
-    <div class="space-y-6">
+    <style>
+        .rp-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.75rem;
+            width: 100%;
+            font-family: inherit;
+        }
 
-        {{-- ─── 1. شريط الأدوات والتصفية (باللون الأبيض الناصع والخط الأسود العريض) ─── --}}
-        <div style="background-color: #111827; border: 1px solid #1f2937;" class="p-4 sm:p-5 rounded-2xl shadow-xl mb-6">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+        /* ─── 1. شريط الأدوات والفلاتر ─── */
+        .rp-filter-card {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 1.25rem;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .dark .rp-filter-card {
+            background: rgba(17, 24, 39, 0.9);
+            border-color: rgba(55, 65, 81, 0.8);
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.35);
+        }
 
-                {{-- زر الطباعة والتصدير باللون الأبيض الساطع والنص الأسود --}}
-                <div class="w-full md:w-auto">
-                    <button type="button" onclick="window.print()" style="background-color: #ffffff !important; color: #000000 !important; border: 1px solid #e5e7eb;" class="w-full md:w-auto px-5 py-2.5 hover:bg-gray-100 rounded-xl text-xs font-black shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer group">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="#000000" class="w-4 h-4 group-hover:scale-110 transition-transform">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5Zm-3 0h.008v.008H15V10.5Z" />
-                        </svg>
-                        <span style="color: #000000 !important; font-weight: 900 !important; font-size: 13px !important;">تصدير وطباعة التقرير الشامل</span>
-                    </button>
+        .rp-btn-print {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.65rem 1.25rem;
+            border-radius: 0.85rem;
+            font-size: 0.82rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+        }
+        .rp-btn-print:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35);
+        }
+
+        .rp-filters-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .rp-select {
+            border-radius: 0.85rem;
+            padding: 0.6rem 1rem;
+            font-size: 0.82rem;
+            font-weight: 800;
+            background-color: #f8fafc;
+            color: #0f172a;
+            border: 1.5px solid #d1d5db;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .dark .rp-select {
+            background-color: #1e293b;
+            color: #f8fafc;
+            border-color: #475569;
+        }
+        .rp-select:focus {
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+        }
+
+        .rp-date-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background-color: #f8fafc;
+            border: 1.5px solid #d1d5db;
+            border-radius: 0.85rem;
+            padding: 0.45rem 0.85rem;
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: #334155;
+        }
+        .dark .rp-date-box {
+            background-color: #1e293b;
+            border-color: #475569;
+            color: #e2e8f0;
+        }
+
+        .rp-date-input {
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 0.8rem;
+            font-weight: 800;
+            font-family: inherit;
+            color: #0f172a;
+            cursor: pointer;
+        }
+        .dark .rp-date-input {
+            color: #f8fafc;
+            color-scheme: dark;
+        }
+
+        /* ─── 2. كروت الإحصائيات الـ 6 ─── */
+        .rp-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 1.15rem;
+        }
+        @media (min-width: 1280px) {
+            .rp-kpi-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+
+        .rp-kpi-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1.25rem;
+            padding: 1.2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+        }
+        .dark .rp-kpi-card {
+            background: #111827;
+            border-color: #374151;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+        }
+        .rp-kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        .rp-kpi-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        .rp-kpi-title {
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: #475569;
+        }
+        .dark .rp-kpi-title {
+            color: #cbd5e1;
+        }
+
+        .rp-kpi-icon {
+            width: 2.1rem;
+            height: 2.1rem;
+            border-radius: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rp-kpi-val {
+            font-size: 1.55rem;
+            font-weight: 900;
+            font-family: monospace;
+            margin: 0.2rem 0;
+            line-height: 1.1;
+        }
+
+        .rp-kpi-sub {
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 0.2rem 0.55rem;
+            border-radius: 0.5rem;
+            display: inline-block;
+            margin-top: 0.35rem;
+        }
+
+        /* ألوان الكروت الـ 6 */
+        .rp-card-rev .rp-kpi-icon { background: rgba(16, 185, 129, 0.15); color: #059669; }
+        .rp-card-rev .rp-kpi-val { color: #059669; }
+        .dark .rp-card-rev .rp-kpi-val { color: #34d399; }
+        .rp-card-rev .rp-kpi-sub { background: rgba(16, 185, 129, 0.12); color: #047857; }
+        .dark .rp-card-rev .rp-kpi-sub { color: #6ee7b7; background: rgba(16, 185, 129, 0.2); }
+
+        .rp-card-exp .rp-kpi-icon { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
+        .rp-card-exp .rp-kpi-val { color: #dc2626; }
+        .dark .rp-card-exp .rp-kpi-val { color: #f87171; }
+        .rp-card-exp .rp-kpi-sub { background: rgba(239, 68, 68, 0.12); color: #b91c1c; }
+        .dark .rp-card-exp .rp-kpi-sub { color: #fca5a5; background: rgba(239, 68, 68, 0.2); }
+
+        .rp-card-profit .rp-kpi-icon { background: rgba(99, 102, 241, 0.15); color: #4f46e5; }
+        .rp-card-profit .rp-kpi-val { color: #4f46e5; }
+        .dark .rp-card-profit .rp-kpi-val { color: #818cf8; }
+        .rp-card-profit .rp-kpi-sub { background: rgba(99, 102, 241, 0.12); color: #4338ca; }
+        .dark .rp-card-profit .rp-kpi-sub { color: #c7d2fe; background: rgba(99, 102, 241, 0.2); }
+
+        .rp-card-students .rp-kpi-icon { background: rgba(37, 99, 235, 0.15); color: #2563eb; }
+        .rp-card-students .rp-kpi-val { color: #2563eb; }
+        .dark .rp-card-students .rp-kpi-val { color: #60a5fa; }
+        .rp-card-students .rp-kpi-sub { background: rgba(37, 99, 235, 0.12); color: #1d4ed8; }
+        .dark .rp-card-students .rp-kpi-sub { color: #93c5fd; background: rgba(37, 99, 235, 0.2); }
+
+        .rp-card-att-count .rp-kpi-icon { background: rgba(20, 184, 166, 0.15); color: #0d9488; }
+        .rp-card-att-count .rp-kpi-val { color: #0d9488; }
+        .dark .rp-card-att-count .rp-kpi-val { color: #2dd4bf; }
+        .rp-card-att-count .rp-kpi-sub { background: rgba(20, 184, 166, 0.12); color: #0f766e; }
+        .dark .rp-card-att-count .rp-kpi-sub { color: #5eead4; background: rgba(20, 184, 166, 0.2); }
+
+        .rp-card-att-rate .rp-kpi-icon { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+        .rp-card-att-rate .rp-kpi-val { color: #d97706; }
+        .dark .rp-card-att-rate .rp-kpi-val { color: #fbbf24; }
+        .rp-card-att-rate .rp-kpi-sub { background: rgba(245, 158, 11, 0.12); color: #b45309; }
+        .dark .rp-card-att-rate .rp-kpi-sub { color: #fde68a; background: rgba(245, 158, 11, 0.2); }
+
+        /* ─── 3. كرت الجداول الرئيسية ─── */
+        .rp-two-col-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        @media (min-width: 1024px) {
+            .rp-two-col-grid {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+
+        .rp-table-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1.25rem;
+            overflow: hidden;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        }
+        .dark .rp-table-card {
+            background: #111827;
+            border-color: #374151;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .rp-table-header {
+            padding: 1.1rem 1.5rem;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .dark .rp-table-header {
+            background: #1f2937;
+            border-bottom-color: #374151;
+        }
+
+        .rp-table-title {
+            font-size: 0.98rem;
+            font-weight: 900;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .dark .rp-table-title {
+            color: #f8fafc;
+        }
+
+        .rp-table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .rp-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+            font-size: 0.84rem;
+        }
+
+        .rp-table th {
+            padding: 0.9rem 1.1rem;
+            background: #f1f5f9;
+            color: #334155;
+            font-weight: 800;
+            font-size: 0.76rem;
+            border-bottom: 1px solid #e2e8f0;
+            white-space: nowrap;
+        }
+        .dark .rp-table th {
+            background: #182234;
+            color: #cbd5e1;
+            border-bottom-color: #374151;
+        }
+
+        .rp-table td {
+            padding: 0.9rem 1.1rem;
+            border-bottom: 1px solid #f1f5f9;
+            color: #1e293b;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .dark .rp-table td {
+            border-bottom-color: #1f2937;
+            color: #e2e8f0;
+        }
+
+        .rp-table tr:hover td {
+            background: rgba(241, 245, 249, 0.7);
+        }
+        .dark .rp-table tr:hover td {
+            background: rgba(31, 41, 55, 0.6);
+        }
+
+        .rp-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.8rem;
+            border-radius: 0.65rem;
+            font-size: 0.74rem;
+            font-weight: 800;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .rp-link-blue {
+            background: rgba(37, 99, 235, 0.12);
+            color: #1d4ed8;
+            border: 1px solid rgba(37, 99, 235, 0.3);
+        }
+        .rp-link-blue:hover { background: rgba(37, 99, 235, 0.22); }
+        .dark .rp-link-blue { color: #93c5fd; border-color: rgba(37, 99, 235, 0.4); }
+
+        .rp-link-rose {
+            background: rgba(225, 29, 72, 0.12);
+            color: #be123c;
+            border: 1px solid rgba(225, 29, 72, 0.3);
+        }
+        .rp-link-rose:hover { background: rgba(225, 29, 72, 0.22); }
+        .dark .rp-link-rose { color: #fda4af; border-color: rgba(225, 29, 72, 0.4); }
+
+        .rp-link-teal {
+            background: rgba(20, 184, 166, 0.12);
+            color: #0f766e;
+            border: 1px solid rgba(20, 184, 166, 0.3);
+        }
+        .rp-link-teal:hover { background: rgba(20, 184, 166, 0.22); }
+        .dark .rp-link-teal { color: #5eead4; border-color: rgba(20, 184, 166, 0.4); }
+
+        .rp-link-purple {
+            background: rgba(168, 85, 247, 0.12);
+            color: #7e22ce;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+        .rp-link-purple:hover { background: rgba(168, 85, 247, 0.22); }
+        .dark .rp-link-purple { color: #e9d5ff; border-color: rgba(168, 85, 247, 0.4); }
+
+        .rp-link-amber {
+            background: rgba(245, 158, 11, 0.12);
+            color: #b45309;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        .rp-link-amber:hover { background: rgba(245, 158, 11, 0.22); }
+        .dark .rp-link-amber { color: #fde68a; border-color: rgba(245, 158, 11, 0.4); }
+
+        /* ─── 4. لوحة المؤشرات الحيوية ─── */
+        .rp-vital-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1.25rem;
+            padding: 1.25rem;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .dark .rp-vital-card {
+            background: #111827;
+            border-color: #374151;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .rp-vital-header {
+            padding-bottom: 0.9rem;
+            margin-bottom: 1rem;
+            border-bottom: 1.5px solid #e2e8f0;
+        }
+        .dark .rp-vital-header {
+            border-bottom-color: #374151;
+        }
+
+        .rp-vital-h3 {
+            font-weight: 900;
+            font-size: 0.98rem;
+            color: #0f172a;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .dark .rp-vital-h3 {
+            color: #f8fafc;
+        }
+
+        .rp-vital-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+
+        .rp-vital-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.95rem 1.15rem;
+            border-radius: 1rem;
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            transition: all 0.2s ease;
+        }
+        .dark .rp-vital-item {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        .rp-vital-item:hover {
+            transform: translateX(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+
+        .rp-vital-lbl {
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .dark .rp-vital-lbl {
+            color: #e2e8f0;
+        }
+
+        .rp-vital-val {
+            font-size: 1.15rem;
+            font-weight: 900;
+            font-family: monospace;
+        }
+    </style>
+
+    <div class="rp-container">
+        {{-- ─── 1. شريط الأدوات والفلاتر الذكية ─── --}}
+        <div class="rp-filter-card">
+            <div>
+                <button type="button" onclick="window.print()" class="rp-btn-print">
+                    <x-heroicon-o-printer style="width: 1.2rem; height: 1.2rem;" />
+                    <span>تصدير وطباعة التقرير الشامل</span>
+                </button>
+            </div>
+
+            <div class="rp-filters-group">
+                <select wire:model.live="period_type" class="rp-select">
+                    <option value="this_month">📅 هذا الشهر الحالي</option>
+                    <option value="last_month">🗓️ الشهر السابق</option>
+                    <option value="this_year">📆 هذه السنة كاملة</option>
+                    <option value="custom">⚙️ فترة مخصصة</option>
+                </select>
+
+                <div class="rp-date-box">
+                    <span>من:</span>
+                    <input type="date" wire:model.live="from_date" class="rp-date-input">
                 </div>
 
-                {{-- الفلاتر الزمنية بحقول بيضاء ناصعة وخط أسود عريض --}}
-                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
-                    <div>
-                        <select wire:model.live="period_type" style="background-color: #ffffff !important; color: #000000 !important; border: 1px solid #d1d5db !important; font-weight: 800 !important;" class="text-xs rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-amber-500 transition cursor-pointer shadow-md">
-                            <option value="this_month" style="background-color: #ffffff; color: #000000;">📅 هذا الشهر الحالي</option>
-                            <option value="last_month" style="background-color: #ffffff; color: #000000;">🗓️ الشهر السابق</option>
-                            <option value="this_year" style="background-color: #ffffff; color: #000000;">📆 هذه السنة كاملة</option>
-                        </select>
-                    </div>
-
-                    <div style="background-color: #ffffff !important; color: #000000 !important; border: 1px solid #d1d5db !important;" class="flex items-center gap-2 text-xs font-black px-3.5 py-2 rounded-xl shadow-md">
-                        <span style="color: #000000 !important; font-weight: 900 !important;">من:</span>
-                        <input type="date" wire:model.live="from_date" style="color-scheme: light; background: transparent; color: #000000 !important; font-weight: 800 !important;" class="text-xs bg-transparent border-0 p-0 focus:ring-0 cursor-pointer">
-                    </div>
-
-                    <div style="background-color: #ffffff !important; color: #000000 !important; border: 1px solid #d1d5db !important;" class="flex items-center gap-2 text-xs font-black px-3.5 py-2 rounded-xl shadow-md">
-                        <span style="color: #000000 !important; font-weight: 900 !important;">إلى:</span>
-                        <input type="date" wire:model.live="to_date" style="color-scheme: light; background: transparent; color: #000000 !important; font-weight: 800 !important;" class="text-xs bg-transparent border-0 p-0 focus:ring-0 cursor-pointer">
-                    </div>
+                <div class="rp-date-box">
+                    <span>إلى:</span>
+                    <input type="date" wire:model.live="to_date" class="rp-date-input">
                 </div>
             </div>
         </div>
 
-        {{-- ─── 2. كروت الإحصائيات الـ 6 (ألوان داكنة راقية مع توهج ملون وتأثير Hover جذاب) ─── --}}
-        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-
+        {{-- ─── 2. كروت الإحصائيات الـ 6 ─── --}}
+        <div class="rp-kpi-grid">
             {{-- إجمالي الإيرادات --}}
-            <div class="group bg-gray-900 p-5 rounded-2xl border border-gray-800 hover:border-emerald-500/60 shadow-lg hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-300 transform hover:-translate-y-1 text-center flex flex-col justify-between relative overflow-hidden">
-                <div class="absolute -top-10 -right-10 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/25 transition-all"></div>
-                <div class="flex items-center justify-between text-gray-400 mb-3 relative z-10">
-                    <span class="text-xs font-black text-gray-200 group-hover:text-emerald-400 transition">إجمالي الإيرادات</span>
-                    <div class="w-8 h-8 rounded-xl bg-emerald-950/80 border border-emerald-800/60 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <x-heroicon-o-banknotes class="w-4 h-4" />
+            <div class="rp-kpi-card rp-card-rev">
+                <div>
+                    <div class="rp-kpi-header">
+                        <span class="rp-kpi-title">إجمالي الإيرادات</span>
+                        <div class="rp-kpi-icon">
+                            <x-heroicon-o-banknotes style="width: 1.25rem; height: 1.25rem;" />
+                        </div>
                     </div>
+                    <div class="rp-kpi-val">{{ number_format($data['revenue'], 2) }} <span style="font-size: 0.7rem;">ج.م</span></div>
                 </div>
-                <div class="text-2xl font-black text-emerald-400 my-1 font-mono tracking-tight relative z-10">
-                    {{ number_format($data['revenue'], 2) }} <span class="text-xs font-bold text-gray-400">ج.م</span>
-                </div>
-                <div class="text-[10px] font-bold text-emerald-300 bg-emerald-950/60 border border-emerald-800/40 py-1 px-2 rounded-lg mt-2 relative z-10">
-                    محصلة من رسوم الطلاب
+                <div>
+                    <span class="rp-kpi-sub">محصلة من الرسوم</span>
                 </div>
             </div>
 
             {{-- إجمالي المصروفات --}}
-            <div class="group bg-gray-900 p-5 rounded-2xl border border-gray-800 hover:border-rose-500/60 shadow-lg hover:shadow-2xl hover:shadow-rose-500/10 transition-all duration-300 transform hover:-translate-y-1 text-center flex flex-col justify-between relative overflow-hidden">
-                <div class="absolute -top-10 -right-10 w-24 h-24 bg-rose-500/10 rounded-full blur-xl group-hover:bg-rose-500/25 transition-all"></div>
-                <div class="flex items-center justify-between text-gray-400 mb-3 relative z-10">
-                    <span class="text-xs font-black text-gray-200 group-hover:text-rose-400 transition">إجمالي المصروفات</span>
-                    <div class="w-8 h-8 rounded-xl bg-rose-950/80 border border-rose-800/60 text-rose-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <x-heroicon-o-arrow-trending-down class="w-4 h-4" />
+            <div class="rp-kpi-card rp-card-exp">
+                <div>
+                    <div class="rp-kpi-header">
+                        <span class="rp-kpi-title">إجمالي المصروفات</span>
+                        <div class="rp-kpi-icon">
+                            <x-heroicon-o-arrow-trending-down style="width: 1.25rem; height: 1.25rem;" />
+                        </div>
                     </div>
+                    <div class="rp-kpi-val">{{ number_format($data['expenses'], 2) }} <span style="font-size: 0.7rem;">ج.م</span></div>
                 </div>
-                <div class="text-2xl font-black text-rose-400 my-1 font-mono tracking-tight relative z-10">
-                    {{ number_format($data['expenses'], 2) }} <span class="text-xs font-bold text-gray-400">ج.م</span>
-                </div>
-                <div class="text-[10px] font-bold text-rose-300 bg-rose-950/60 border border-rose-800/40 py-1 px-2 rounded-lg mt-2 relative z-10">
-                    نفقات تشغيلية + رواتب
+                <div>
+                    <span class="rp-kpi-sub">نفقات + رواتب</span>
                 </div>
             </div>
 
-            {{-- صافي الربح --}}
-            <div class="group bg-gray-900 p-5 rounded-2xl border border-gray-800 hover:border-indigo-500/60 shadow-lg hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-300 transform hover:-translate-y-1 text-center flex flex-col justify-between relative overflow-hidden">
-                <div class="absolute -top-10 -right-10 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl group-hover:bg-indigo-500/25 transition-all"></div>
-                <div class="flex items-center justify-between text-gray-400 mb-3 relative z-10">
-                    <span class="text-xs font-black text-gray-200 group-hover:text-indigo-400 transition">صافي الأرباح</span>
-                    <div class="w-8 h-8 rounded-xl bg-indigo-950/80 border border-indigo-800/60 text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <x-heroicon-o-chart-bar class="w-4 h-4" />
+            {{-- صافي الأرباح --}}
+            <div class="rp-kpi-card rp-card-profit">
+                <div>
+                    <div class="rp-kpi-header">
+                        <span class="rp-kpi-title">صافي الأرباح</span>
+                        <div class="rp-kpi-icon">
+                            <x-heroicon-o-chart-bar style="width: 1.25rem; height: 1.25rem;" />
+                        </div>
                     </div>
+                    <div class="rp-kpi-val">{{ number_format($data['net_profit'], 2) }} <span style="font-size: 0.7rem;">ج.م</span></div>
                 </div>
-                <div class="text-2xl font-black {{ $data['net_profit'] >= 0 ? 'text-indigo-400' : 'text-rose-400' }} my-1 font-mono tracking-tight relative z-10">
-                    {{ number_format($data['net_profit'], 2) }} <span class="text-xs font-bold text-gray-400">ج.م</span>
-                </div>
-                <div class="text-[10px] font-bold text-indigo-300 bg-indigo-950/60 border border-indigo-800/40 py-1 px-2 rounded-lg mt-2 relative z-10">
-                    الإيرادات - المصروفات
+                <div>
+                    <span class="rp-kpi-sub">الإيراد - المصروفات</span>
                 </div>
             </div>
 
             {{-- إجمالي الطلاب --}}
-            <div class="group bg-gray-900 p-5 rounded-2xl border border-gray-800 hover:border-blue-500/60 shadow-lg hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 transform hover:-translate-y-1 text-center flex flex-col justify-between relative overflow-hidden">
-                <div class="absolute -top-10 -right-10 w-24 h-24 bg-blue-500/10 rounded-full blur-xl group-hover:bg-blue-500/25 transition-all"></div>
-                <div class="flex items-center justify-between text-gray-400 mb-3 relative z-10">
-                    <span class="text-xs font-black text-gray-200 group-hover:text-blue-400 transition">إجمالي الطلاب</span>
-                    <div class="w-8 h-8 rounded-xl bg-blue-950/80 border border-blue-800/60 text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <x-heroicon-o-users class="w-4 h-4" />
+            <div class="rp-kpi-card rp-card-students">
+                <div>
+                    <div class="rp-kpi-header">
+                        <span class="rp-kpi-title">إجمالي الطلاب</span>
+                        <div class="rp-kpi-icon">
+                            <x-heroicon-o-users style="width: 1.25rem; height: 1.25rem;" />
+                        </div>
                     </div>
+                    <div class="rp-kpi-val">{{ number_format($data['total_students']) }}</div>
                 </div>
-                <div class="text-2xl font-black text-blue-400 my-1 font-mono tracking-tight relative z-10">
-                    {{ number_format($data['total_students']) }} <span class="text-xs font-bold text-gray-400">طالب</span>
-                </div>
-                <div class="text-[10px] font-bold text-blue-300 bg-blue-950/60 border border-blue-800/40 py-1 px-2 rounded-lg mt-2 relative z-10">
-                    الطلاب المقيدين بالسنتر
+                <div>
+                    <span class="rp-kpi-sub">المقيدين بالسنتر</span>
                 </div>
             </div>
 
-            {{-- إجمالي الحضور --}}
-            <div class="group bg-gray-900 p-5 rounded-2xl border border-gray-800 hover:border-teal-500/60 shadow-lg hover:shadow-2xl hover:shadow-teal-500/10 transition-all duration-300 transform hover:-translate-y-1 text-center flex flex-col justify-between relative overflow-hidden">
-                <div class="absolute -top-10 -right-10 w-24 h-24 bg-teal-500/10 rounded-full blur-xl group-hover:bg-teal-500/25 transition-all"></div>
-                <div class="flex items-center justify-between text-gray-400 mb-3 relative z-10">
-                    <span class="text-xs font-black text-gray-200 group-hover:text-teal-400 transition">سجلات الحضور</span>
-                    <div class="w-8 h-8 rounded-xl bg-teal-950/80 border border-teal-800/60 text-teal-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <x-heroicon-o-check-circle class="w-4 h-4" />
+            {{-- سجلات الحضور --}}
+            <div class="rp-kpi-card rp-card-att-count">
+                <div>
+                    <div class="rp-kpi-header">
+                        <span class="rp-kpi-title">سجلات الحضور</span>
+                        <div class="rp-kpi-icon">
+                            <x-heroicon-o-check-circle style="width: 1.25rem; height: 1.25rem;" />
+                        </div>
                     </div>
+                    <div class="rp-kpi-val">{{ number_format($data['today_present']) }}</div>
                 </div>
-                <div class="text-2xl font-black text-teal-400 my-1 font-mono tracking-tight relative z-10">
-                    {{ number_format($data['today_present']) }} <span class="text-xs font-bold text-gray-400">حضور</span>
-                </div>
-                <div class="text-[10px] font-bold text-teal-300 bg-teal-950/60 border border-teal-800/40 py-1 px-2 rounded-lg mt-2 relative z-10">
-                    حضور الحصص بالفترة
+                <div>
+                    <span class="rp-kpi-sub">حضور الحصص بالفترة</span>
                 </div>
             </div>
 
-            {{-- نسبة الحضور --}}
-            <div class="group bg-gray-900 p-5 rounded-2xl border border-gray-800 hover:border-amber-500/60 shadow-lg hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-300 transform hover:-translate-y-1 text-center flex flex-col justify-between relative overflow-hidden">
-                <div class="absolute -top-10 -right-10 w-24 h-24 bg-amber-500/10 rounded-full blur-xl group-hover:bg-amber-500/25 transition-all"></div>
-                <div class="flex items-center justify-between text-gray-400 mb-3 relative z-10">
-                    <span class="text-xs font-black text-gray-200 group-hover:text-amber-400 transition">معدل الالتزام</span>
-                    <div class="w-8 h-8 rounded-xl bg-amber-950/80 border border-amber-800/60 text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <x-heroicon-o-chart-pie class="w-4 h-4" />
+            {{-- معدل الالتزام --}}
+            <div class="rp-kpi-card rp-card-att-rate">
+                <div>
+                    <div class="rp-kpi-header">
+                        <span class="rp-kpi-title">معدل الالتزام</span>
+                        <div class="rp-kpi-icon">
+                            <x-heroicon-o-chart-pie style="width: 1.25rem; height: 1.25rem;" />
+                        </div>
                     </div>
+                    <div class="rp-kpi-val">{{ $data['attendance_rate'] }}%</div>
                 </div>
-                <div class="text-2xl font-black text-amber-400 my-1 font-mono tracking-tight relative z-10">
-                    {{ $data['attendance_rate'] }}%
-                </div>
-                <div class="text-[10px] font-bold text-amber-300 bg-amber-950/60 border border-amber-800/40 py-1 px-2 rounded-lg mt-2 relative z-10">
-                    معدل حضور الطلاب
+                <div>
+                    <span class="rp-kpi-sub">معدل حضور الطلاب</span>
                 </div>
             </div>
-
         </div>
 
-        {{-- ─── 3. التقارير الجاهزة للتصدير + ملخص الأداء الفعلي ─── --}}
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            {{-- جدول روابط التقارير المباشرة --}}
-            <div class="lg:col-span-2 bg-gray-900 rounded-2xl border border-gray-800 shadow-lg overflow-hidden">
-                <div class="p-5 border-b border-gray-800 flex items-center justify-between bg-gray-850">
-                    <div>
-                        <h3 class="font-black text-base text-white flex items-center gap-2">
-                            <span>📋 مراكز وتقارير المنظومة المباشرة</span>
-                        </h3>
-                        <p class="text-xs text-gray-400 mt-0.5">الانتقال السريع لجميع سجلات وتقارير النظام مع إمكانية التصدير</p>
+        {{-- ─── 3. التقارير المباشرة + لوحة المؤشرات الحيوية ─── --}}
+        <div class="rp-two-col-grid">
+            {{-- جدول روابط السجلات والتقارير المباشرة --}}
+            <div class="rp-table-card">
+                <div class="rp-table-header">
+                    <div class="rp-table-title">
+                        <x-heroicon-o-clipboard-document-list style="width: 1.35rem; height: 1.35rem; color: #2563eb;" />
+                        <span>مراكز وتقارير المنظومة المباشرة للتصدير والمتابعة</span>
                     </div>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-right text-sm">
-                        <thead class="bg-gray-800 text-xs font-bold text-gray-400 uppercase border-b border-gray-700">
+                <div class="rp-table-responsive">
+                    <table class="rp-table">
+                        <thead>
                             <tr>
-                                <th class="p-4">نوع التقرير والسجل</th>
-                                <th class="p-4">الوصف</th>
-                                <th class="p-4 text-left">الانتقال المباشر</th>
+                                <th>نوع التقرير والسجل</th>
+                                <th>الوصف والبيان</th>
+                                <th style="text-align: left;">الانتقال المباشر</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-800 text-xs font-medium">
-                            <tr class="hover:bg-blue-950/30 transition-colors duration-150">
-                                <td class="p-4 font-extrabold text-gray-100 flex items-center gap-2">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50"></span>
+                        <tbody>
+                            <tr>
+                                <td style="font-weight: 900;">
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: #2563eb; margin-left: 6px;"></span>
                                     سجل مدفوعات واشتراكات الطلاب
                                 </td>
-                                <td class="p-4 text-gray-400">جميع إيصالات وتحصيلات الرسوم الدراسية وحسابات الطلاب</td>
-                                <td class="p-4 text-left">
-                                    <a href="{{ url('/admin/student-payments') }}" class="px-3.5 py-1.5 bg-blue-950/70 hover:bg-blue-900 text-blue-300 border border-blue-800/80 rounded-xl font-bold transition shadow-sm inline-flex items-center gap-1.5 hover:scale-105">
+                                <td style="color: #64748b; font-size: 0.8rem;" class="dark:text-slate-300">
+                                    إيصالات وتحصيلات الرسوم الدراسية وحسابات الطلاب
+                                </td>
+                                <td style="text-align: left;">
+                                    <a href="{{ url('/admin/student-payments') }}" class="rp-link-btn rp-link-blue">
+                                        <x-heroicon-o-eye style="width: 1rem; height: 1rem;" />
                                         <span>عرض السجل</span>
-                                        <span>👁️</span>
                                     </a>
                                 </td>
                             </tr>
-                            <tr class="hover:bg-rose-950/30 transition-colors duration-150">
-                                <td class="p-4 font-extrabold text-gray-100 flex items-center gap-2">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-sm shadow-rose-500/50"></span>
+                            <tr>
+                                <td style="font-weight: 900;">
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: #e11d48; margin-left: 6px;"></span>
                                     سجل المصروفات التشغيلية
                                 </td>
-                                <td class="p-4 text-gray-400">تفاصيل جميع النفقات والمصروفات ومستلزمات السنتر</td>
-                                <td class="p-4 text-left">
-                                    <a href="{{ url('/admin/expenses') }}" class="px-3.5 py-1.5 bg-rose-950/70 hover:bg-rose-900 text-rose-300 border border-rose-800/80 rounded-xl font-bold transition shadow-sm inline-flex items-center gap-1.5 hover:scale-105">
+                                <td style="color: #64748b; font-size: 0.8rem;" class="dark:text-slate-300">
+                                    تفاصيل جميع النفقات والمصروفات ومستلزمات السنتر
+                                </td>
+                                <td style="text-align: left;">
+                                    <a href="{{ url('/admin/expenses') }}" class="rp-link-btn rp-link-rose">
+                                        <x-heroicon-o-eye style="width: 1rem; height: 1rem;" />
                                         <span>عرض المصروفات</span>
-                                        <span>👁️</span>
                                     </a>
                                 </td>
                             </tr>
-                            <tr class="hover:bg-teal-950/30 transition-colors duration-150">
-                                <td class="p-4 font-extrabold text-gray-100 flex items-center gap-2">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shadow-sm shadow-teal-500/50"></span>
+                            <tr>
+                                <td style="font-weight: 900;">
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: #0d9488; margin-left: 6px;"></span>
                                     سجل الرواتب والأجور
                                 </td>
-                                <td class="p-4 text-gray-400">سجل الرواتب والمستحقات المصروفة للمساعدين والموظفين</td>
-                                <td class="p-4 text-left">
-                                    <a href="{{ url('/admin/salaries') }}" class="px-3.5 py-1.5 bg-teal-950/70 hover:bg-teal-900 text-teal-300 border border-teal-800/80 rounded-xl font-bold transition shadow-sm inline-flex items-center gap-1.5 hover:scale-105">
+                                <td style="color: #64748b; font-size: 0.8rem;" class="dark:text-slate-300">
+                                    سجل الرواتب والمستحقات المصروفة للمساعدين والموظفين
+                                </td>
+                                <td style="text-align: left;">
+                                    <a href="{{ url('/admin/salaries') }}" class="rp-link-btn rp-link-teal">
+                                        <x-heroicon-o-eye style="width: 1rem; height: 1rem;" />
                                         <span>عرض الرواتب</span>
-                                        <span>👁️</span>
                                     </a>
                                 </td>
                             </tr>
-                            <tr class="hover:bg-purple-950/30 transition-colors duration-150">
-                                <td class="p-4 font-extrabold text-gray-100 flex items-center gap-2">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-sm shadow-purple-500/50"></span>
-                                    تقرير الحضور والغياب وسجل الجلسات
+                            <tr>
+                                <td style="font-weight: 900;">
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: #9333ea; margin-left: 6px;"></span>
+                                    سجل الحصص والجلسات والغياب
                                 </td>
-                                <td class="p-4 text-gray-400">سجلات حضور وغياب الطلاب والملاحظات الأكاديمية للحصص</td>
-                                <td class="p-4 text-left">
-                                    <a href="{{ url('/admin/group-sessions') }}" class="px-3.5 py-1.5 bg-purple-950/70 hover:bg-purple-900 text-purple-300 border border-purple-800/80 rounded-xl font-bold transition shadow-sm inline-flex items-center gap-1.5 hover:scale-105">
+                                <td style="color: #64748b; font-size: 0.8rem;" class="dark:text-slate-300">
+                                    سجلات حضور وغياب الطلاب والملاحظات الأكاديمية
+                                </td>
+                                <td style="text-align: left;">
+                                    <a href="{{ url('/admin/group-sessions') }}" class="rp-link-btn rp-link-purple">
+                                        <x-heroicon-o-eye style="width: 1rem; height: 1rem;" />
                                         <span>عرض الجلسات</span>
-                                        <span>👁️</span>
                                     </a>
                                 </td>
                             </tr>
-                            <tr class="hover:bg-amber-950/30 transition-colors duration-150">
-                                <td class="p-4 font-extrabold text-gray-100 flex items-center gap-2">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm shadow-amber-500/50"></span>
-                                    تقرير الامتحانات وبنوك الأسئلة
+                            <tr>
+                                <td style="font-weight: 900;">
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: #d97706; margin-left: 6px;"></span>
+                                    سجل الامتحانات والتقييمات
                                 </td>
-                                <td class="p-4 text-gray-400">درجات ونتائج الامتحانات الورقية والإلكترونية المرصودة</td>
-                                <td class="p-4 text-left">
-                                    <a href="{{ url('/admin/exams') }}" class="px-3.5 py-1.5 bg-amber-950/70 hover:bg-amber-900 text-amber-300 border border-amber-800/80 rounded-xl font-bold transition shadow-sm inline-flex items-center gap-1.5 hover:scale-105">
+                                <td style="color: #64748b; font-size: 0.8rem;" class="dark:text-slate-300">
+                                    درجات ونتائج الامتحانات الورقية والإلكترونية المرصودة
+                                </td>
+                                <td style="text-align: left;">
+                                    <a href="{{ url('/admin/exams') }}" class="rp-link-btn rp-link-amber">
+                                        <x-heroicon-o-eye style="width: 1rem; height: 1rem;" />
                                         <span>عرض الامتحانات</span>
-                                        <span>👁️</span>
                                     </a>
                                 </td>
                             </tr>
@@ -243,61 +691,61 @@
                 </div>
             </div>
 
-            {{-- ملخص الأداء المالي والأكاديمي --}}
-            <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-lg flex flex-col justify-between">
-                <div>
-                    <h3 class="font-black text-base text-white mb-1 flex items-center gap-2">
-                        <span> مؤشرات الأداء الحيوية</span>
+            {{-- لوحة مؤشرات الأداء الحيوية --}}
+            <div class="rp-vital-card">
+                <div class="rp-vital-header">
+                    <h3 class="rp-vital-h3">
+                        <x-heroicon-o-bolt style="width: 1.35rem; height: 1.35rem; color: #f59e0b;" />
+                        <span>مؤشرات الأداء الحيوية للفترة</span>
                     </h3>
-                    <p class="text-xs text-gray-400 mb-5">تحليل ديناميكي للفترة المختارة</p>
                 </div>
 
-                <div class="space-y-3.5">
-
-                    <div class="group flex items-center justify-between p-3.5 bg-blue-950/30 hover:bg-blue-950/60 rounded-xl border border-blue-900/60 transition-colors">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-blue-900/80 text-blue-300 flex items-center justify-center font-bold text-sm">
-                                💵
-                            </div>
-                            <span class="font-bold text-xs text-gray-200">متوسط دخل الطالب للفترة</span>
+                <div class="rp-vital-list">
+                    {{-- متوسط دخل الطالب --}}
+                    <div class="rp-vital-item">
+                        <div class="rp-vital-lbl">
+                            <x-heroicon-o-currency-dollar style="width: 1.2rem; height: 1.2rem; color: #2563eb;" />
+                            <span>متوسط دخل الطالب بالفترة</span>
                         </div>
-                        <span class="font-black text-xs text-blue-400 font-mono">{{ number_format($data['avg_fee'], 2) }} ج.م</span>
+                        <div class="rp-vital-val" style="color: #2563eb;" class="dark:text-blue-400">
+                            {{ number_format($data['avg_fee'], 2) }} ج.م
+                        </div>
                     </div>
 
-                    <div class="group flex items-center justify-between p-3.5 bg-emerald-950/30 hover:bg-emerald-950/60 rounded-xl border border-emerald-900/60 transition-colors">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-emerald-900/80 text-emerald-300 flex items-center justify-center font-bold text-sm">
-                                💳
-                            </div>
-                            <span class="font-bold text-xs text-gray-200">نسبة سداد الاشتراكات</span>
+                    {{-- نسبة سداد الاشتراكات --}}
+                    <div class="rp-vital-item">
+                        <div class="rp-vital-lbl">
+                            <x-heroicon-o-check-badge style="width: 1.2rem; height: 1.2rem; color: #059669;" />
+                            <span>نسبة سداد الاشتراكات</span>
                         </div>
-                        <span class="font-black text-xs text-emerald-400 font-mono">{{ $data['payment_rate'] }}%</span>
+                        <div class="rp-vital-val" style="color: #059669;" class="dark:text-emerald-400">
+                            {{ $data['payment_rate'] }}%
+                        </div>
                     </div>
 
-                    <div class="group flex items-center justify-between p-3.5 bg-rose-950/30 hover:bg-rose-950/60 rounded-xl border border-rose-900/60 transition-colors">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-rose-900/80 text-rose-300 flex items-center justify-center font-bold text-sm">
-                                ⚠️
-                            </div>
-                            <span class="font-bold text-xs text-gray-200">الطلاب غير المسددين</span>
+                    {{-- الطلاب غير المسددين --}}
+                    <div class="rp-vital-item">
+                        <div class="rp-vital-lbl">
+                            <x-heroicon-o-exclamation-circle style="width: 1.2rem; height: 1.2rem; color: #dc2626;" />
+                            <span>الطلاب غير المسددين</span>
                         </div>
-                        <span class="font-black text-xs text-rose-400 font-mono">{{ number_format($data['late_students']) }} طلاب</span>
+                        <div class="rp-vital-val" style="color: #dc2626;" class="dark:text-rose-400">
+                            {{ number_format($data['late_students']) }} طالب
+                        </div>
                     </div>
 
-                    <div class="group flex items-center justify-between p-3.5 bg-purple-950/30 hover:bg-purple-950/60 rounded-xl border border-purple-900/60 transition-colors">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-purple-900/80 text-purple-300 flex items-center justify-center font-bold text-sm">
-                                📊
-                            </div>
-                            <span class="font-bold text-xs text-gray-200">إجمالي الحركات بالدورة</span>
+                    {{-- إجمالي الحركات المالية --}}
+                    <div class="rp-vital-item">
+                        <div class="rp-vital-lbl">
+                            <x-heroicon-o-arrows-right-left style="width: 1.2rem; height: 1.2rem; color: #9333ea;" />
+                            <span>إجمالي المعاملات بالفترة</span>
                         </div>
-                        <span class="font-black text-xs text-purple-400 font-mono">{{ number_format($data['total_transactions']) }} حركة</span>
+                        <div class="rp-vital-val" style="color: #9333ea;" class="dark:text-purple-400">
+                            {{ number_format($data['total_transactions']) }} حركة
+                        </div>
                     </div>
-
                 </div>
             </div>
-
         </div>
-
     </div>
 </x-filament-panels::page>

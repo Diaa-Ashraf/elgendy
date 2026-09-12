@@ -22,13 +22,18 @@ class StudentPerformance extends Page
 
     public ?int $selectedStudentId = null;
 
+    protected $memoizedAnalytics = null;
+    protected $memoizedStudentsList = null;
+
     public function mount()
     {
         $this->selectedStudentId = request('student_id') ?? Student::first()?->id;
     }
 
-    protected $memoizedAnalytics = null;
-    protected $memoizedStudentsList = null;
+    public function updatedSelectedStudentId(): void
+    {
+        $this->memoizedAnalytics = null;
+    }
 
     public function getAnalyticsProperty()
     {
@@ -59,6 +64,15 @@ class StudentPerformance extends Page
     public function getAtRiskStudentsProperty(): array
     {
         return app(StudentPerformanceService::class)->getAtRiskStudents(12);
+    }
+
+    protected function getViewData(): array
+    {
+        return [
+            'analytics' => $this->analytics,
+            'studentsList' => $this->studentsList,
+            'atRiskStudents' => $this->atRiskStudents,
+        ];
     }
 }
 

@@ -4,125 +4,604 @@
         $metrics = $analytics['academicMetrics'];
     @endphp
 
-    <div class="space-y-6">
+    <style>
+        .aa-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.75rem;
+            width: 100%;
+            font-family: inherit;
+        }
 
-        {{-- ─── 1. كروت مؤشرات الجودة والأداء الكبرى (KPIs) ─── --}}
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            
-            {{-- إجمالي الطلاب --}}
-            <div class="group bg-gray-900 p-5 rounded-2xl border border-gray-800 hover:border-blue-500/60 shadow-lg hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 transform hover:-translate-y-1 text-center flex flex-col justify-between relative overflow-hidden">
-                <div class="absolute -top-10 -right-10 w-24 h-24 bg-blue-500/10 rounded-full blur-xl group-hover:bg-blue-500/25 transition-all"></div>
-                <div class="flex items-center justify-between text-gray-400 mb-3 relative z-10">
-                    <span class="text-xs font-black text-gray-200 group-hover:text-blue-400 transition">إجمالي الطلاب</span>
-                    <div class="w-8 h-8 rounded-xl bg-blue-950/80 border border-blue-800/60 text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <x-heroicon-o-user-group class="w-4 h-4" />
-                    </div>
+        /* ─── 1. شريط العنوان والتحديث اللحظي ─── */
+        .aa-header-card {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 1.25rem;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .dark .aa-header-card {
+            background: rgba(17, 24, 39, 0.9);
+            border-color: rgba(55, 65, 81, 0.8);
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.35);
+        }
+
+        .aa-header-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .aa-header-icon {
+            width: 2.75rem;
+            height: 2.75rem;
+            border-radius: 0.85rem;
+            background: rgba(245, 158, 11, 0.15);
+            border: 1.5px solid rgba(245, 158, 11, 0.35);
+            color: #d97706;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .dark .aa-header-icon {
+            color: #fbbf24;
+            border-color: rgba(245, 158, 11, 0.5);
+            background: rgba(245, 158, 11, 0.2);
+        }
+
+        .aa-header-h3 {
+            font-size: 1.15rem;
+            font-weight: 900;
+            color: #0f172a;
+            margin: 0;
+        }
+        .dark .aa-header-h3 {
+            color: #f8fafc;
+        }
+        .aa-header-p {
+            font-size: 0.78rem;
+            color: #475569;
+            margin: 0.2rem 0 0 0;
+            font-weight: 700;
+        }
+        .dark .aa-header-p {
+            color: #cbd5e1;
+        }
+
+        .aa-header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1.1rem;
+            border-radius: 9999px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1.5px solid rgba(16, 185, 129, 0.35);
+            color: #047857;
+        }
+        .dark .aa-header-badge {
+            color: #34d399;
+            border-color: rgba(16, 185, 129, 0.5);
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        /* ─── 2. كروت المؤشرات الكبرى (KPIs) ─── */
+        .aa-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .aa-kpi-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1.25rem;
+            padding: 1.35rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .dark .aa-kpi-card {
+            background: #111827;
+            border-color: #374151;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+        }
+        .aa-kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        .aa-kpi-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        .aa-kpi-label {
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: #334155;
+        }
+        .dark .aa-kpi-label {
+            color: #cbd5e1;
+        }
+
+        .aa-kpi-icon-box {
+            width: 2.35rem;
+            height: 2.35rem;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .aa-kpi-val {
+            font-size: 1.95rem;
+            font-weight: 900;
+            font-family: monospace;
+            margin: 0.25rem 0;
+            line-height: 1.1;
+        }
+
+        .aa-kpi-sub {
+            font-size: 0.74rem;
+            font-weight: 800;
+            padding: 0.25rem 0.65rem;
+            border-radius: 0.5rem;
+            display: inline-block;
+            margin-top: 0.35rem;
+        }
+
+        /* تخصيص الألوان للكروت الأربعة */
+        .aa-card-blue .aa-kpi-icon-box { background: rgba(59, 130, 246, 0.15); color: #2563eb; }
+        .aa-card-blue .aa-kpi-val { color: #2563eb; }
+        .dark .aa-card-blue .aa-kpi-val { color: #60a5fa; }
+        .aa-card-blue .aa-kpi-sub { background: rgba(59, 130, 246, 0.12); color: #1d4ed8; }
+        .dark .aa-card-blue .aa-kpi-sub { color: #93c5fd; background: rgba(59, 130, 246, 0.2); }
+
+        .aa-card-teal .aa-kpi-icon-box { background: rgba(20, 184, 166, 0.15); color: #0d9488; }
+        .aa-card-teal .aa-kpi-val { color: #0d9488; }
+        .dark .aa-card-teal .aa-kpi-val { color: #2dd4bf; }
+        .aa-card-teal .aa-kpi-sub { background: rgba(20, 184, 166, 0.12); color: #0f766e; }
+        .dark .aa-card-teal .aa-kpi-sub { color: #5eead4; background: rgba(20, 184, 166, 0.2); }
+
+        .aa-card-amber .aa-kpi-icon-box { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+        .aa-card-amber .aa-kpi-val { color: #d97706; }
+        .dark .aa-card-amber .aa-kpi-val { color: #fbbf24; }
+        .aa-card-amber .aa-kpi-sub { background: rgba(245, 158, 11, 0.12); color: #b45309; }
+        .dark .aa-card-amber .aa-kpi-sub { color: #fde68a; background: rgba(245, 158, 11, 0.2); }
+
+        .aa-card-purple .aa-kpi-icon-box { background: rgba(168, 85, 247, 0.15); color: #9333ea; }
+        .aa-card-purple .aa-kpi-val { color: #9333ea; }
+        .dark .aa-card-purple .aa-kpi-val { color: #c084fc; }
+        .aa-card-purple .aa-kpi-sub { background: rgba(168, 85, 247, 0.12); color: #7e22ce; }
+        .dark .aa-card-purple .aa-kpi-sub { color: #e9d5ff; background: rgba(168, 85, 247, 0.2); }
+
+        /* ─── 3. كرت الجداول الرئيسية ─── */
+        .aa-table-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1.25rem;
+            overflow: hidden;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        }
+        .dark .aa-table-card {
+            background: #111827;
+            border-color: #374151;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .aa-table-header {
+            padding: 1.1rem 1.5rem;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .dark .aa-table-header {
+            background: #1f2937;
+            border-bottom-color: #374151;
+        }
+
+        .aa-table-title {
+            font-size: 0.98rem;
+            font-weight: 900;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .dark .aa-table-title {
+            color: #f8fafc;
+        }
+
+        .aa-table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .aa-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+            font-size: 0.84rem;
+        }
+
+        .aa-table th {
+            padding: 0.9rem 1.1rem;
+            background: #f1f5f9;
+            color: #334155;
+            font-weight: 800;
+            font-size: 0.76rem;
+            border-bottom: 1px solid #e2e8f0;
+            white-space: nowrap;
+        }
+        .dark .aa-table th {
+            background: #182234;
+            color: #cbd5e1;
+            border-bottom-color: #374151;
+        }
+
+        .aa-table td {
+            padding: 0.9rem 1.1rem;
+            border-bottom: 1px solid #f1f5f9;
+            color: #1e293b;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .dark .aa-table td {
+            border-bottom-color: #1f2937;
+            color: #e2e8f0;
+        }
+
+        .aa-table tr:hover td {
+            background: rgba(241, 245, 249, 0.7);
+        }
+        .dark .aa-table tr:hover td {
+            background: rgba(31, 41, 55, 0.6);
+        }
+
+        /* الشارات الملونة للجدول */
+        .aa-status-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.3rem 0.85rem;
+            border-radius: 0.65rem;
+            font-size: 0.76rem;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+        .aa-status-profit {
+            background: rgba(16, 185, 129, 0.15);
+            color: #047857;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+        .dark .aa-status-profit {
+            color: #34d399;
+            background: rgba(16, 185, 129, 0.2);
+            border-color: rgba(16, 185, 129, 0.4);
+        }
+
+        .aa-status-loss {
+            background: rgba(239, 68, 68, 0.15);
+            color: #b91c1c;
+            border: 1px solid rgba(239, 68, 68, 0.35);
+        }
+        .dark .aa-status-loss {
+            color: #f87171;
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+
+        .aa-status-neutral {
+            background: rgba(148, 163, 184, 0.15);
+            color: #334155;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+        }
+        .dark .aa-status-neutral {
+            color: #cbd5e1;
+            background: rgba(148, 163, 184, 0.2);
+            border-color: rgba(148, 163, 184, 0.4);
+        }
+
+        /* ─── 4. قسم توزيع المراحل والمجموعات ─── */
+        .aa-two-col-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        @media (min-width: 1024px) {
+            .aa-two-col-grid {
+                grid-template-columns: 1fr 1.8fr;
+            }
+        }
+
+        .aa-stage-card-wrapper {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1.25rem;
+            padding: 1.25rem;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .dark .aa-stage-card-wrapper {
+            background: #111827;
+            border-color: #374151;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .aa-stage-header {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding-bottom: 0.9rem;
+            margin-bottom: 1rem;
+            border-bottom: 1.5px solid #e2e8f0;
+        }
+        .dark .aa-stage-header {
+            border-bottom-color: #374151;
+        }
+
+        .aa-stage-h3 {
+            font-weight: 900;
+            font-size: 0.98rem;
+            margin: 0;
+            color: #0f172a;
+        }
+        .dark .aa-stage-h3 {
+            color: #f8fafc;
+        }
+
+        .aa-stage-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+
+        .aa-stage-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.95rem 1.15rem;
+            border-radius: 1rem;
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            transition: all 0.2s ease;
+        }
+        .dark .aa-stage-item {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        .aa-stage-item:hover {
+            border-color: #10b981;
+            transform: translateX(-3px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12);
+        }
+
+        .aa-stage-name {
+            font-weight: 900;
+            font-size: 0.92rem;
+            color: #0f172a;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+        .dark .aa-stage-name {
+            color: #ffffff;
+        }
+
+        .aa-stage-groups-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: #2563eb;
+            background: rgba(37, 99, 235, 0.1);
+            padding: 0.15rem 0.55rem;
+            border-radius: 0.5rem;
+        }
+        .dark .aa-stage-groups-badge {
+            color: #93c5fd;
+            background: rgba(37, 99, 235, 0.2);
+        }
+
+        .aa-stage-count-box {
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .aa-stage-count {
+            font-size: 1.5rem;
+            font-weight: 900;
+            font-family: monospace;
+            color: #059669;
+            line-height: 1;
+            margin-bottom: 0.2rem;
+        }
+        .dark .aa-stage-count {
+            color: #34d399;
+        }
+
+        .aa-stage-count-lbl {
+            font-size: 0.7rem;
+            color: #475569;
+            font-weight: 800;
+        }
+        .dark .aa-stage-count-lbl {
+            color: #cbd5e1;
+        }
+
+        .aa-tag-pill {
+            display: inline-block;
+            padding: 0.25rem 0.7rem;
+            border-radius: 0.55rem;
+            background: rgba(37, 99, 235, 0.12);
+            color: #1d4ed8;
+            font-size: 0.75rem;
+            font-weight: 800;
+        }
+        .dark .aa-tag-pill {
+            color: #93c5fd;
+            background: rgba(37, 99, 235, 0.2);
+        }
+    </style>
+
+    <div class="aa-container">
+        {{-- ─── 1. شريط العنوان والتحكم الذكي ─── --}}
+        <div class="aa-header-card">
+            <div class="aa-header-title">
+                <div class="aa-header-icon">
+                    <x-heroicon-o-presentation-chart-line style="width: 1.6rem; height: 1.6rem;" />
                 </div>
-                <div class="text-3xl font-black text-blue-400 my-1 font-mono tracking-tight relative z-10">
-                    {{ number_format($metrics['total_students']) }}
-                </div>
-                <div class="text-[10px] font-bold text-blue-300 bg-blue-950/60 border border-blue-800/40 py-1 px-2 rounded-lg mt-2 relative z-10">
-                    طالب مقيد بالمنظومة
+                <div>
+                    <h3 class="aa-header-h3">لوحة التحليلات المتقدمة والمؤشرات الاستراتيجية</h3>
+                    <p class="aa-header-p">رصد شامل ومباشر للمؤشرات المالية، جودة التحصيل الأكاديمي، ونمو المجموعات</p>
                 </div>
             </div>
 
-            {{-- نسبة الحضور العامة --}}
-            <div class="group bg-gray-900 p-5 rounded-2xl border border-gray-800 hover:border-teal-500/60 shadow-lg hover:shadow-2xl hover:shadow-teal-500/10 transition-all duration-300 transform hover:-translate-y-1 text-center flex flex-col justify-between relative overflow-hidden">
-                <div class="absolute -top-10 -right-10 w-24 h-24 bg-teal-500/10 rounded-full blur-xl group-hover:bg-teal-500/25 transition-all"></div>
-                <div class="flex items-center justify-between text-gray-400 mb-3 relative z-10">
-                    <span class="text-xs font-black text-gray-200 group-hover:text-teal-400 transition">معدل الحضور العام</span>
-                    <div class="w-8 h-8 rounded-xl bg-teal-950/80 border border-teal-800/60 text-teal-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <x-heroicon-o-check-badge class="w-4 h-4" />
-                    </div>
-                </div>
-                <div class="text-3xl font-black text-teal-400 my-1 font-mono tracking-tight relative z-10">
-                    {{ $metrics['overall_attendance_rate'] }}%
-                </div>
-                <div class="text-[10px] font-bold text-teal-300 bg-teal-950/60 border border-teal-800/40 py-1 px-2 rounded-lg mt-2 relative z-10">
-                    التزام ومواظبة الطلاب
-                </div>
+            <div class="aa-header-badge">
+                <x-heroicon-o-bolt style="width: 1.15rem; height: 1.15rem;" />
+                <span>تحديث لحظي ومحمي بنظام الكاش الذكي</span>
             </div>
-
-            {{-- متوسط درجات الامتحانات --}}
-            <div class="group bg-gray-900 p-5 rounded-2xl border border-gray-800 hover:border-amber-500/60 shadow-lg hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-300 transform hover:-translate-y-1 text-center flex flex-col justify-between relative overflow-hidden">
-                <div class="absolute -top-10 -right-10 w-24 h-24 bg-amber-500/10 rounded-full blur-xl group-hover:bg-amber-500/25 transition-all"></div>
-                <div class="flex items-center justify-between text-gray-400 mb-3 relative z-10">
-                    <span class="text-xs font-black text-gray-200 group-hover:text-amber-400 transition">متوسط درجات الطلاب</span>
-                    <div class="w-8 h-8 rounded-xl bg-amber-950/80 border border-amber-800/60 text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <x-heroicon-o-academic-cap class="w-4 h-4" />
-                    </div>
-                </div>
-                <div class="text-3xl font-black text-amber-400 my-1 font-mono tracking-tight relative z-10">
-                    {{ $metrics['avg_exam_score'] }}%
-                </div>
-                <div class="text-[10px] font-bold text-amber-300 bg-amber-950/60 border border-amber-800/40 py-1 px-2 rounded-lg mt-2 relative z-10">
-                    مستوى التحصيل الأكاديمي
-                </div>
-            </div>
-
-            {{-- إجمالي الامتحانات --}}
-            <div class="group bg-gray-900 p-5 rounded-2xl border border-gray-800 hover:border-purple-500/60 shadow-lg hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-300 transform hover:-translate-y-1 text-center flex flex-col justify-between relative overflow-hidden">
-                <div class="absolute -top-10 -right-10 w-24 h-24 bg-purple-500/10 rounded-full blur-xl group-hover:bg-purple-500/25 transition-all"></div>
-                <div class="flex items-center justify-between text-gray-400 mb-3 relative z-10">
-                    <span class="text-xs font-black text-gray-200 group-hover:text-purple-400 transition">إجمالي الامتحانات</span>
-                    <div class="w-8 h-8 rounded-xl bg-purple-950/80 border border-purple-800/60 text-purple-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <x-heroicon-o-clipboard-document-list class="w-4 h-4" />
-                    </div>
-                </div>
-                <div class="text-3xl font-black text-purple-400 my-1 font-mono tracking-tight relative z-10">
-                    {{ number_format($metrics['total_exams']) }}
-                </div>
-                <div class="text-[10px] font-bold text-purple-300 bg-purple-950/60 border border-purple-800/40 py-1 px-2 rounded-lg mt-2 relative z-10">
-                    امتحانات ورقية وإلكترونية
-                </div>
-            </div>
-
         </div>
 
-        {{-- ─── 2. جدول اتجاه الأرباح والإيرادات الشهرية (آخر 6 أشهر) ─── --}}
-        <div class="bg-gray-900 rounded-2xl border border-gray-800 shadow-xl overflow-hidden">
-            <div class="p-5 border-b border-gray-800 flex items-center justify-between bg-gray-850">
-                <h3 class="font-black text-base text-white flex items-center gap-2">
-                    <x-heroicon-o-chart-bar-square class="w-5 h-5 text-amber-500" />
-                    <span>تحليل حركة الأرباح والإيرادات والمصروفات الشهرية (آخر 6 أشهر)</span>
-                </h3>
-                <span class="text-xs px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-full font-bold">
-                    تحديث لحظي ومحمي بالكاش
-                </span>
+        {{-- ─── 2. كروت المؤشرات الكبرى (KPIs) ─── --}}
+        <div class="aa-kpi-grid">
+            {{-- إجمالي الطلاب --}}
+            <div class="aa-kpi-card aa-card-blue">
+                <div>
+                    <div class="aa-kpi-top">
+                        <span class="aa-kpi-label">إجمالي الطلاب المقيدين</span>
+                        <div class="aa-kpi-icon-box">
+                            <x-heroicon-o-user-group style="width: 1.3rem; height: 1.3rem;" />
+                        </div>
+                    </div>
+                    <div class="aa-kpi-val">{{ number_format($metrics['total_students']) }}</div>
+                </div>
+                <div>
+                    <span class="aa-kpi-sub">طالب مقيد بالمنظومة</span>
+                </div>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-right text-xs">
-                    <thead class="bg-gray-800 text-xs font-black text-gray-400 uppercase border-b border-gray-700">
+            {{-- معدل الحضور العام --}}
+            <div class="aa-kpi-card aa-card-teal">
+                <div>
+                    <div class="aa-kpi-top">
+                        <span class="aa-kpi-label">معدل الحضور والمواظبة</span>
+                        <div class="aa-kpi-icon-box">
+                            <x-heroicon-o-check-badge style="width: 1.3rem; height: 1.3rem;" />
+                        </div>
+                    </div>
+                    <div class="aa-kpi-val">{{ $metrics['overall_attendance_rate'] }}%</div>
+                </div>
+                <div>
+                    <span class="aa-kpi-sub">التزام ومواظبة الطلاب</span>
+                </div>
+            </div>
+
+            {{-- متوسط درجات الطلاب --}}
+            <div class="aa-kpi-card aa-card-amber">
+                <div>
+                    <div class="aa-kpi-top">
+                        <span class="aa-kpi-label">متوسط درجات الطلاب</span>
+                        <div class="aa-kpi-icon-box">
+                            <x-heroicon-o-academic-cap style="width: 1.3rem; height: 1.3rem;" />
+                        </div>
+                    </div>
+                    <div class="aa-kpi-val">{{ $metrics['avg_exam_score'] }}%</div>
+                </div>
+                <div>
+                    <span class="aa-kpi-sub">مستوى التحصيل الأكاديمي</span>
+                </div>
+            </div>
+
+            {{-- إجمالي الاختبارات --}}
+            <div class="aa-kpi-card aa-card-purple">
+                <div>
+                    <div class="aa-kpi-top">
+                        <span class="aa-kpi-label">إجمالي الامتحانات والكويزات</span>
+                        <div class="aa-kpi-icon-box">
+                            <x-heroicon-o-clipboard-document-list style="width: 1.3rem; height: 1.3rem;" />
+                        </div>
+                    </div>
+                    <div class="aa-kpi-val">{{ number_format($metrics['total_exams']) }}</div>
+                </div>
+                <div>
+                    <span class="aa-kpi-sub">امتحانات ورقية وإلكترونية</span>
+                </div>
+            </div>
+        </div>
+
+        {{-- ─── 3. جدول اتجاه الأرباح والإيرادات الشهرية ─── --}}
+        <div class="aa-table-card">
+            <div class="aa-table-header">
+                <div class="aa-table-title">
+                    <x-heroicon-o-chart-bar-square style="width: 1.35rem; height: 1.35rem; color: #f59e0b;" />
+                    <span>تحليل حركة الأرباح والإيرادات والمصروفات الشهرية (آخر 6 أشهر)</span>
+                </div>
+                <div class="aa-status-pill aa-status-profit" style="font-size: 0.75rem;">
+                    سجل مالي معتمد
+                </div>
+            </div>
+
+            <div class="aa-table-responsive">
+                <table class="aa-table">
+                    <thead>
                         <tr>
-                            <th class="p-4">الشهر والبيان</th>
-                            <th class="p-4 text-emerald-400">الإيرادات المحصلة</th>
-                            <th class="p-4 text-rose-400">المصروفات والرواتب</th>
-                            <th class="p-4 text-indigo-400">صافي الربح الفعلي</th>
-                            <th class="p-4 text-center">مؤشر الأداء المالي</th>
+                            <th>الشهر والبيان</th>
+                            <th style="color: #059669;" class="dark:text-emerald-400">الإيرادات المحصلة</th>
+                            <th style="color: #dc2626;" class="dark:text-rose-400">المصروفات والرواتب</th>
+                            <th style="color: #2563eb;" class="dark:text-blue-400">صافي الربح الفعلي</th>
+                            <th style="text-align: center;">مؤشر الأداء المالي</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-800 font-bold">
+                    <tbody>
                         @foreach($analytics['monthlyChart'] as $m)
-                            <tr class="hover:bg-gray-800/60 transition-colors duration-150">
-                                <td class="p-4 font-black text-gray-100 text-sm">{{ $m['label'] }}</td>
-                                <td class="p-4 text-emerald-400 font-black font-mono text-sm">{{ number_format($m['revenue'], 2) }} ج.م</td>
-                                <td class="p-4 text-rose-400 font-black font-mono text-sm">{{ number_format($m['expenses'], 2) }} ج.م</td>
-                                <td class="p-4 font-black font-mono text-sm {{ $m['profit'] >= 0 ? 'text-indigo-400' : 'text-rose-400' }}">
+                            <tr>
+                                <td style="font-weight: 900; font-size: 0.9rem;">
+                                    {{ $m['label'] }}
+                                </td>
+                                <td style="font-weight: 900; font-family: monospace; font-size: 0.98rem; color: #059669;" class="dark:text-emerald-400">
+                                    {{ number_format($m['revenue'], 2) }} ج.م
+                                </td>
+                                <td style="font-weight: 900; font-family: monospace; font-size: 0.98rem; color: #dc2626;" class="dark:text-rose-400">
+                                    {{ number_format($m['expenses'], 2) }} ج.م
+                                </td>
+                                <td style="font-weight: 900; font-family: monospace; font-size: 0.98rem; color: {{ $m['profit'] >= 0 ? '#2563eb' : '#dc2626' }};" class="dark:text-blue-400">
                                     {{ number_format($m['profit'], 2) }} ج.م
                                 </td>
-                                <td class="p-4 text-center">
+                                <td style="text-align: center;">
                                     @if($m['profit'] > 0)
-                                        <span class="px-3 py-1 bg-emerald-950/80 border border-emerald-800 text-emerald-300 rounded-xl font-black text-xs shadow-sm">
-                                            📈 فائض أرباح ممتاز
+                                        <span class="aa-status-pill aa-status-profit">
+                                            فائض أرباح ممتاز 📈
                                         </span>
                                     @elseif($m['profit'] < 0)
-                                        <span class="px-3 py-1 bg-rose-950/80 border border-rose-800 text-rose-300 rounded-xl font-black text-xs shadow-sm">
-                                            📉 عجز تشغيلي
+                                        <span class="aa-status-pill aa-status-loss">
+                                            عجز تشغيلي 📉
                                         </span>
                                     @else
-                                        <span class="px-3 py-1 bg-gray-800 border border-gray-700 text-gray-300 rounded-xl font-black text-xs">
-                                            ⚖️ نقطة التعادل
+                                        <span class="aa-status-pill aa-status-neutral">
+                                            نقطة التعادل ⚖️
                                         </span>
                                     @endif
                                 </td>
@@ -133,80 +612,92 @@
             </div>
         </div>
 
-        {{-- ─── 3. توزيع الطلاب على المراحل وتحليل ربحية المجموعات ─── --}}
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {{-- ─── 4. توزيع الطلاب وتحليل كفاءة وربحية المجموعات ─── --}}
+        <div class="aa-two-col-grid">
+            {{-- كروت توزيع المراحل الدراسية بتصميم بارز وواضح جداً --}}
+            <div class="aa-stage-card-wrapper">
+                <div class="aa-stage-header">
+                    <x-heroicon-o-academic-cap style="width: 1.35rem; height: 1.35rem; color: #10b981;" />
+                    <h3 class="aa-stage-h3">
+                        توزيع الطلاب حسب المراحل الدراسية
+                    </h3>
+                </div>
 
-            {{-- كروت توزيع المراحل الدراسية --}}
-            <div class="lg:col-span-1 bg-gray-900 p-5 rounded-2xl border border-gray-800 shadow-xl space-y-4">
-                <h3 class="font-black text-base text-white flex items-center gap-2 border-b border-gray-800 pb-3">
-                    <x-heroicon-o-academic-cap class="w-5 h-5 text-emerald-400" />
-                    <span>توزيع الطلاب حسب المراحل الدراسية</span>
-                </h3>
-
-                <div class="space-y-3">
+                <div class="aa-stage-list">
                     @forelse($analytics['stageDistribution'] as $stg)
-                        <div class="group p-4 rounded-xl bg-gray-850 hover:bg-gray-800 border border-gray-800 hover:border-emerald-500/50 transition-all flex items-center justify-between">
+                        <div class="aa-stage-item">
                             <div>
-                                <span class="text-sm font-black text-gray-100 block">{{ $stg->name }}</span>
-                                <span class="text-xs text-gray-400 font-bold mt-0.5 block">{{ $stg->groups_count }} مجموعات دراسية</span>
+                                <span class="aa-stage-name">
+                                    {{ $stg->name }}
+                                </span>
+                                <span class="aa-stage-groups-badge">
+                                    <x-heroicon-o-user-group style="width: 0.85rem; height: 0.85rem;" />
+                                    <span>{{ $stg->groups_count }} مجموعات</span>
+                                </span>
                             </div>
-                            <div class="text-left">
-                                <span class="text-2xl font-black text-emerald-400 font-mono">{{ $stg->count }}</span>
-                                <span class="text-[10px] text-gray-400 block">طالب مقيد</span>
+                            <div class="aa-stage-count-box">
+                                <span class="aa-stage-count">
+                                    {{ $stg->count }}
+                                </span>
+                                <span class="aa-stage-count-lbl">طالب مقيد</span>
                             </div>
                         </div>
                     @empty
-                        <p class="text-xs text-gray-500 text-center py-4">لا توجد مراحل مسجلة</p>
+                        <p style="text-align: center; color: #94a3b8; padding: 1.5rem 0; font-size: 0.85rem; font-weight: 700;">لا توجد مراحل دراسية مسجلة</p>
                     @endforelse
                 </div>
             </div>
 
             {{-- تحليل كفاءة وربحية المجموعات الدراسية --}}
-            <div class="lg:col-span-2 bg-gray-900 rounded-2xl border border-gray-800 shadow-xl overflow-hidden">
-                <div class="p-5 border-b border-gray-800 flex items-center justify-between bg-gray-850">
-                    <h3 class="font-black text-base text-white flex items-center gap-2">
-                        <x-heroicon-o-presentation-chart-bar class="w-5 h-5 text-blue-400" />
-                        <span>تحليل الطاقة الاستيعابية والربحية المتوقعة للمجموعات</span>
-                    </h3>
+            <div class="aa-table-card">
+                <div class="aa-table-header">
+                    <div class="aa-table-title">
+                        <x-heroicon-o-presentation-chart-bar style="width: 1.35rem; height: 1.35rem; color: #2563eb;" />
+                        <span>تحليل الطاقة الاستيعابية والربحية للمجموعات</span>
+                    </div>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-right text-xs">
-                        <thead class="bg-gray-800 text-xs font-black text-gray-400 uppercase border-b border-gray-700">
+                <div class="aa-table-responsive">
+                    <table class="aa-table">
+                        <thead>
                             <tr>
-                                <th class="p-3.5">اسم المجموعة</th>
-                                <th class="p-3.5">المرحلة</th>
-                                <th class="p-3.5 text-center">الطلاب المقيدين</th>
-                                <th class="p-3.5 text-center">سعر الاشتراك</th>
-                                <th class="p-3.5 text-left text-emerald-400">الدخل المتوقع شهرياً</th>
+                                <th>اسم المجموعة</th>
+                                <th>المرحلة الدراسية</th>
+                                <th style="text-align: center;">الطلاب المقيدين</th>
+                                <th style="text-align: center;">سعر الاشتراك</th>
+                                <th style="text-align: left; color: #059669;" class="dark:text-emerald-400">الدخل المتوقع شهرياً</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-800 font-bold">
+                        <tbody>
                             @forelse($analytics['groupsAnalytics'] as $grp)
-                                <tr class="hover:bg-gray-800/60 transition-colors">
-                                    <td class="p-3.5 font-black text-gray-100 text-xs">{{ $grp['name'] }}</td>
-                                    <td class="p-3.5 text-gray-400">{{ $grp['stage'] }}</td>
-                                    <td class="p-3.5 text-center">
-                                        <span class="px-2.5 py-1 bg-blue-950/70 border border-blue-800 text-blue-300 rounded-lg font-black">
+                                <tr>
+                                    <td style="font-weight: 900; font-size: 0.88rem;">
+                                        {{ $grp['name'] }}
+                                    </td>
+                                    <td style="color: #64748b; font-size: 0.8rem;" class="dark:text-slate-300">
+                                        {{ $grp['stage'] }}
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <span class="aa-tag-pill">
                                             {{ $grp['students_count'] }} طالب
                                         </span>
                                     </td>
-                                    <td class="p-3.5 text-center font-mono text-gray-300">{{ number_format($grp['price']) }} ج.م</td>
-                                    <td class="p-3.5 text-left font-black text-emerald-400 font-mono text-sm">
+                                    <td style="text-align: center; font-family: monospace; font-weight: 900;">
+                                        {{ number_format($grp['price']) }} ج.م
+                                    </td>
+                                    <td style="text-align: left; font-weight: 900; font-family: monospace; font-size: 0.98rem; color: #059669;" class="dark:text-emerald-400">
                                         {{ number_format($grp['expected_revenue']) }} ج.م
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="p-6 text-center text-gray-500">لا توجد مجموعات نشطة حالياً</td>
+                                    <td colspan="5" style="text-align: center; padding: 2rem; color: #94a3b8; font-weight: 700;">لا توجد مجموعات دراسية نشطة حالياً</td>
                                 </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
             </div>
-
         </div>
-
     </div>
 </x-filament-panels::page>

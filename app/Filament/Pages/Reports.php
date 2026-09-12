@@ -42,6 +42,7 @@ class Reports extends Page
 
     public function updatedPeriodType($value): void
     {
+        $this->memoizedAnalytics = null;
         if ($value === 'this_month') {
             $this->from_date = now()->startOfMonth()->toDateString();
             $this->to_date = now()->toDateString();
@@ -52,6 +53,25 @@ class Reports extends Page
             $this->from_date = now()->startOfYear()->toDateString();
             $this->to_date = now()->toDateString();
         }
+    }
+
+    public function updatedFromDate(): void
+    {
+        $this->memoizedAnalytics = null;
+        $this->period_type = 'custom';
+    }
+
+    public function updatedToDate(): void
+    {
+        $this->memoizedAnalytics = null;
+        $this->period_type = 'custom';
+    }
+
+    protected function getViewData(): array
+    {
+        return [
+            'data' => $this->getAnalyticsData(),
+        ];
     }
 
     protected ?array $memoizedAnalytics = null;

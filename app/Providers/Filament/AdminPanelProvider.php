@@ -58,6 +58,10 @@ class AdminPanelProvider extends PanelProvider
             ->font('Cairo')
             ->databaseNotifications()
             ->databaseNotificationsPolling('5s')
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::HEAD_END,
+                fn () => view('filament.global-theme-styles')
+            )
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

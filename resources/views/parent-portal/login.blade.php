@@ -8,7 +8,7 @@
         $faviconUrl = app(\App\Services\SettingService::class)->url('site_favicon');
     @endphp
     @if($faviconUrl)
-        <link rel="icon" href="{{ $faviconUrl }}">
+        <link rel="icon" type="image/png" href="{{ $faviconUrl }}">
         <link rel="shortcut icon" href="{{ $faviconUrl }}">
         <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
     @endif

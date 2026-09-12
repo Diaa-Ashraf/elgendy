@@ -1,259 +1,247 @@
 <x-filament-widgets::widget>
+    <style>
+        .dw-table-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1.25rem;
+            overflow: hidden;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+        }
+        .dark .dw-table-card {
+            background: #111827;
+            border-color: #374151;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .dw-table-header {
+            padding: 1rem 1.25rem;
+            background: #f8fafc;
+            border-bottom: 1.5px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .dark .dw-table-header {
+            background: #1f2937;
+            border-bottom-color: #374151;
+        }
+
+        .dw-table-h3 {
+            font-size: 0.95rem;
+            font-weight: 900;
+            color: #0f172a;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .dark .dw-table-h3 {
+            color: #f8fafc;
+        }
+
+        .dw-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+            font-size: 0.82rem;
+        }
+
+        .dw-table th {
+            padding: 0.85rem 1rem;
+            background: #f1f5f9;
+            color: #334155;
+            font-weight: 800;
+            font-size: 0.76rem;
+            border-bottom: 1.5px solid #e2e8f0;
+            white-space: nowrap;
+        }
+        .dark .dw-table th {
+            background: #182234;
+            color: #cbd5e1;
+            border-bottom-color: #374151;
+        }
+
+        .dw-table td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            color: #1e293b;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .dark .dw-table td {
+            border-bottom-color: #1f2937;
+            color: #e2e8f0;
+        }
+
+        .dw-table tr:hover td {
+            background: rgba(241, 245, 249, 0.7);
+        }
+        .dark .dw-table tr:hover td {
+            background: rgba(31, 41, 55, 0.6);
+        }
+    </style>
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {{-- العمود الأيمن: جدول حصص اليوم (يشغل 2 أجزاء في الشاشات الكبيرة) --}}
+        {{-- العمود الأيمن: جدول حصص اليوم + الإشعارات --}}
         <div class="lg:col-span-2 space-y-6">
-            <x-filament::section>
-                <x-slot name="heading">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2 font-bold text-lg text-gray-900 dark:text-white">
-                            <x-heroicon-o-calendar class="w-6 h-6 text-primary-500" />
-                            <span>جدول حصص اليوم - {{ now()->translatedFormat('l d F Y') }}</span>
-                        </div>
-                        <a href="{{ url('/admin/group-sessions') }}" class="text-xs font-semibold text-primary-600 hover:underline">
-                            عرض الجدول الكامل ←
-                        </a>
-                    </div>
-                </x-slot>
+            {{-- جدول حصص اليوم --}}
+            <div class="dw-table-card">
+                <div class="dw-table-header">
+                    <h3 class="dw-table-h3">
+                        <x-heroicon-o-calendar style="width: 1.35rem; height: 1.35rem; color: #f59e0b;" />
+                        <span>جدول حصص اليوم — {{ now()->translatedFormat('l d F Y') }}</span>
+                    </h3>
+                    <a href="{{ url('/admin/group-sessions') }}" style="font-size: 0.75rem; font-weight: 800; color: #2563eb; text-decoration: none;">
+                        عرض الجدول الكامل ←
+                    </a>
+                </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-right text-gray-700 dark:text-gray-200">
-                        <thead class="bg-gray-100 dark:bg-gray-800 text-xs font-bold uppercase text-gray-600 dark:text-gray-300">
+                <div style="width: 100%; overflow-x: auto;">
+                    <table class="dw-table">
+                        <thead>
                             <tr>
-                                <th class="p-3">الوقت</th>
-                                <th class="p-3">المجموعة</th>
-                                <th class="p-3">المادة</th>
-                                <th class="p-3">عدد الطلاب</th>
-                                <th class="p-3">القاعة</th>
+                                <th>الوقت</th>
+                                <th>المجموعة</th>
+                                <th>المادة الدراسية</th>
+                                <th style="text-align: center;">عدد الطلاب</th>
+                                <th>القاعة</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        <tbody>
                             @forelse($todaySchedules as $schedule)
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
-                                    <td class="p-3 font-bold text-primary-600 dark:text-primary-400">
+                                <tr>
+                                    <td style="font-weight: 900; font-family: monospace; color: #d97706;" class="dark:text-amber-400">
                                         {{ date('h:i A', strtotime($schedule->time)) }}
                                     </td>
-                                    <td class="p-3 font-semibold">
+                                    <td style="font-weight: 900;">
                                         {{ $schedule->group->name ?? 'غير محدد' }}
                                     </td>
-                                    <td class="p-3">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                    <td>
+                                        <span style="display: inline-block; padding: 0.2rem 0.6rem; border-radius: 0.5rem; background: rgba(37, 99, 235, 0.1); color: #2563eb; font-weight: 800; font-size: 0.72rem;">
                                             {{ $schedule->group->subject->name ?? '-' }}
                                         </span>
                                     </td>
-                                    <td class="p-3 font-bold">
+                                    <td style="text-align: center; font-weight: 900; font-family: monospace;">
                                         {{ $schedule->group->students->count() ?? 0 }} طالب
                                     </td>
-                                    <td class="p-3 text-gray-500">
+                                    <td style="color: #64748b;">
                                         {{ $schedule->room ?? 'قاعة 1' }}
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="p-6 text-center text-gray-400">
-                                        لا توجد حصص مجدولة اليوم 
+                                    <td colspan="5" style="text-align: center; padding: 2rem; color: #94a3b8;">
+                                        لا توجد حصص مجدولة اليوم
                                     </td>
                                 </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
-            </x-filament::section>
+            </div>
 
-            {{-- قسم مركز التنبيهات والإشعارات المباشرة بأسلوب فاخر --}}
-            <x-filament::section>
-                <x-slot name="heading">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2 font-black text-base text-gray-900 dark:text-white">
-                            <x-heroicon-o-bell class="w-6 h-6 text-amber-500 animate-bounce" />
-                            <span>مركز التنبيهات والإشعارات اللحظية</span>
-                        </div>
-                        <span class="text-xs px-2.5 py-1 bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 rounded-full font-bold">
-                            تحديث تلقائي
-                        </span>
-                    </div>
-                </x-slot>
+            {{-- قسم مركز التنبيهات والإشعارات اللحظية --}}
+            <div class="dw-table-card">
+                <div class="dw-table-header">
+                    <h3 class="dw-table-h3">
+                        <x-heroicon-o-bell style="width: 1.35rem; height: 1.35rem; color: #f59e0b;" />
+                        <span>مركز التنبيهات والإشعارات اللحظية</span>
+                    </h3>
+                    <span style="font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.65rem; border-radius: 9999px; background: rgba(245, 158, 11, 0.15); color: #d97706;">
+                        تحديث تلقائي
+                    </span>
+                </div>
 
-                <div class="space-y-3">
+                <div style="padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
                     @forelse($recentNotifications as $notif)
-                        <div class="p-4 rounded-2xl border transition duration-200 flex items-start justify-between gap-4 {{ $notif['read_at'] ? 'bg-gray-50/70 dark:bg-gray-900/40 border-gray-200 dark:border-gray-800' : 'bg-gradient-to-r from-amber-50/90 to-orange-50/90 dark:from-amber-950/30 dark:to-orange-950/20 border-amber-300 dark:border-amber-800/80 shadow-sm' }}">
-                            <div class="flex items-start gap-3">
-                                <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-base shadow-sm shrink-0 {{ str_contains($notif['title'], 'أونلاين') ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400' : (str_contains($notif['title'], 'تحصيل') ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400' : 'bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400') }}">
-                                    @if(str_contains($notif['title'], 'أونلاين')) 🌐 @elseif(str_contains($notif['title'], 'تحصيل')) 💰 @else 🔔 @endif
+                        <div style="padding: 0.9rem 1.1rem; border-radius: 1rem; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; transition: all 0.2s;"
+                             class="{{ $notif['read_at'] ? 'bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700' : 'bg-amber-500/10 border border-amber-500/30' }}">
+                            <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                                <div style="width: 2.25rem; height: 2.25rem; border-radius: 0.65rem; background: rgba(245, 158, 11, 0.15); color: #d97706; display: flex; align-items: center; justify-content: center; font-weight: 900; flex-shrink: 0;">
+                                    🔔
                                 </div>
-                                <div class="space-y-1">
-                                    <h4 class="font-extrabold text-sm text-gray-900 dark:text-white flex items-center gap-2">
-                                        <span>{!! $notif['title'] !!}</span>
-                                        @if(!$notif['read_at'])
-                                            <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-                                        @endif
+                                <div>
+                                    <h4 style="font-weight: 900; font-size: 0.88rem; margin: 0 0 0.2rem 0; color: #0f172a;" class="dark:text-white">
+                                        {!! $notif['title'] !!}
                                     </h4>
-                                    <p class="text-xs text-gray-600 dark:text-gray-300 font-semibold leading-relaxed">{!! $notif['body'] !!}</p>
+                                    <p style="font-size: 0.75rem; color: #475569; margin: 0; font-weight: 600;" class="dark:text-slate-300">
+                                        {!! $notif['body'] !!}
+                                    </p>
                                 </div>
                             </div>
-                            <span class="text-[11px] font-bold text-gray-400 shrink-0 dir-ltr">{{ $notif['created_at'] }}</span>
+                            <span style="font-size: 0.68rem; font-weight: 800; color: #94a3b8; white-space: nowrap;">
+                                {{ $notif['created_at'] }}
+                            </span>
                         </div>
                     @empty
-                        <div class="p-6 text-center text-gray-400 font-bold text-xs">
-                             لا توجد إشعارات جديدة حالياً.. جميع الأنشطة هادئة ومنتظمة!
+                        <div style="text-align: center; color: #94a3b8; padding: 1.5rem; font-size: 0.8rem; font-weight: 700;">
+                            لا توجد إشعارات جديدة حالياً.. جميع الأنشطة هادئة ومنتظمة!
                         </div>
                     @endforelse
                 </div>
-            </x-filament::section>
+            </div>
         </div>
 
-        {{-- العمود الأيسر: الطلاب المتأخرون في الدفع وطلبات التقديم أونلاين --}}
+        {{-- العمود الأيسر: الحصص والطلبات المعلقة --}}
         <div class="space-y-6">
-            {{-- تنبيه: حصص سابقة تنتظر رصد وتسجيل الحضور --}}
-            @if(isset($unrecordedSessions) && $unrecordedSessions->isNotEmpty())
-            <x-filament::section>
-                <x-slot name="heading">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2 font-bold text-base text-amber-500">
-                            <x-heroicon-o-clock class="w-5 h-5 text-amber-500 animate-pulse" />
-                            <span>تنبيه: حصص لم يتم رصد حضورها ⏰</span>
-                        </div>
-                        <a href="{{ url('/admin/group-sessions') }}" class="text-xs text-primary-600 font-bold hover:underline">عرض الكل</a>
-                    </div>
-                </x-slot>
-
-                <div class="space-y-3">
-                    @foreach($unrecordedSessions as $sess)
-                        <div class="flex items-center justify-between p-3 bg-amber-500/10 rounded-xl border border-amber-500/30">
-                            <div>
-                                <h4 class="font-bold text-sm text-gray-900 dark:text-white">{{ $sess->group?->name ?? 'حصة' }}</h4>
-                                <p class="text-xs text-amber-600 dark:text-amber-400 font-bold mt-0.5">تاريخ: {{ $sess->date }} ({{ $sess->group?->subject?->name }})</p>
-                            </div>
-                            <a href="{{ url('/admin/group-sessions') }}"
-                               class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-gray-950 font-black rounded-lg text-xs transition">
-                                رصد الآن ➔
-                            </a>
-                        </div>
-                    @endforeach
-                </div>
-            </x-filament::section>
-            @endif
-
             {{-- طلبات التقديم أونلاين الجديدة --}}
-            <x-filament::section>
-                <x-slot name="heading">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2 font-bold text-base text-gray-900 dark:text-white">
-                            <x-heroicon-o-document-check class="w-5 h-5 text-amber-500" />
-                            <span>طلبات التقديم أونلاين 🌐</span>
-                        </div>
-                        <a href="{{ url('/admin/student-applications') }}" class="text-xs text-primary-600 font-bold hover:underline">عرض الكل</a>
-                    </div>
-                </x-slot>
+            <div class="dw-table-card">
+                <div class="dw-table-header">
+                    <h3 class="dw-table-h3">
+                        <x-heroicon-o-document-check style="width: 1.35rem; height: 1.35rem; color: #2563eb;" />
+                        <span>طلبات التقديم أونلاين</span>
+                    </h3>
+                    <a href="{{ url('/admin/student-applications') }}" style="font-size: 0.75rem; font-weight: 800; color: #2563eb; text-decoration: none;">عرض الكل</a>
+                </div>
 
-                <div class="space-y-3">
+                <div style="padding: 0.85rem; display: flex; flex-direction: column; gap: 0.65rem;">
                     @forelse($pendingApplications as $app)
-                        <div class="flex items-center justify-between p-3.5 bg-amber-50/70 dark:bg-amber-950/30 rounded-2xl border border-amber-200 dark:border-amber-800/80 shadow-sm hover:border-amber-400 transition">
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0.9rem; border-radius: 0.85rem; background: #f8fafc; border: 1px solid #e2e8f0;" class="dark:bg-gray-800/80 dark:border-gray-700">
                             <div>
-                                <h4 class="font-extrabold text-sm text-gray-900 dark:text-white">{{ $app->name }}</h4>
-                                <p class="text-xs text-gray-500 font-semibold mt-0.5">{{ $app->educationalStage?->name ?? '-' }} | {{ $app->parent_phone }}</p>
+                                <h4 style="font-weight: 900; font-size: 0.85rem; margin: 0; color: #0f172a;" class="dark:text-white">{{ $app->name }}</h4>
+                                <p style="font-size: 0.72rem; color: #64748b; margin: 0.15rem 0 0 0; font-weight: 700;">{{ $app->educationalStage?->name ?? '-' }} | {{ $app->parent_phone }}</p>
                             </div>
                             <a href="{{ url('/admin/student-applications/' . $app->id . '/edit') }}"
-                               class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-black transition flex items-center gap-1 shadow-md shadow-amber-600/20">
+                               style="display: inline-block; padding: 0.3rem 0.75rem; border-radius: 0.6rem; background: #2563eb; color: #ffffff; font-size: 0.72rem; font-weight: 900; text-decoration: none;">
                                 مراجعة
                             </a>
                         </div>
                     @empty
-                        <p class="text-xs text-center text-gray-400 py-4 font-bold">لا توجد طلبات تقديم معلقة حالياً </p>
+                        <p style="text-align: center; color: #94a3b8; padding: 1rem 0; font-size: 0.75rem; font-weight: 700; margin: 0;">لا توجد طلبات تقديم معلقة حالياً</p>
                     @endforelse
                 </div>
-            </x-filament::section>
+            </div>
 
-            {{-- طلبات السداد الإلكتروني المعلقة --}}
-            @if(isset($pendingPayments) && $pendingPayments->isNotEmpty())
-            <x-filament::section>
-                <x-slot name="heading">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2 font-bold text-base text-gray-900 dark:text-white">
-                            <x-heroicon-o-credit-card class="w-5 h-5 text-emerald-500" />
-                            <span>إيصالات سداد تنتظر الاعتماد 💳</span>
-                        </div>
-                        <a href="{{ url('/admin/online-payment-requests') }}" class="text-xs text-primary-600 font-bold hover:underline">عرض الكل</a>
-                    </div>
-                </x-slot>
-
-                <div class="space-y-3">
-                    @foreach($pendingPayments as $pay)
-                        <div class="flex items-center justify-between p-3 bg-emerald-50/60 dark:bg-emerald-950/30 rounded-xl border border-emerald-200 dark:border-emerald-800">
-                            <div>
-                                <h4 class="font-bold text-sm text-gray-900 dark:text-white">{{ $pay->student?->name ?? 'طالب' }}</h4>
-                                <p class="text-xs text-emerald-700 dark:text-emerald-400 font-black mt-0.5">{{ number_format($pay->amount) }} ج.م ({{ $pay->payment_method }})</p>
-                            </div>
-                            <a href="{{ url('/admin/online-payment-requests/' . $pay->id . '/edit') }}"
-                               class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition">
-                                مراجعة واعتماد
-                            </a>
-                        </div>
-                    @endforeach
+            {{-- الطلاب المتأخرون في الدفع --}}
+            <div class="dw-table-card">
+                <div class="dw-table-header">
+                    <h3 class="dw-table-h3">
+                        <x-heroicon-o-exclamation-triangle style="width: 1.35rem; height: 1.35rem; color: #dc2626;" />
+                        <span>الطلاب المتأخرون في الدفع</span>
+                    </h3>
+                    <a href="{{ url('/admin/students') }}" style="font-size: 0.75rem; font-weight: 800; color: #dc2626; text-decoration: none;">عرض الكل</a>
                 </div>
-            </x-filament::section>
-            @endif
 
-            {{-- تنبيهات الغياب المتكرر --}}
-            @if(isset($frequentAbsentees) && $frequentAbsentees->isNotEmpty())
-            <x-filament::section>
-                <x-slot name="heading">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2 font-bold text-base text-gray-900 dark:text-white">
-                            <x-heroicon-o-user-minus class="w-5 h-5 text-rose-500" />
-                            <span>تنبيه: طلاب متكررو الغياب 🚨</span>
-                        </div>
-                    </div>
-                </x-slot>
-
-                <div class="space-y-3">
-                    @foreach($frequentAbsentees as $st)
-                        <div class="flex items-center justify-between p-3 bg-rose-50/50 dark:bg-rose-950/20 rounded-xl border border-rose-200 dark:border-rose-900">
-                            <div>
-                                <h4 class="font-bold text-sm text-gray-900 dark:text-white">{{ $st->name }}</h4>
-                                <p class="text-xs text-rose-600 dark:text-rose-400 font-bold mt-0.5">غائب أكثر من حصتين</p>
-                            </div>
-                            <a href="https://wa.me/2{{ $st->parent_phone }}?text={{ urlencode('تحذير من إدارة السنتر: لوحظ تكرار غياب الطالب ' . $st->name . ' يرجى التواصل معنا للاطمئنان.') }}" 
-                               target="_blank"
-                               class="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition">
-                                💬 تواصل
-                            </a>
-                        </div>
-                    @endforeach
-                </div>
-            </x-filament::section>
-            @endif
-
-            {{-- الطلاب المتأخرون عن الدفع --}}
-            <x-filament::section>
-                <x-slot name="heading">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2 font-bold text-base text-gray-900 dark:text-white">
-                            <x-heroicon-o-exclamation-triangle class="w-5 h-5 text-rose-500" />
-                            <span>الطلاب المتأخرون في الدفع</span>
-                        </div>
-                        <a href="{{ url('/admin/students') }}" class="text-xs text-primary-600 font-bold hover:underline">عرض الكل</a>
-                    </div>
-                </x-slot>
-
-                <div class="space-y-3">
+                <div style="padding: 0.85rem; display: flex; flex-direction: column; gap: 0.65rem;">
                     @forelse($lateStudents as $student)
-                        <div class="flex items-center justify-between p-3 bg-rose-50/50 dark:bg-rose-950/20 rounded-xl border border-rose-100 dark:border-rose-900/50">
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0.9rem; border-radius: 0.85rem; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2);" class="dark:bg-gray-800/80">
                             <div>
-                                <h4 class="font-bold text-sm text-gray-900 dark:text-white">{{ $student->name }}</h4>
-                                <p class="text-xs text-gray-500">{{ $student->educationalStage->name ?? '-' }} | {{ $student->parent_phone }}</p>
+                                <h4 style="font-weight: 900; font-size: 0.85rem; margin: 0; color: #0f172a;" class="dark:text-white">{{ $student->name }}</h4>
+                                <p style="font-size: 0.72rem; color: #64748b; margin: 0.15rem 0 0 0; font-weight: 700;">{{ $student->educationalStage->name ?? '-' }} | {{ $student->parent_phone }}</p>
                             </div>
                             <a href="https://wa.me/2{{ $student->parent_phone }}?text={{ urlencode('تذكير بموعد سداد الاشتراك الشهري للطالب: ' . $student->name) }}" 
-                               target="_blank"
-                               class="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold transition flex items-center gap-1">
-                                💬 تذكير
+                               target="_blank" 
+                               style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.3rem 0.75rem; border-radius: 0.6rem; background: #059669; color: #ffffff; font-size: 0.72rem; font-weight: 900; text-decoration: none;">
+                                تذكير
                             </a>
                         </div>
                     @empty
-                        <p class="text-xs text-center text-gray-400 py-4 font-bold">جميع الطلاب مسددين الاشتراكات 👍</p>
+                        <p style="text-align: center; color: #059669; padding: 1rem 0; font-size: 0.75rem; font-weight: 700; margin: 0;">جميع الطلاب مسددين الاشتراكات 👍</p>
                     @endforelse
                 </div>
-            </x-filament::section>
+            </div>
         </div>
 
     </div>

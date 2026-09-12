@@ -59,9 +59,45 @@ class SettingService
     {
         $path = $this->get($key);
         if (! $path) {
+            // Intelligent fallbacks when key is not set in DB
+            if ($key === 'site_favicon') {
+                $logo = $this->get('center_logo');
+                if ($logo) {
+                    return $this->formatUrl($logo);
+                }
+                if (file_exists(public_path('storage/settings/01KZV5X3S1KYP5X9CGDHG0TERS.PNG'))) {
+                    return asset('storage/settings/01KZV5X3S1KYP5X9CGDHG0TERS.PNG');
+                }
+                if (file_exists(public_path('storage/settings/01KZV5X3R2Y5Z8NPMFK9M2RG2B.PNG'))) {
+                    return asset('storage/settings/01KZV5X3R2Y5Z8NPMFK9M2RG2B.PNG');
+                }
+                if (file_exists(public_path('favicon.ico'))) {
+                    return asset('favicon.ico');
+                }
+            } elseif ($key === 'center_logo') {
+                if (file_exists(public_path('storage/settings/01KZV5X3R2Y5Z8NPMFK9M2RG2B.PNG'))) {
+                    return asset('storage/settings/01KZV5X3R2Y5Z8NPMFK9M2RG2B.PNG');
+                }
+                if (file_exists(public_path('storage/settings/01KZV5X3S1KYP5X9CGDHG0TERS.PNG'))) {
+                    return asset('storage/settings/01KZV5X3S1KYP5X9CGDHG0TERS.PNG');
+                }
+            } elseif ($key === 'teacher_image') {
+                if (file_exists(public_path('images/teacher_mohammed_elgandy.jpg'))) {
+                    return asset('images/teacher_mohammed_elgandy.jpg');
+                }
+            }
+
             return $default;
         }
 
+        return $this->formatUrl($path);
+    }
+
+    /**
+     * Format stored path/URL into fully qualified public asset URL.
+     */
+    protected function formatUrl(string $path): string
+    {
         if (filter_var($path, FILTER_VALIDATE_URL)) {
             return $path;
         }
