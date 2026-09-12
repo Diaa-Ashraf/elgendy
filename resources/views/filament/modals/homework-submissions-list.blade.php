@@ -12,7 +12,106 @@
     $subsColl = collect($submissions);
 @endphp
 
-<div class="modal-content-wrapper text-right" id="hw-submissions-modal-{{ $homework?->id }}">
+<div class="modal-content-wrapper text-right" 
+     x-data="{
+        openSubId: null,
+        scores: {
+            @foreach($subsColl as $st)
+                {{ $st['id'] }}: '{{ $st['score'] !== null ? $st['score'] : '' }}',
+            @endforeach
+        },
+        feedbacks: {
+            @foreach($subsColl as $st)
+                {{ $st['id'] }}: '{{ addslashes($st['feedback'] ?? '') }}',
+            @endforeach
+        },
+        displayScores: {
+            @foreach($subsColl as $st)
+                {{ $st['id'] }}: {{ $st['score'] !== null ? $st['score'] : 'null' }},
+            @endforeach
+        },
+        displayPercentages: {
+            @foreach($subsColl as $st)
+                {{ $st['id'] }}: {{ $st['percentage'] !== null ? $st['percentage'] : 'null' }},
+            @endforeach
+        },
+        displayFeedbacks: {
+            @foreach($subsColl as $st)
+                {{ $st['id'] }}: '{{ addslashes($st['feedback'] ?? '') }}',
+            @endforeach
+        },
+        loadingSubId: null,
+        alertMessage: '',
+        togglePanel(id) {
+            this.openSubId = (this.openSubId === id) ? null : id;
+        },
+        async saveGrade(subId, maxMarks, name, parentPhone) {
+            const rawScore = this.scores[subId];
+            const feedback = this.feedbacks[subId] || '';
+
+            if (rawScore === undefined || rawScore === '' || rawScore === null) {
+                alert('يرجى كتابة درجة الطالب أولاً');
+                return;
+            }
+
+            const numScore = parseFloat(rawScore);
+            if (isNaN(numScore) || numScore < 0 || numScore > maxMarks) {
+                alert('الدرجة يجب أن تكون رقماً بين 0 و ' + maxMarks);
+                return;
+            }
+
+            this.loadingSubId = subId;
+            try {
+                const response = await fetch('/admin/homework/submissions/' + subId + '/grade', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        score: numScore,
+                        feedback: feedback
+                    })
+                });
+
+                const res = await response.json();
+                if (!response.ok || !res.success) {
+                    throw new Error(res.message || 'حدث خطأ أثناء حفظ الدرجة');
+                }
+
+                // تحديث القيم تفاعلياً
+                this.displayScores[subId] = res.score;
+                this.displayPercentages[subId] = res.percentage;
+                this.displayFeedbacks[subId] = res.feedback || '';
+                this.openSubId = null;
+
+                // تحديث رابط الواتساب
+                const waEl = document.getElementById('wa-link-' + subId);
+                if (waEl && parentPhone) {
+                    const scoreText = res.score + ' من ' + res.total_marks + ' (' + res.percentage + '%)';
+                    const centerName = '{{ addslashes($centerName) }}';
+                    const hwTitle = '{{ addslashes($hwTitle) }}';
+                    const subjectName = '{{ addslashes($subjectName) }}';
+                    let msg = 'السلام عليكم ورحمة الله، المكرم ولي أمر الطالب/ة: ' + name + ' 📝\n'
+                            + 'نحيطكم علماً بأنه تم استلام وتصحيح واجب (' + hwTitle + ') في مادة (' + subjectName + '):\n\n'
+                            + '▪️ نتيجة الواجب: ' + scoreText + '\n';
+                    if (res.feedback) {
+                        msg += '▪️ ملاحظات المدرس: ' + res.feedback + '\n';
+                    }
+                    msg += '\n— ' + centerName;
+                    waEl.href = 'https://wa.me/' + parentPhone + '?text=' + encodeURIComponent(msg);
+                }
+
+                this.alertMessage = '✅ تم رصد درجة الطالب/ة (' + name + ') بنجاح: ' + res.score + ' من ' + res.total_marks;
+                setTimeout(() => { this.alertMessage = ''; }, 4500);
+            } catch (err) {
+                alert('خطأ: ' + err.message);
+            } finally {
+                this.loadingSubId = null;
+            }
+        }
+     }">
     <style>
         .em-stat-grid-5 {
             display: grid;
@@ -99,7 +198,7 @@
         .em-table-container {
             border-radius: 14px;
             overflow: hidden;
-            border: 1px solid #e2e8f0;
+            border: 1.5px solid #e2e8f0;
             background: #ffffff;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
@@ -117,8 +216,8 @@
             padding: 12px 14px;
             background: #f8fafc;
             color: #475569;
-            font-weight: 800;
-            border-bottom: 1px solid #e2e8f0;
+            font-weight: 900;
+            border-bottom: 1.5px solid #e2e8f0;
             white-space: nowrap;
         }
         .dark .em-table th {
@@ -127,7 +226,7 @@
             border-bottom-color: #334155;
         }
         .em-table td {
-            padding: 11px 14px;
+            padding: 12px 14px;
             border-bottom: 1px solid #f1f5f9;
             color: #1e293b;
             vertical-align: middle;
@@ -170,42 +269,43 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            padding: 4px 10px;
+            padding: 5px 12px;
             border-radius: 8px;
             font-size: 11px;
-            font-weight: 800;
-            background: #3b82f6;
+            font-weight: 900;
+            background: #2563eb;
             color: #ffffff !important;
             border: none;
             cursor: pointer;
+            box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
             transition: all 0.15s ease;
         }
         .em-btn-grade:hover {
-            background: #2563eb;
+            background: #1d4ed8;
             transform: scale(1.04);
         }
 
         .em-grade-panel {
             background: #f8fafc;
-            border: 1.5px solid #cbd5e1;
+            border: 1.5px solid #93c5fd;
             border-radius: 12px;
             padding: 12px 14px;
-            margin-top: 8px;
-            display: none;
-            animation: fadeIn 0.2s ease-in-out;
+            margin-top: 10px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
         }
         .dark .em-grade-panel {
             background: #1e293b;
-            border-color: #475569;
+            border-color: #3b82f6;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
         }
 
         .em-input-score {
-            width: 80px;
-            padding: 5px 8px;
-            border-radius: 6px;
+            width: 85px;
+            padding: 6px 10px;
+            border-radius: 8px;
             border: 1.5px solid #cbd5e1;
             font-weight: 900;
-            font-size: 13px;
+            font-size: 14px;
             text-align: center;
             color: #0f172a;
         }
@@ -218,11 +318,11 @@
         .em-input-feedback {
             flex: 1;
             min-width: 180px;
-            padding: 5px 10px;
-            border-radius: 6px;
+            padding: 6px 12px;
+            border-radius: 8px;
             border: 1.5px solid #cbd5e1;
             font-size: 12px;
-            font-weight: 600;
+            font-weight: 700;
             color: #0f172a;
         }
         .dark .em-input-feedback {
@@ -235,7 +335,7 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            padding: 6px 12px;
+            padding: 6px 14px;
             border-radius: 8px;
             font-size: 11px;
             font-weight: 900;
@@ -243,21 +343,26 @@
             color: #ffffff !important;
             border: none;
             cursor: pointer;
+            box-shadow: 0 2px 5px rgba(5, 150, 105, 0.3);
             transition: all 0.15s ease;
         }
         .em-btn-save-grade:hover {
             background: #047857;
+            transform: scale(1.02);
         }
 
         .em-btn-cancel-grade {
-            padding: 6px 10px;
+            padding: 6px 12px;
             border-radius: 8px;
             font-size: 11px;
-            font-weight: 700;
+            font-weight: 800;
             background: #64748b;
             color: #ffffff !important;
             border: none;
             cursor: pointer;
+        }
+        .em-btn-cancel-grade:hover {
+            background: #475569;
         }
 
         .em-wa-btn-emerald {
@@ -267,23 +372,18 @@
             padding: 6px 12px;
             border-radius: 10px;
             font-size: 11px;
-            font-weight: 800;
+            font-weight: 900;
             background: #059669;
             color: #ffffff !important;
             text-decoration: none;
             border: none;
             transition: all 0.2s ease;
-            box-shadow: 0 1px 2px rgba(5, 150, 105, 0.2);
+            box-shadow: 0 1px 3px rgba(5, 150, 105, 0.25);
         }
         .em-wa-btn-emerald:hover {
             background: #047857;
             transform: scale(1.04);
             color: #ffffff !important;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-4px); }
-            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 
@@ -291,7 +391,7 @@
     <div class="em-stat-grid-5">
         <div class="em-stat-card success">
             <span class="label">👥 قاموا بالتسليم</span>
-            <span class="value" id="stat-submitted-count">{{ $subsColl->count() }}</span>
+            <span class="value">{{ $subsColl->count() }}</span>
         </div>
         <div class="em-stat-card info">
             <span class="label">📈 نسبة التسليم</span>
@@ -299,11 +399,11 @@
         </div>
         <div class="em-stat-card purple">
             <span class="label">✅ تم التصحيح</span>
-            <span class="value" id="stat-graded-count">{{ $stats['graded_count'] ?? 0 }}</span>
+            <span class="value">{{ $stats['graded_count'] ?? 0 }}</span>
         </div>
         <div class="em-stat-card warning">
             <span class="label">🎯 متوسط الدرجة</span>
-            <span class="value" id="stat-avg-score">{{ $stats['average_score'] ?? 0 }}</span>
+            <span class="value">{{ $stats['average_score'] ?? 0 }}</span>
         </div>
         <div class="em-stat-card success">
             <span class="label">🌟 أعلى درجة</span>
@@ -312,7 +412,10 @@
     </div>
 
     <!-- Alert Message Area -->
-    <div id="hw-alert-box" style="display: none; padding: 10px 14px; border-radius: 10px; margin-bottom: 12px; font-weight: 800; font-size: 12px;"></div>
+    <div x-show="alertMessage" 
+         x-transition
+         style="display: none; padding: 12px 16px; border-radius: 10px; margin-bottom: 14px; font-weight: 900; font-size: 13px; background: #ecfdf5; border: 1.5px solid #a7f3d0; color: #065f46;" 
+         x-text="alertMessage"></div>
 
     <!-- Submissions Table -->
     @if($subsColl->count() > 0)
@@ -357,86 +460,93 @@
                                 . "\n— {$centerName}";
                             $waUrl = $cleanedPhone ? "https://wa.me/{$cleanedPhone}?text=" . urlencode($msg) : null;
                         @endphp
-                        <tr id="sub-row-{{ $subId }}">
+                        <tr>
                             <td style="text-align: center; font-weight: bold; opacity: 0.6;">{{ $idx + 1 }}</td>
-                            <td style="font-weight: 800; font-size: 13px;">
+                            <td style="font-weight: 900; font-size: 13px;">
                                 {{ $name }}
                             </td>
                             <td>
                                 <span class="em-code-badge">{{ $code }}</span>
                             </td>
                             <td style="font-family: monospace; font-size: 11px;">
-                                <div>{{ $submittedAt }}</div>
+                                <div style="font-weight: 800;">{{ $submittedAt }}</div>
                                 @if($isLate)
-                                    <span style="font-size: 10px; color: #e11d48; font-weight: bold;">(تسليم متأخر ⚠️)</span>
+                                    <span style="font-size: 10px; color: #e11d48; font-weight: 900;">(تسليم متأخر ⚠️)</span>
                                 @endif
                             </td>
                             <td>
-                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;" id="score-badge-box-{{ $subId }}">
-                                    @if($score !== null)
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <template x-if="displayScores[{{ $subId }}] !== null">
                                         <div style="display: flex; align-items: center; gap: 6px;">
-                                            <span style="font-family: monospace; font-weight: 900; font-size: 13px; color: #059669;">
-                                                {{ $score }} / {{ $totalMarks }}
-                                            </span>
-                                            <span style="padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;">
-                                                {{ $percentage }}%
-                                            </span>
+                                            <span style="font-family: monospace; font-weight: 900; font-size: 13px; color: #059669;"
+                                                  x-text="displayScores[{{ $subId }}] + ' / {{ $totalMarks }}'"></span>
+                                            <span style="padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 900; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;"
+                                                  x-text="displayPercentages[{{ $subId }}] + '%'"></span>
+                                            <button type="button" class="em-btn-grade" @click="togglePanel({{ $subId }})" style="background: #e0f2fe; color: #0369a1 !important;">
+                                                ✏️ تعديل
+                                            </button>
                                         </div>
-                                        <button type="button" class="em-btn-grade" onclick="toggleGradePanel({{ $subId }})" style="background: #e0f2fe; color: #0369a1 !important;">
-                                            ✏️ تعديل
-                                        </button>
-                                    @else
-                                        <span style="padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; background: #fffbeb; color: #92400e; border: 1px solid #fde68a;">
-                                            قيد التصحيح ⏳
-                                        </span>
-                                        <button type="button" class="em-btn-grade" onclick="toggleGradePanel({{ $subId }})">
-                                            ✍️ رصد الدرجة
-                                        </button>
-                                    @endif
+                                    </template>
+                                    <template x-if="displayScores[{{ $subId }}] === null">
+                                        <div style="display: flex; align-items: center; gap: 6px;">
+                                            <span style="padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 900; background: #fffbeb; color: #92400e; border: 1px solid #fde68a;">
+                                                قيد التصحيح ⏳
+                                            </span>
+                                            <button type="button" class="em-btn-grade" @click="togglePanel({{ $subId }})">
+                                                ✍️ رصد الدرجة
+                                            </button>
+                                        </div>
+                                    </template>
                                 </div>
 
-                                <!-- Inline Grading Panel -->
-                                <div id="grade-panel-{{ $subId }}" class="em-grade-panel">
-                                    <div style="font-weight: 800; font-size: 11px; margin-bottom: 6px; color: #0284c7;">
-                                        ✍️ رصد درجة الطالب: <span style="font-weight: 900;">{{ $name }}</span>
+                                <!-- Inline Grading Panel (Alpine Controlled) -->
+                                <div x-show="openSubId === {{ $subId }}" 
+                                     x-transition
+                                     style="display: none;" 
+                                     class="em-grade-panel">
+                                    <div style="font-weight: 900; font-size: 11px; margin-bottom: 8px; color: #0284c7;">
+                                        ✍️ رصد درجة الطالب: <span style="font-weight: 900; color: #0f172a;" class="dark:text-white">{{ $name }}</span>
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                         <div style="display: flex; align-items: center; gap: 4px;">
-                                            <input type="number" id="input-score-{{ $subId }}" class="em-input-score" 
+                                            <input type="number" 
+                                                   x-model="scores[{{ $subId }}]" 
+                                                   class="em-input-score" 
                                                    min="0" max="{{ $totalMarks }}" step="0.5" 
-                                                   value="{{ $score !== null ? $score : '' }}" 
                                                    placeholder="الدرجة" />
-                                            <span style="font-weight: 800; font-size: 11px; opacity: 0.7;">/ {{ $totalMarks }}</span>
+                                            <span style="font-weight: 900; font-size: 11px; opacity: 0.8;">/ {{ $totalMarks }}</span>
                                         </div>
-                                        <input type="text" id="input-feedback-{{ $subId }}" class="em-input-feedback" 
-                                               value="{{ $feedback ?? '' }}" 
-                                               placeholder="ملاحظات وتوجيهات المدرس (اختياري)..." />
-                                        <button type="button" class="em-btn-save-grade" id="btn-save-{{ $subId }}" onclick="submitQuickGrade({{ $subId }}, '{{ addslashes($name) }}', {{ $totalMarks }}, '{{ $cleanedPhone }}')">
-                                            ✅ حفظ واعتماد
+                                        <input type="text" 
+                                               x-model="feedbacks[{{ $subId }}]" 
+                                               class="em-input-feedback" 
+                                               placeholder="ملاحظات وتوجيهات المدرس للطالب (اختياري)..." />
+                                        <button type="button" 
+                                                class="em-btn-save-grade" 
+                                                :disabled="loadingSubId === {{ $subId }}"
+                                                @click="saveGrade({{ $subId }}, {{ $totalMarks }}, '{{ addslashes($name) }}', '{{ $cleanedPhone }}')">
+                                            <span x-show="loadingSubId !== {{ $subId }}">✅ حفظ واعتماد</span>
+                                            <span x-show="loadingSubId === {{ $subId }}">⏳ جاري الحفظ...</span>
                                         </button>
-                                        <button type="button" class="em-btn-cancel-grade" onclick="toggleGradePanel({{ $subId }})">
-                                            ✖
+                                        <button type="button" class="em-btn-cancel-grade" @click="togglePanel({{ $subId }})">
+                                            ✖ إلغاء
                                         </button>
                                     </div>
                                 </div>
                             </td>
                             <td style="font-size: 11px;">
                                 @if($attachment)
-                                    <div style="margin-bottom: 4px;">
+                                    <div style="margin-bottom: 5px;">
                                         <a href="{{ asset('storage/' . $attachment) }}" target="_blank" style="display: inline-flex; align-items: center; gap: 4px; color: #2563eb; font-weight: 900; background: rgba(37, 99, 235, 0.1); padding: 3px 8px; border-radius: 6px; text-decoration: none; border: 1px solid rgba(37, 99, 235, 0.25);">
                                             📎 معاينة ملف الحل ⬇️
                                         </a>
                                     </div>
                                 @endif
-                                <div id="feedback-text-{{ $subId }}" style="color: #475569; font-weight: 700;">
-                                    @if($feedback)
-                                        💬 {{ \Illuminate\Support\Str::limit($feedback, 40) }}
-                                    @elseif(!$attachment)
-                                        <span style="opacity: 0.4;">—</span>
-                                    @endif
+                                <div style="color: #475569; font-weight: 700;" class="dark:text-slate-300">
+                                    <span x-show="displayFeedbacks[{{ $subId }}]" x-text="'💬 ' + displayFeedbacks[{{ $subId }}]"></span>
+                                    <span x-show="!displayFeedbacks[{{ $subId }}] && !'{{ $attachment }}'" style="opacity: 0.4;">—</span>
                                 </div>
                             </td>
-                            <td style="font-family: monospace; direction: ltr; font-weight: 700; text-align: right;">
+                            <td style="font-family: monospace; direction: ltr; font-weight: 800; text-align: right;">
                                 {{ $parentPhone ?: '—' }}
                             </td>
                             <td style="text-align: center;">
@@ -462,136 +572,3 @@
         </div>
     @endif
 </div>
-
-<script>
-    function toggleGradePanel(subId) {
-        const panel = document.getElementById('grade-panel-' + subId);
-        if (!panel) return;
-        if (panel.style.display === 'block') {
-            panel.style.display = 'none';
-        } else {
-            panel.style.display = 'block';
-            const input = document.getElementById('input-score-' + subId);
-            if (input) input.focus();
-        }
-    }
-
-    function submitQuickGrade(subId, studentName, totalMarks, parentPhone) {
-        const scoreInput = document.getElementById('input-score-' + subId);
-        const feedbackInput = document.getElementById('input-feedback-' + subId);
-        const saveBtn = document.getElementById('btn-save-' + subId);
-        const alertBox = document.getElementById('hw-alert-box');
-
-        const scoreVal = scoreInput ? scoreInput.value.trim() : '';
-        const feedbackVal = feedbackInput ? feedbackInput.value.trim() : '';
-
-        if (scoreVal === '') {
-            alert('يرجى إدخال درجة الطالب أولاً');
-            if (scoreInput) scoreInput.focus();
-            return;
-        }
-
-        const numScore = parseFloat(scoreVal);
-        if (isNaN(numScore) || numScore < 0 || numScore > totalMarks) {
-            alert(`الدرجة يجب أن تكون رقماً بين 0 و ${totalMarks}`);
-            if (scoreInput) scoreInput.focus();
-            return;
-        }
-
-        if (saveBtn) {
-            saveBtn.disabled = true;
-            saveBtn.innerHTML = '⏳ جاري الحفظ...';
-        }
-
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') 
-                       || '{{ csrf_token() }}';
-
-        fetch(`/admin/homework/submissions/${subId}/grade`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
-            },
-            body: JSON.stringify({
-                score: numScore,
-                feedback: feedbackVal
-            })
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => { throw new Error(err.message || 'فشل حفظ الدرجة'); });
-            }
-            return response.json();
-        })
-        .then(res => {
-            if (res.success) {
-                // 1. تحديث شارة الدرجة
-                const badgeBox = document.getElementById('score-badge-box-' + subId);
-                if (badgeBox) {
-                    badgeBox.innerHTML = `
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <span style="font-family: monospace; font-weight: 900; font-size: 13px; color: #059669;">
-                                ${res.score} / ${res.total_marks}
-                            </span>
-                            <span style="padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;">
-                                ${res.percentage}%
-                            </span>
-                        </div>
-                        <button type="button" class="em-btn-grade" onclick="toggleGradePanel(${subId})" style="background: #e0f2fe; color: #0369a1 !important;">
-                            ✏️ تعديل
-                        </button>
-                    `;
-                }
-
-                // 2. تحديث نص الملاحظات
-                const feedbackBox = document.getElementById('feedback-text-' + subId);
-                if (feedbackBox) {
-                    feedbackBox.innerHTML = res.feedback ? `💬 ${res.feedback}` : '';
-                }
-
-                // 3. تحديث رابط الواتساب
-                const waLink = document.getElementById('wa-link-' + subId);
-                if (waLink && parentPhone) {
-                    const scoreText = `${res.score} من ${res.total_marks} (${res.percentage}%)`;
-                    const centerName = '{{ addslashes($centerName) }}';
-                    const hwTitle = '{{ addslashes($hwTitle) }}';
-                    const subjectName = '{{ addslashes($subjectName) }}';
-                    
-                    let msg = `السلام عليكم ورحمة الله، المكرم ولي أمر الطالب/ة: ${studentName} 📝\n`
-                            + `نحيطكم علماً بأنه تم استلام وتصحيح واجب (${hwTitle}) في مادة (${subjectName}):\n\n`
-                            + `▪️ نتيجة الواجب: ${scoreText}\n`;
-                    if (res.feedback) {
-                        msg += `▪️ ملاحظات المدرس: ${res.feedback}\n`;
-                    }
-                    msg += `\n— ${centerName}`;
-                    
-                    waLink.href = `https://wa.me/${parentPhone}?text=` + encodeURIComponent(msg);
-                }
-
-                // 4. إغلاق لوحة الرصد
-                const panel = document.getElementById('grade-panel-' + subId);
-                if (panel) panel.style.display = 'none';
-
-                // 5. إظهار رسالة النجاح
-                if (alertBox) {
-                    alertBox.style.display = 'block';
-                    alertBox.style.background = '#ecfdf5';
-                    alertBox.style.border = '1px solid #a7f3d0';
-                    alertBox.style.color = '#065f46';
-                    alertBox.innerHTML = `✅ تم رصد درجة الطالب/ة (${studentName}) بنجاح: ${res.score} من ${res.total_marks}`;
-                    setTimeout(() => { alertBox.style.display = 'none'; }, 4000);
-                }
-            }
-        })
-        .catch(err => {
-            alert('خطأ: ' + err.message);
-        })
-        .finally(() => {
-            if (saveBtn) {
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = '✅ حفظ واعتماد';
-            }
-        });
-    }
-</script>
