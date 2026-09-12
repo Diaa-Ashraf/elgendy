@@ -265,7 +265,7 @@ class HomeworkService
 
         $submissions = HomeworkSubmission::where('homework_id', $homeworkId)
             ->with(['student.educationalStage'])
-            ->orderByRaw('score DESC NULLS LAST, submitted_at ASC')
+            ->orderByRaw('CASE WHEN score IS NULL THEN 1 ELSE 0 END, score DESC, submitted_at ASC')
             ->get();
 
         return $submissions->map(function ($sub, $idx) use ($totalMarks) {
