@@ -78,6 +78,7 @@ class LeaderboardService
                 $totalPoints = round(($examPercentage * 0.75) + ($attendanceRate * 0.25) + ($examsCount * 2), 1);
 
                 return [
+                    'student' => $student,
                     'student_id' => $student->id,
                     'student_name' => $student->name,
                     'qr_code' => $student->qr_code,

@@ -650,8 +650,8 @@
                             </span>
                         </div>
 
-                        <h3 class="text-lg font-black text-white mb-1">{{ $st['student']->name }}</h3>
-                        <p class="text-xs text-slate-300 mb-4">{{ $st['stage_name'] }} • {{ $st['group_name'] }}</p>
+                        <h3 class="text-lg font-black text-white mb-1">{{ $st['student_name'] ?? ($st['student']->name ?? '') }}</h3>
+                        <p class="text-xs text-slate-300 mb-4">{{ $st['stage_name'] ?? '' }} • {{ $st['group_name'] ?? '' }}</p>
 
                         <div class="grid grid-cols-2 gap-2 bg-black/20 rounded-2xl p-3 text-xs">
                             <div>
