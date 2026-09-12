@@ -31,6 +31,20 @@
             border-color: rgba(55, 65, 81, 0.8);
             box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.35);
         }
+        @media (max-width: 768px) {
+            .rp-filter-card,
+            .rp-filters-group {
+                flex-direction: column;
+                align-items: stretch;
+                width: 100%;
+            }
+            .rp-btn-print,
+            .rp-select,
+            .rp-date-box {
+                width: 100%;
+                justify-content: center;
+            }
+        }
 
         .rp-btn-print {
             display: inline-flex;
@@ -118,12 +132,19 @@
         /* ─── 2. كروت الإحصائيات الـ 6 ─── */
         .rp-kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-            gap: 1.15rem;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.85rem;
         }
-        @media (min-width: 1280px) {
+        @media (min-width: 640px) {
+            .rp-kpi-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1rem;
+            }
+        }
+        @media (min-width: 1440px) {
             .rp-kpi-grid {
                 grid-template-columns: repeat(6, 1fr);
+                gap: 1.15rem;
             }
         }
 
@@ -131,7 +152,7 @@
             background: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 1.25rem;
-            padding: 1.2rem;
+            padding: 1.15rem 1rem;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
             display: flex;
             flex-direction: column;
@@ -155,38 +176,42 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
+            gap: 0.4rem;
         }
         .rp-kpi-title {
-            font-size: 0.78rem;
+            font-size: 0.76rem;
             font-weight: 800;
             color: #475569;
+            white-space: nowrap;
         }
         .dark .rp-kpi-title {
             color: #cbd5e1;
         }
 
         .rp-kpi-icon {
-            width: 2.1rem;
-            height: 2.1rem;
-            border-radius: 0.7rem;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 0.65rem;
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
 
         .rp-kpi-val {
-            font-size: 1.55rem;
+            font-size: clamp(1.15rem, 1.6vw, 1.55rem);
             font-weight: 900;
             font-family: monospace;
             margin: 0.2rem 0;
-            line-height: 1.1;
+            line-height: 1.15;
+            word-break: break-word;
         }
 
         .rp-kpi-sub {
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             font-weight: 800;
-            padding: 0.2rem 0.55rem;
+            padding: 0.2rem 0.5rem;
             border-radius: 0.5rem;
             display: inline-block;
             margin-top: 0.35rem;
@@ -235,9 +260,9 @@
             grid-template-columns: 1fr;
             gap: 1.5rem;
         }
-        @media (min-width: 1024px) {
+        @media (min-width: 1440px) {
             .rp-two-col-grid {
-                grid-template-columns: 2fr 1fr;
+                grid-template-columns: 1.65fr 1.35fr;
             }
         }
 
@@ -284,6 +309,7 @@
         .rp-table-responsive {
             width: 100%;
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .rp-table {
@@ -313,7 +339,6 @@
             border-bottom: 1px solid #f1f5f9;
             color: #1e293b;
             font-weight: 700;
-            white-space: nowrap;
         }
         .dark .rp-table td {
             border-bottom-color: #1f2937;
@@ -327,15 +352,38 @@
             background: rgba(31, 41, 55, 0.6);
         }
 
+        .rp-col-name {
+            font-weight: 900;
+            white-space: nowrap;
+            min-width: 160px;
+        }
+        .rp-col-desc {
+            color: #64748b;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            white-space: normal;
+            min-width: 150px;
+        }
+        .dark .rp-col-desc {
+            color: #94a3b8;
+        }
+        .rp-col-action {
+            text-align: left;
+            white-space: nowrap;
+            width: 1%;
+        }
+
         .rp-link-btn {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 0.4rem;
-            padding: 0.35rem 0.8rem;
+            padding: 0.4rem 0.85rem;
             border-radius: 0.65rem;
-            font-size: 0.74rem;
+            font-size: 0.75rem;
             font-weight: 800;
             text-decoration: none;
+            white-space: nowrap;
             transition: all 0.2s ease;
         }
         .rp-link-blue {
@@ -612,14 +660,14 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td style="font-weight: 900;">
+                                <td class="rp-col-name">
                                     <span style="display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: #2563eb; margin-left: 6px;"></span>
                                     سجل مدفوعات واشتراكات الطلاب
                                 </td>
-                                <td style="color: #64748b; font-size: 0.8rem;" class="dark:text-slate-300">
+                                <td class="rp-col-desc">
                                     إيصالات وتحصيلات الرسوم الدراسية وحسابات الطلاب
                                 </td>
-                                <td style="text-align: left;">
+                                <td class="rp-col-action">
                                     <a href="{{ url('/admin/student-payments') }}" class="rp-link-btn rp-link-blue">
                                         <x-heroicon-o-eye style="width: 1rem; height: 1rem;" />
                                         <span>عرض السجل</span>
@@ -627,14 +675,14 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td style="font-weight: 900;">
+                                <td class="rp-col-name">
                                     <span style="display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: #e11d48; margin-left: 6px;"></span>
                                     سجل المصروفات التشغيلية
                                 </td>
-                                <td style="color: #64748b; font-size: 0.8rem;" class="dark:text-slate-300">
+                                <td class="rp-col-desc">
                                     تفاصيل جميع النفقات والمصروفات ومستلزمات السنتر
                                 </td>
-                                <td style="text-align: left;">
+                                <td class="rp-col-action">
                                     <a href="{{ url('/admin/expenses') }}" class="rp-link-btn rp-link-rose">
                                         <x-heroicon-o-eye style="width: 1rem; height: 1rem;" />
                                         <span>عرض المصروفات</span>
@@ -642,14 +690,14 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td style="font-weight: 900;">
+                                <td class="rp-col-name">
                                     <span style="display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: #0d9488; margin-left: 6px;"></span>
                                     سجل الرواتب والأجور
                                 </td>
-                                <td style="color: #64748b; font-size: 0.8rem;" class="dark:text-slate-300">
+                                <td class="rp-col-desc">
                                     سجل الرواتب والمستحقات المصروفة للمساعدين والموظفين
                                 </td>
-                                <td style="text-align: left;">
+                                <td class="rp-col-action">
                                     <a href="{{ url('/admin/salaries') }}" class="rp-link-btn rp-link-teal">
                                         <x-heroicon-o-eye style="width: 1rem; height: 1rem;" />
                                         <span>عرض الرواتب</span>
@@ -657,14 +705,14 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td style="font-weight: 900;">
+                                <td class="rp-col-name">
                                     <span style="display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: #9333ea; margin-left: 6px;"></span>
                                     سجل الحصص والجلسات والغياب
                                 </td>
-                                <td style="color: #64748b; font-size: 0.8rem;" class="dark:text-slate-300">
+                                <td class="rp-col-desc">
                                     سجلات حضور وغياب الطلاب والملاحظات الأكاديمية
                                 </td>
-                                <td style="text-align: left;">
+                                <td class="rp-col-action">
                                     <a href="{{ url('/admin/group-sessions') }}" class="rp-link-btn rp-link-purple">
                                         <x-heroicon-o-eye style="width: 1rem; height: 1rem;" />
                                         <span>عرض الجلسات</span>
@@ -672,14 +720,14 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td style="font-weight: 900;">
+                                <td class="rp-col-name">
                                     <span style="display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: #d97706; margin-left: 6px;"></span>
                                     سجل الامتحانات والتقييمات
                                 </td>
-                                <td style="color: #64748b; font-size: 0.8rem;" class="dark:text-slate-300">
+                                <td class="rp-col-desc">
                                     درجات ونتائج الامتحانات الورقية والإلكترونية المرصودة
                                 </td>
-                                <td style="text-align: left;">
+                                <td class="rp-col-action">
                                     <a href="{{ url('/admin/exams') }}" class="rp-link-btn rp-link-amber">
                                         <x-heroicon-o-eye style="width: 1rem; height: 1rem;" />
                                         <span>عرض الامتحانات</span>

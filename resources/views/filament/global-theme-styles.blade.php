@@ -174,4 +174,25 @@
     .dark .fi-modal-window table td {
         border-bottom-color: #1f2937 !important;
     }
+
+    /* ─── 9. تحسينات التجاوب الشامل (Global Responsive Helpers) ─── */
+    .fi-ta-content,
+    .fi-ta-table-ctn {
+        -webkit-overflow-scrolling: touch !important;
+    }
+    @media (max-width: 640px) {
+        .fi-ta-header-cell,
+        .fi-ta-table th,
+        table.table-custom th,
+        .fi-ta-cell,
+        .fi-ta-table td,
+        table.table-custom td {
+            padding: 0.65rem 0.75rem !important;
+            font-size: 0.78rem !important;
+        }
+        .fi-ta-header-ctn,
+        .fi-ta-header {
+            padding: 0.75rem 1rem !important;
+        }
+    }
 </style>

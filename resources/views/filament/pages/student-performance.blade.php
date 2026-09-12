@@ -232,7 +232,7 @@
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             border: 1px solid #334155;
             border-radius: 1.5rem;
-            padding: 1.5rem;
+            padding: 1.25rem;
             color: #ffffff;
             box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
             display: flex;
@@ -253,12 +253,13 @@
         .sp-profile-info {
             display: flex;
             align-items: center;
-            gap: 1.25rem;
+            gap: 1.15rem;
+            flex-wrap: wrap;
         }
 
         .sp-profile-avatar {
-            width: 4.5rem;
-            height: 4.5rem;
+            width: 4rem;
+            height: 4rem;
             border-radius: 1.25rem;
             background: rgba(245, 158, 11, 0.15);
             border: 2px solid #f59e0b;
@@ -266,14 +267,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 900;
             flex-shrink: 0;
             box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);
         }
 
         .sp-profile-name {
-            font-size: 1.35rem;
+            font-size: 1.25rem;
             font-weight: 900;
             color: #ffffff;
             margin-bottom: 0.3rem;
@@ -284,7 +285,7 @@
         }
 
         .sp-profile-meta {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             color: #94a3b8;
             font-weight: 600;
             display: flex;
@@ -296,12 +297,14 @@
         .sp-score-box {
             display: flex;
             align-items: center;
+            justify-content: space-around;
             gap: 1.25rem;
             background: rgba(15, 23, 42, 0.8);
             border: 1px solid rgba(71, 85, 105, 0.6);
             border-radius: 1.25rem;
             padding: 0.85rem 1.25rem;
             box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
+            flex-wrap: wrap;
         }
 
         .sp-score-item {
@@ -312,32 +315,46 @@
             font-weight: 700;
             color: #94a3b8;
             margin-bottom: 0.2rem;
+            white-space: nowrap;
         }
         .sp-score-val {
-            font-size: 1.6rem;
+            font-size: 1.5rem;
             font-weight: 900;
             font-family: monospace;
             color: #10b981;
             line-height: 1;
         }
         .sp-score-badge {
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 900;
             color: #fbbf24;
+            white-space: nowrap;
         }
 
         /* ─── 4. بطاقات المؤشرات الأربعة (KPIs) ─── */
         .sp-kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.25rem;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.85rem;
+        }
+        @media (min-width: 640px) {
+            .sp-kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+        }
+        @media (min-width: 1200px) {
+            .sp-kpi-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 1.25rem;
+            }
         }
 
         .sp-kpi-card {
             background: #ffffff;
             border: 1px solid #e5e7eb;
             border-radius: 1.25rem;
-            padding: 1.25rem;
+            padding: 1.15rem 1rem;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
             display: flex;
             flex-direction: column;
@@ -360,36 +377,40 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
+            gap: 0.4rem;
         }
         .sp-kpi-title {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 800;
             color: #4b5563;
+            white-space: nowrap;
         }
         .dark .sp-kpi-title {
             color: #9ca3af;
         }
 
         .sp-kpi-icon {
-            width: 2.25rem;
-            height: 2.25rem;
+            width: 2rem;
+            height: 2rem;
             border-radius: 0.75rem;
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
 
         .sp-kpi-value {
-            font-size: 1.75rem;
+            font-size: clamp(1.2rem, 2vw, 1.75rem);
             font-weight: 900;
             font-family: monospace;
-            margin: 0.25rem 0;
-            line-height: 1.1;
+            margin: 0.2rem 0;
+            line-height: 1.15;
+            word-break: break-word;
         }
 
         .sp-kpi-sub {
-            font-size: 0.72rem;
+            font-size: 0.7rem;
             font-weight: 700;
             color: #6b7280;
         }
@@ -458,6 +479,7 @@
         .sp-table-responsive {
             width: 100%;
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .sp-table {

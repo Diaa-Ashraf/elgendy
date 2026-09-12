@@ -92,19 +92,46 @@
             border-color: rgba(16, 185, 129, 0.5);
             background: rgba(16, 185, 129, 0.2);
         }
+        @media (max-width: 768px) {
+            .aa-header-card {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: right;
+            }
+            .aa-header-title {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .aa-header-badge {
+                width: 100%;
+                justify-content: center;
+            }
+        }
 
         /* ─── 2. كروت المؤشرات الكبرى (KPIs) ─── */
         .aa-kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.25rem;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.85rem;
+        }
+        @media (min-width: 640px) {
+            .aa-kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+        }
+        @media (min-width: 1200px) {
+            .aa-kpi-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 1.25rem;
+            }
         }
 
         .aa-kpi-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 1.25rem;
-            padding: 1.35rem;
+            padding: 1.2rem;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
             display: flex;
             flex-direction: column;
@@ -127,38 +154,42 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
+            gap: 0.4rem;
         }
         .aa-kpi-label {
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             font-weight: 800;
             color: #334155;
+            white-space: nowrap;
         }
         .dark .aa-kpi-label {
             color: #cbd5e1;
         }
 
         .aa-kpi-icon-box {
-            width: 2.35rem;
-            height: 2.35rem;
+            width: 2.2rem;
+            height: 2.2rem;
             border-radius: 0.75rem;
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
 
         .aa-kpi-val {
-            font-size: 1.95rem;
+            font-size: clamp(1.3rem, 2vw, 1.95rem);
             font-weight: 900;
             font-family: monospace;
             margin: 0.25rem 0;
-            line-height: 1.1;
+            line-height: 1.15;
+            word-break: break-word;
         }
 
         .aa-kpi-sub {
-            font-size: 0.74rem;
+            font-size: 0.72rem;
             font-weight: 800;
-            padding: 0.25rem 0.65rem;
+            padding: 0.2rem 0.6rem;
             border-radius: 0.5rem;
             display: inline-block;
             margin-top: 0.35rem;
@@ -233,6 +264,7 @@
         .aa-table-responsive {
             width: 100%;
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .aa-table {
@@ -326,7 +358,7 @@
             grid-template-columns: 1fr;
             gap: 1.5rem;
         }
-        @media (min-width: 1024px) {
+        @media (min-width: 1400px) {
             .aa-two-col-grid {
                 grid-template-columns: 1fr 1.8fr;
             }
