@@ -406,7 +406,7 @@
                         </span>
                         <span>متأخرات الاشتراكات</span>
                     </h3>
-                    <a href="{{ url('/admin/students') }}" style="font-size: 0.78rem; font-weight: 900; color: #dc2626; text-decoration: none;">عرض الكل ←</a>
+                    <a href="{{ \App\Filament\Pages\LatePaymentsReport::getUrl() }}" style="font-size: 0.78rem; font-weight: 900; color: #dc2626; text-decoration: none;">عرض الكل ←</a>
                 </div>
 
                 <div style="padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">

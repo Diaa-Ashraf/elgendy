@@ -37,9 +37,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style> 
         body { font-family: 'IBM Plex Sans Arabic', sans-serif; } 
         h1, h2, h3, h4, .font-heading { font-family: 'Alexandria', sans-serif; }
+        [x-cloak] { display: none !important; }
     </style>
 </head>
 <body class="bg-brand-bg text-brand-slate min-h-screen pb-16 selection:bg-brand-coral selection:text-white">
@@ -81,7 +83,12 @@
             </div>
         @endif
 
-        {{-- بطاقة تفاصيل الواجب --}}
+        {{-- بطاقة تفاصيل الواجب وموعد التسليم --}}
+        @php
+            $isPastDue = $homework->due_date && now()->greaterThan($homework->due_date);
+            $remainingHours = $homework->due_date ? max(0, now()->diffInHours($homework->due_date, false)) : null;
+        @endphp
+
         <div class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm text-center space-y-6">
             <div>
                 <span class="inline-block px-3.5 py-1 bg-amber-50 border border-amber-200 text-amber-800 rounded-full text-xs font-bold mb-2">
@@ -98,11 +105,18 @@
                 @endif
             </div>
 
-            {{-- إحصائيات ومعلومات الواجب --}}
+            {{-- إحصائيات ومعلومات الواجب ومؤقت التسليم --}}
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-right">
                 <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl">
-                    <span class="text-[11px] font-bold text-slate-500 block mb-1">آخر موعد:</span>
-                    <span class="text-xs font-bold text-brand-slate">{{ $homework->due_date->format('Y-m-d h:i A') }}</span>
+                    <span class="text-[11px] font-bold text-slate-500 block mb-1">آخر موعد للتسليم:</span>
+                    <span class="text-xs font-bold {{ $isPastDue ? 'text-rose-600' : 'text-brand-slate' }}">
+                        {{ $homework->due_date ? $homework->due_date->format('Y-m-d h:i A') : 'مفتوح' }}
+                    </span>
+                    @if($homework->due_date)
+                        <span class="text-[10px] font-bold block mt-0.5 {{ $isPastDue ? 'text-rose-500' : 'text-emerald-600' }}">
+                            {{ $isPastDue ? '(انتهى موعد التسليم)' : '(متبقي ' . $homework->due_date->diffForHumans(null, true) . ')' }}
+                        </span>
+                    @endif
                 </div>
 
                 <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl">
@@ -186,18 +200,55 @@
                 {{-- إذا الواجب به أسئلة إلكترونية --}}
                 @if(in_array($homework->type, ['questions', 'mixed']) && $homework->questions->isNotEmpty())
                     <div class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 shadow-sm space-y-6">
-                        <h3 class="font-heading font-black text-base text-brand-slate border-b border-slate-100 pb-3">
-                            أجب عن أسئلة الواجب:
-                        </h3>
+                        <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                            <h3 class="font-heading font-black text-base text-brand-slate">
+                                أجب عن أسئلة الواجب:
+                            </h3>
+                            <span class="text-xs font-bold text-brand-teal bg-brand-teal/5 px-3 py-1 rounded-xl border border-brand-teal/10">
+                                {{ $homework->questions->count() }} أسئلة
+                            </span>
+                        </div>
 
                         @foreach($homework->questions as $index => $question)
-                            <div class="bg-slate-50/70 border border-slate-200 rounded-2xl p-5 space-y-4">
-                                <div class="flex items-start justify-between gap-3">
-                                    <div class="font-bold text-sm text-brand-slate leading-relaxed">
-                                        <span class="text-brand-coral ml-1 font-black">س{{ $index + 1 }}:</span> {{ $question->question_text }}
+                            @php
+                                $options = is_array($question->options) ? $question->options : [];
+                                $correctAnswers = is_array($question->correct_answers) ? $question->correct_answers : [];
+                                $correctCount = count($correctAnswers);
+                                
+                                $isMultiple = ($question->type === 'multiple_choice' && $correctCount > 1);
+                                $maxAllowed = $isMultiple ? max(2, $correctCount) : 1;
+                            @endphp
+
+                            <div class="bg-slate-50/70 border border-slate-200 rounded-2xl p-5 space-y-4 transition"
+                                 x-data="hwQuestionPicker({
+                                     id: {{ $question->id }},
+                                     isMultiple: {{ $isMultiple ? 'true' : 'false' }},
+                                     maxAllowed: {{ $maxAllowed }}
+                                 })">
+                                 
+                                <div class="flex items-start justify-between gap-3 border-b border-slate-200/60 pb-3">
+                                    <div class="space-y-1.5">
+                                        <div class="font-bold text-sm text-brand-slate leading-relaxed">
+                                            <span class="text-brand-coral ml-1 font-black">س{{ $index + 1 }}:</span> {{ $question->question_text }}
+                                        </div>
+                                        
+                                        <div class="flex items-center gap-2">
+                                            @if($isMultiple)
+                                                <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-md border transition"
+                                                      :class="selected.length === maxAllowed ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-brand-coral/10 text-brand-coral border-brand-coral/20'">
+                                                    <span>اختر {{ $maxAllowed }} إجابات</span>
+                                                    <span class="font-mono text-xs">(محدد: <strong x-text="selected.length"></strong>/{{ $maxAllowed }})</span>
+                                                </span>
+                                            @else
+                                                <span class="text-[10px] font-bold text-slate-500 bg-white px-2 py-0.5 rounded-md border border-slate-200">
+                                                    إجابة واحدة فقط
+                                                </span>
+                                            @endif
+                                        </div>
                                     </div>
+
                                     <span class="px-3 py-1 bg-white border border-slate-200 text-brand-teal text-[11px] font-bold rounded-xl shrink-0 shadow-sm">
-                                        {{ $question->pivot->marks ?? 1 }} درجة
+                                        {{ $question->pivot->marks ?? $question->default_marks ?? 1 }} درجات
                                     </span>
                                 </div>
 
@@ -207,19 +258,54 @@
                                     </div>
                                 @endif
 
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
-                                    @foreach($question->options as $opt)
-                                        <label class="flex items-center gap-3 p-3.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl cursor-pointer transition shadow-sm">
-                                            <input type="{{ $question->type === 'multiple_choice' ? 'checkbox' : 'radio' }}" 
-                                                   name="answers[{{ $question->id }}]{{ $question->type === 'multiple_choice' ? '[]' : '' }}" 
-                                                   value="{{ $opt['key'] }}"
-                                                   class="w-4 h-4 text-brand-coral focus:ring-brand-coral border-slate-300 rounded">
-                                            <span class="text-xs font-bold text-brand-slate">
-                                                <span class="text-brand-teal font-mono ml-1 font-black">({{ $opt['key'] }})</span> {{ $opt['text'] }}
-                                            </span>
-                                        </label>
+                                {{-- تنبيه عند تجاوز الحد الأقصى --}}
+                                <div x-show="errorMessage" x-cloak x-transition class="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold flex items-center gap-2">
+                                    <span>⚠️</span>
+                                    <span x-text="errorMessage"></span>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                                    @foreach($options as $opt)
+                                        <div @click="toggleOption('{{ $opt['key'] }}')"
+                                             class="flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer transition select-none group shadow-sm"
+                                             :class="isSelected('{{ $opt['key'] }}') ? 'bg-brand-coral/5 border-brand-coral ring-1 ring-brand-coral/30' : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-brand-teal/40'">
+
+                                            <div class="flex items-center gap-2.5 text-xs font-semibold"
+                                                 :class="isSelected('{{ $opt['key'] }}') ? 'text-brand-coral font-bold' : 'text-brand-slate'">
+                                                <span class="px-2 py-0.5 min-w-[26px] text-center rounded-lg font-mono text-xs font-black flex items-center justify-center border transition"
+                                                      :class="isSelected('{{ $opt['key'] }}') ? 'bg-brand-coral text-white border-brand-coral' : 'bg-slate-100 text-brand-teal border-slate-200'">
+                                                    {{ $opt['key'] === 'true' ? 'صواب' : ($opt['key'] === 'false' ? 'خطأ' : $opt['key']) }}
+                                                </span>
+                                                <span>{{ $opt['text'] }}</span>
+                                            </div>
+
+                                            <div>
+                                                @if($isMultiple)
+                                                    <div class="w-4 h-4 rounded border flex items-center justify-center transition"
+                                                         :class="isSelected('{{ $opt['key'] }}') ? 'border-brand-coral bg-brand-coral text-white' : 'border-slate-300 bg-white'">
+                                                        <svg x-show="isSelected('{{ $opt['key'] }}')" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    </div>
+                                                @else
+                                                    <div class="w-4 h-4 rounded-full border flex items-center justify-center transition"
+                                                         :class="isSelected('{{ $opt['key'] }}') ? 'border-brand-coral bg-white ring-2 ring-brand-coral/20' : 'border-slate-300 bg-white'">
+                                                        <div class="w-2 h-2 rounded-full bg-brand-coral" x-show="isSelected('{{ $opt['key'] }}')"></div>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
                                     @endforeach
                                 </div>
+
+                                {{-- حقول الإرسال المخفية --}}
+                                @if($isMultiple)
+                                    <template x-for="ansKey in selected" :key="ansKey">
+                                        <input type="hidden" name="answers[{{ $question->id }}][]" :value="ansKey">
+                                    </template>
+                                @else
+                                    <input type="hidden" name="answers[{{ $question->id }}]" :value="selected.length > 0 ? selected[0] : ''">
+                                @endif
                             </div>
                         @endforeach
                     </div>
@@ -261,6 +347,51 @@
         @endif
 
     </main>
+
+    <script>
+        function hwQuestionPicker(config) {
+            return {
+                id: config.id,
+                isMultiple: config.isMultiple,
+                maxAllowed: config.maxAllowed,
+                selected: [],
+                errorMessage: '',
+                errorTimeout: null,
+
+                isSelected(key) {
+                    return this.selected.includes(key);
+                },
+
+                toggleOption(key) {
+                    if (!this.isMultiple) {
+                        this.selected = [key];
+                        this.errorMessage = '';
+                        return;
+                    }
+
+                    if (this.selected.includes(key)) {
+                        this.selected = this.selected.filter(k => k !== key);
+                        this.errorMessage = '';
+                    } else {
+                        if (this.selected.length < this.maxAllowed) {
+                            this.selected.push(key);
+                            this.errorMessage = '';
+                        } else {
+                            this.showError('يمكنك اختيار ' + this.maxAllowed + ' إجابات فقط لهذا السؤال. قم بإلغاء إجابة سابقة لاختيار غيرها.');
+                        }
+                    }
+                },
+
+                showError(msg) {
+                    this.errorMessage = msg;
+                    if (this.errorTimeout) clearTimeout(this.errorTimeout);
+                    this.errorTimeout = setTimeout(() => {
+                        this.errorMessage = '';
+                    }, 4000);
+                }
+            };
+        }
+    </script>
 
 </body>
 </html>

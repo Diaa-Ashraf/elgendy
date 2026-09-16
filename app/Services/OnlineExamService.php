@@ -17,12 +17,24 @@ class OnlineExamService
      */
     public function startAttempt(Student $student, Exam $exam): OnlineExamAttempt
     {
+        $modelsCount = max(1, (int) ($exam->models_count ?? 1));
+        $modelLetters = ['أ', 'ب', 'ج', 'د'];
+        $modelLetters = array_slice($modelLetters, 0, min($modelsCount, 4));
+
+        $modelIndex = abs($student->id) % count($modelLetters);
+        $assignedModel = $modelLetters[$modelIndex] ?? 'أ';
+
         // التحقق من وجود محاولة جارية مسبقاً
         $existingAttempt = OnlineExamAttempt::where('exam_id', $exam->id)
             ->where('student_id', $student->id)
             ->first();
 
         if ($existingAttempt) {
+            // تحديث النموذج إن لم يكن معيناً
+            if (empty($existingAttempt->exam_model)) {
+                $existingAttempt->update(['exam_model' => $assignedModel]);
+            }
+
             // إذا كانت مكتملة نرجعها كما هي
             if ($existingAttempt->status !== 'in_progress') {
                 return $existingAttempt;
@@ -62,7 +74,35 @@ class OnlineExamService
             'max_possible_score' => $maxScore,
             'status' => 'in_progress',
             'student_answers' => [],
+            'exam_model' => $assignedModel,
         ]);
+    }
+
+    /**
+     * ترتيب أسئلة الامتحان بناءً على نموذج الامتحان (أ / ب / ج / د).
+     */
+    public function getQuestionsForModel(Exam $exam, ?string $model = 'أ'): Collection
+    {
+        $questions = $exam->questions;
+        if ($questions->isEmpty() || empty($model) || $model === 'أ') {
+            return $questions;
+        }
+
+        // للموديلات (ب، ج، د) نقوم بعمل ترتيب عشوائي ثابت (Deterministic Permutation)
+        // حتى يرى جميع الطلاب الذين لديهم نفس النموذج نفس الترتيب بدقة
+        $seed = crc32($exam->id . '_' . $model);
+        $items = $questions->all();
+
+        mt_srand($seed);
+        for ($i = count($items) - 1; $i > 0; $i--) {
+            $j = mt_rand(0, $i);
+            $temp = $items[$i];
+            $items[$i] = $items[$j];
+            $items[$j] = $temp;
+        }
+        mt_srand(); // reset seed
+
+        return collect($items);
     }
 
     /**

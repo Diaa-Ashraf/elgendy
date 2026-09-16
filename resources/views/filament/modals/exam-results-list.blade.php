@@ -305,7 +305,14 @@
                                 @endif
                             </td>
                             <td style="font-weight: 800; font-size: 13px;">
-                                {{ $name }}
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span>{{ $name }}</span>
+                                    @if(!empty($st['exam_model']))
+                                        <span style="font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 6px; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">
+                                            نموذج ({{ $st['exam_model'] }})
+                                        </span>
+                                    @endif
+                                </div>
                             </td>
                             <td>
                                 <span class="em-code-badge">{{ $code }}</span>

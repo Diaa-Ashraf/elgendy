@@ -27,6 +27,11 @@ class Exam extends Model
         return $this->belongsTo(EducationalStage::class, 'stage_id');
     }
 
+    public function group()
+    {
+        return $this->belongsTo(Group::class);
+    }
+
     public function examResults()
     {
         return $this->hasMany(ExamResult::class);

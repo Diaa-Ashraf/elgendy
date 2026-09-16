@@ -69,6 +69,9 @@
             <div>
                 <span class="inline-block px-3.5 py-1 bg-brand-teal/10 border border-brand-teal/20 text-brand-teal rounded-full text-xs font-bold mb-2">
                     {{ $exam->subject?->name }} • {{ $exam->educationalStage?->name }}
+                    @if($exam->group)
+                        • <span class="text-brand-coral font-black">مجموعة: {{ $exam->group->name }}</span>
+                    @endif
                 </span>
                 <h1 class="text-xl sm:text-2xl font-heading font-black text-brand-slate">{{ $exam->title }}</h1>
             </div>

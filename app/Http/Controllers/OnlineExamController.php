@@ -20,11 +20,18 @@ class OnlineExamController extends Controller
             return redirect()->route('parent.login');
         }
 
-        $student = Student::with('educationalStage')->findOrFail($studentId);
-        $exam = Exam::with(['subject', 'educationalStage', 'questions'])
+        $student = Student::with(['educationalStage', 'groups'])->findOrFail($studentId);
+        $exam = Exam::with(['subject', 'educationalStage', 'questions', 'group'])
             ->where('is_online', true)
             ->where('stage_id', $student->stage_id)
             ->findOrFail($id);
+
+        // التحقق من انتماء الطالب للمجموعة المحددة للامتحان
+        $groupIds = $student->groups->pluck('id')->toArray();
+        if ($exam->group_id && ! in_array($exam->group_id, $groupIds)) {
+            return redirect()->route('parent.dashboard')
+                ->with('error', 'عذراً، هذا الاختبار مخصص لطلاب مجموعة معينة.');
+        }
 
         $attempt = OnlineExamAttempt::where('exam_id', $exam->id)
             ->where('student_id', $student->id)
@@ -62,11 +69,18 @@ class OnlineExamController extends Controller
             return redirect()->route('parent.login');
         }
 
-        $student = Student::findOrFail($studentId);
-        $exam = Exam::with(['subject', 'questions'])
+        $student = Student::with('groups')->findOrFail($studentId);
+        $exam = Exam::with(['subject', 'questions', 'group'])
             ->where('is_online', true)
             ->where('stage_id', $student->stage_id)
             ->findOrFail($id);
+
+        // التحقق من انتماء الطالب للمجموعة المحددة للامتحان
+        $groupIds = $student->groups->pluck('id')->toArray();
+        if ($exam->group_id && ! in_array($exam->group_id, $groupIds)) {
+            return redirect()->route('parent.dashboard')
+                ->with('error', 'عذراً، هذا الاختبار مخصص لطلاب مجموعة معينة.');
+        }
 
         if ($exam->questions->isEmpty()) {
             return back()->with('error', 'عذراً، لم يتم إضافة أسئلة لهذا الاختبار بعد.');
@@ -121,11 +135,13 @@ class OnlineExamController extends Controller
             }
         }
 
+        $questions = $examService->getQuestionsForModel($exam, $attempt->exam_model ?? 'أ');
+
         return view('parent-portal.exams.take', [
             'student' => $student,
             'exam' => $exam,
             'attempt' => $attempt,
-            'questions' => $exam->questions,
+            'questions' => $questions,
             'remainingSeconds' => $remainingSeconds,
         ]);
     }

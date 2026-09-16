@@ -133,9 +133,14 @@ class StudentPortalController extends Controller
             ->get();
 
         // الاختبارات الإلكترونية المتاحة
+        $groupIds = $student->groups->pluck('id')->toArray();
         $onlineExams = \App\Models\Exam::where('stage_id', $student->stage_id)
             ->where('is_online', true)
-            ->with(['subject', 'onlineAttempts' => function ($q) use ($student) {
+            ->where(function ($q) use ($groupIds) {
+                $q->whereIn('group_id', $groupIds)
+                  ->orWhereNull('group_id');
+            })
+            ->with(['subject', 'group', 'onlineAttempts' => function ($q) use ($student) {
                 $q->where('student_id', $student->id);
             }])
             ->orderBy('date', 'desc')

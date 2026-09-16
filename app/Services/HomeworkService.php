@@ -116,13 +116,18 @@ class HomeworkService
             $questionId = (int) $question->id;
             $userAns = $submittedAnswers[$questionId] ?? null;
 
-            $userAnsArray = is_array($userAns) ? $userAns : ($userAns !== null ? [$userAns] : []);
-            $correctAnswers = is_array($question->correct_answers) ? $question->correct_answers : [];
+            // تسوية الإجابات للمقارنة بدقة
+            $userAnsRaw = is_array($userAns) ? $userAns : ($userAns !== null && $userAns !== '' ? [$userAns] : []);
+            $userAnsArray = array_values(array_unique(array_filter(array_map(fn ($v) => trim((string) $v), $userAnsRaw))));
 
+            $correctAnsRaw = is_array($question->correct_answers) ? $question->correct_answers : [];
+            $correctAnswers = array_values(array_unique(array_filter(array_map(fn ($v) => trim((string) $v), $correctAnsRaw))));
+
+            // ترتيب المصفوفات لضمان دقة المقارنة الحرفية
             sort($userAnsArray);
             sort($correctAnswers);
 
-            $isCorrect = ($userAnsArray === $correctAnswers && ! empty($correctAnswers));
+            $isCorrect = (!empty($correctAnswers) && $userAnsArray === $correctAnswers);
             $earned = $isCorrect ? $qMarks : 0.0;
             $totalEarned += $earned;
 

@@ -159,6 +159,8 @@ class StudentResource extends Resource
                     ->label('المجموعات الدراسية')
                     ->badge()
                     ->color('success')
+                    ->separator(', ')
+                    ->placeholder('بدون مجموعة')
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('created_at')

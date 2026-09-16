@@ -38,20 +38,40 @@ class ExamService
     }
 
     /**
+     * جلب الطلاب المستهدفين للامتحان (المجموعة المحددة أو جميع طلاب المرحلة)
+     */
+    public function getTargetStudents(Exam $exam): \Illuminate\Support\Collection
+    {
+        if ($exam->group_id) {
+            $group = $exam->group ?: \App\Models\Group::find($exam->group_id);
+            if ($group) {
+                $students = $group->students()->wherePivot('status', 'active')->get();
+                if ($students->isNotEmpty()) {
+                    return $students;
+                }
+                return $group->students()->get();
+            }
+        }
+
+        return Student::where('stage_id', $exam->stage_id)->get();
+    }
+
+    /**
      * Get statistics for a specific exam.
      */
     public function getExamStats(int $examId): array
     {
-        $exam = Exam::with('examResults')->findOrFail($examId);
+        $exam = Exam::with(['examResults', 'group'])->findOrFail($examId);
         $results = $exam->examResults;
 
-        $totalStageStudents = Student::where('stage_id', $exam->stage_id)->count();
+        $targetStudents = $this->getTargetStudents($exam);
+        $totalTargetStudents = $targetStudents->count();
         $attendedCount = $results->count();
-        $absentCount = max(0, $totalStageStudents - $attendedCount);
+        $absentCount = max(0, $totalTargetStudents - $attendedCount);
 
         if ($results->isEmpty()) {
             return [
-                'total_stage_students' => $totalStageStudents,
+                'total_stage_students' => $totalTargetStudents,
                 'total_students' => 0,
                 'attended_count' => 0,
                 'absent_count' => $absentCount,
@@ -70,11 +90,11 @@ class ExamService
         $failCount = $attendedCount - $passCount;
 
         return [
-            'total_stage_students' => $totalStageStudents,
+            'total_stage_students' => $totalTargetStudents,
             'total_students' => $attendedCount,
             'attended_count' => $attendedCount,
             'absent_count' => $absentCount,
-            'attendance_rate' => $totalStageStudents > 0 ? round(($attendedCount / $totalStageStudents) * 100, 1) : 0,
+            'attendance_rate' => $totalTargetStudents > 0 ? round(($attendedCount / $totalTargetStudents) * 100, 1) : 0,
             'average_mark' => round($results->avg('marks_obtained'), 2),
             'highest_mark' => $results->max('marks_obtained'),
             'lowest_mark' => $results->min('marks_obtained'),
@@ -85,20 +105,18 @@ class ExamService
     }
 
     /**
-     * الحصول على قائمة الطلاب الغائبين عن أداء الامتحان (المقيدين بالمرحلة ولم ترصد لهم درجات)
+     * الحصول على قائمة الطلاب الغائبين عن أداء الامتحان
      *
-     * @return \Illuminate\Support\Collection<int, array{id: int, name: string, code: string, phone: ?string, parent_phone: ?string, stage_name: string, exam_title: string, exam_date: string, subject_name: string}>
+     * @return \Illuminate\Support\Collection<int, array{id: int, name: string, code: string, phone: ?string, parent_phone: ?string, stage_name: string, group_name: string, exam_title: string, exam_date: string, subject_name: string}>
      */
     public function getExamAbsentees(int $examId): \Illuminate\Support\Collection
     {
-        $exam = Exam::with(['educationalStage', 'subject'])->findOrFail($examId);
+        $exam = Exam::with(['educationalStage', 'subject', 'group'])->findOrFail($examId);
+        $targetStudents = $this->getTargetStudents($exam);
 
         $attendedStudentIds = ExamResult::where('exam_id', $examId)->pluck('student_id')->toArray();
 
-        $absentStudents = Student::where('stage_id', $exam->stage_id)
-            ->whereNotIn('id', $attendedStudentIds)
-            ->orderBy('name')
-            ->get();
+        $absentStudents = $targetStudents->whereNotIn('id', $attendedStudentIds);
 
         return $absentStudents->map(function ($st) use ($exam) {
             return [
@@ -108,12 +126,13 @@ class ExamService
                 'phone' => $st->phone,
                 'parent_phone' => $st->parent_phone ?? $st->phone,
                 'stage_name' => $exam->educationalStage?->name ?? 'المرحلة',
+                'group_name' => $exam->group?->name ?? 'جميع المجموعات',
                 'subject_name' => $exam->subject?->name ?? 'المادة',
                 'exam_title' => $exam->title,
                 'exam_date' => $exam->date ? \Carbon\Carbon::parse($exam->date)->format('Y-m-d') : now()->toDateString(),
                 'total_marks' => $exam->total_marks,
             ];
-        });
+        })->values();
     }
 
     /**
@@ -130,14 +149,19 @@ class ExamService
             ->orderBy('marks_obtained', 'desc')
             ->get();
 
+        $attempts = \App\Models\OnlineExamAttempt::where('exam_id', $examId)
+            ->get()
+            ->keyBy('student_id');
+
         $totalMarks = $exam->total_marks > 0 ? (float) $exam->total_marks : 100.0;
         $halfMarks = $totalMarks / 2;
 
-        return $results->map(function ($res, $idx) use ($exam, $totalMarks, $halfMarks) {
+        return $results->map(function ($res, $idx) use ($exam, $totalMarks, $halfMarks, $attempts) {
             $student = $res->student;
             $marks = (float) $res->marks_obtained;
             $percentage = round(($marks / $totalMarks) * 100, 1);
             $passed = $marks >= $halfMarks;
+            $model = $student ? ($attempts->get($student->id)?->exam_model) : null;
 
             $gradeText = match (true) {
                 $percentage >= 85 => 'ممتاز 🌟',
@@ -161,6 +185,7 @@ class ExamService
                 'rank' => $idx + 1,
                 'passed' => $passed,
                 'notes' => $res->notes,
+                'exam_model' => $model,
                 'exam_title' => $exam->title,
                 'subject_name' => $exam->subject?->name ?? 'المادة',
                 'exam_date' => $exam->date ? \Carbon\Carbon::parse($exam->date)->format('Y-m-d') : now()->toDateString(),
@@ -349,16 +374,18 @@ class ExamService
             $exam = Exam::create([
                 'title' => $criteria['title'],
                 'stage_id' => $criteria['stage_id'],
+                'group_id' => ! empty($criteria['group_id']) ? $criteria['group_id'] : null,
                 'subject_id' => $criteria['subject_id'],
                 'exam_type' => $criteria['exam_type'] ?? ($criteria['type'] ?? 'quiz'),
                 'date' => $criteria['date'] ?? now()->toDateString(),
                 'total_marks' => $totalMarks,
                 'duration_minutes' => (int) ($criteria['duration_minutes'] ?? 45),
                 'is_online' => (bool) ($criteria['is_online'] ?? false),
+                'models_count' => (int) ($criteria['models_count'] ?? 1),
                 'starts_at' => ! empty($criteria['starts_at']) ? $criteria['starts_at'] : null,
                 'ends_at' => ! empty($criteria['ends_at']) ? $criteria['ends_at'] : null,
                 'pass_percentage' => (int) ($criteria['pass_percentage'] ?? 50),
-                'show_correct_answers_after_submission' => true,
+                'show_correct_answers_after_submission' => isset($criteria['show_correct_answers_after_submission']) ? (bool) $criteria['show_correct_answers_after_submission'] : true,
                 'shuffle_questions' => (bool) ($criteria['shuffle_questions'] ?? true),
                 'status' => 'published',
             ]);

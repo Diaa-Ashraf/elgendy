@@ -55,7 +55,14 @@
     <header class="bg-brand-teal border-b border-brand-teal-dark/50 sticky top-0 z-50 px-4 py-3 shadow-md shadow-brand-teal/10 backdrop-blur-md bg-opacity-95">
         <div class="max-w-4xl mx-auto flex items-center justify-between">
             <div class="space-y-0.5">
-                <h1 class="font-heading font-black text-sm sm:text-base text-white truncate max-w-[180px] sm:max-w-md">{{ $exam->title }}</h1>
+                <div class="flex items-center gap-2">
+                    <h1 class="font-heading font-black text-sm sm:text-base text-white truncate max-w-[180px] sm:max-w-md">{{ $exam->title }}</h1>
+                    @if(!empty($attempt->exam_model))
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-black bg-white/15 text-amber-300 border border-white/20 shadow-sm shrink-0">
+                            النموذج: ({{ $attempt->exam_model }})
+                        </span>
+                    @endif
+                </div>
                 <span class="text-[11px] text-slate-300 font-medium">الطالب: <strong class="text-brand-coral">{{ $student->name }}</strong></span>
             </div>
 

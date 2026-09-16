@@ -47,7 +47,20 @@ class ExamResource extends Resource
                             ->relationship('educationalStage', 'name')
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->reactive(),
+
+                        Forms\Components\Select::make('group_id')
+                            ->label('المجموعة المستهدفة')
+                            ->relationship('group', 'name', fn ($query, Forms\Get $get) => 
+                                $query->when($get('stage_id'), fn ($q, $stageId) => $q->where('stage_id', $stageId))
+                            )
+                            ->searchable()
+                            ->preload()
+                            ->nullable()
+                            ->placeholder('جميع المجموعات (المرحلة بالكامل)')
+                            ->helperText('اختر مجموعة محددة لطلاب معينين، أو اتركه فارغاً ليكون الامتحان عاماً لجميع المجموعات.')
+                            ->reactive(),
 
                         Forms\Components\Select::make('subject_id')
                             ->label('المادة الدراسية')
@@ -99,6 +112,19 @@ class ExamResource extends Resource
                             ->helperText('الوقت المتاح للطالب بمجرد البدء. إذا تركته فارغاً فسيتم احتسابه تلقائياً من فترة فتح وإغلاق الامتحان.')
                             ->visible(fn ($get) => (bool) $get('is_online')),
 
+                        Forms\Components\Select::make('models_count')
+                            ->label('عدد نماذج الامتحان (أ / ب / ج / د)')
+                            ->options([
+                                1 => 'نموذج واحد (أ)',
+                                2 => 'نموذجان (أ / ب) — تبديل ترتيب الأسئلة لمنع الغش',
+                                3 => '3 نماذج (أ / ب / ج)',
+                                4 => '4 نماذج (أ / ب / ج / د)',
+                            ])
+                            ->default(1)
+                            ->helperText('عند تحديد أكثر من نموذج، يتم توزيع النماذج أوتوماتيكياً على الطلاب وتبديل ترتيب الأسئلة لكل نموذج.')
+                            ->visible(fn ($get) => (bool) $get('is_online'))
+                            ->native(false),
+
                         Forms\Components\TextInput::make('pass_percentage')
                             ->label('نسبة النجاح (%)')
                             ->numeric()
@@ -147,6 +173,10 @@ class ExamResource extends Resource
                             })
                             ->native(false),
 
+                        Forms\Components\Toggle::make('show_correct_answers_after_submission')
+                            ->label('إظهار الإجابات النموذجية والشرح للطلاب بعد التسليم')
+                            ->default(true)
+                            ->visible(fn ($get) => (bool) $get('is_online')),
                     ])
                     ->columns(2),
 
@@ -169,6 +199,14 @@ class ExamResource extends Resource
 
                 Tables\Columns\TextColumn::make('educationalStage.name')
                     ->label('المرحلة الدراسية')
+                    ->sortable()
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('group.name')
+                    ->label('المجموعة المستهدفة')
+                    ->badge()
+                    ->color(fn ($state) => $state ? 'info' : 'gray')
+                    ->placeholder('جميع المجموعات')
                     ->sortable()
                     ->searchable(),
 
@@ -214,19 +252,60 @@ class ExamResource extends Resource
                     ->label('حالة الامتحان')
                     ->state(function (Exam $record, ExamService $examService): string {
                         $stats = $examService->getExamStats($record->id);
-                        $attended = $stats['attended_count'];
-                        $absent = $stats['absent_count'];
+                        $attended = (int) ($stats['attended_count'] ?? 0);
+                        $absent = (int) ($stats['absent_count'] ?? 0);
+                        $total = (int) ($stats['total_stage_students'] ?? ($attended + $absent));
 
-                        if ($attended === 0 && $absent === 0) {
+                        if ($total === 0) {
                             return 'لا يوجد طلاب بالمرحلة';
                         }
 
-                        return "{$attended} ممتحن / {$absent} غائب";
+                        // إذا كان امتحاناً أونلاين
+                        if ($record->is_online) {
+                            $now = now();
+                            if ($record->starts_at && $now->lessThan($record->starts_at)) {
+                                return 'مجدول (يبدأ ' . $record->starts_at->format('d/m h:i A') . ')';
+                            }
+
+                            if ($record->ends_at && $now->greaterThan($record->ends_at)) {
+                                return $attended > 0 
+                                    ? "انتهى ({$attended} أتموا / {$absent} لم يؤدوا)"
+                                    : "انتهى (لم يؤده أي طالب)";
+                            }
+
+                            return $attended > 0
+                                ? "متاح أونلاين ({$attended} أتموا الحل من {$total})"
+                                : "متاح أونلاين (بانتظار دخول الطلاب)";
+                        }
+
+                        // للامتحانات الورقية العادية
+                        if ($attended === 0) {
+                            return 'لم ترصد درجات بعد';
+                        }
+
+                        if ($absent === 0) {
+                            return "اكتمل الرصد ({$attended} طالب)";
+                        }
+
+                        return "تم رصد {$attended} من أصل {$total} طالب";
                     })
                     ->badge()
                     ->color(function (Exam $record, ExamService $examService): string {
                         $stats = $examService->getExamStats($record->id);
-                        return $stats['attended_count'] > 0 ? 'success' : 'warning';
+                        $attended = (int) ($stats['attended_count'] ?? 0);
+                        
+                        if ($record->is_online) {
+                            $now = now();
+                            if ($record->starts_at && $now->lessThan($record->starts_at)) {
+                                return 'info';
+                            }
+                            if ($record->ends_at && $now->greaterThan($record->ends_at)) {
+                                return $attended > 0 ? 'success' : 'danger';
+                            }
+                            return $attended > 0 ? 'success' : 'warning';
+                        }
+
+                        return $attended > 0 ? 'success' : 'gray';
                     }),
             ])
             ->defaultSort('date', 'desc')
@@ -234,6 +313,10 @@ class ExamResource extends Resource
                 Tables\Filters\SelectFilter::make('stage_id')
                     ->label('المرحلة الدراسية')
                     ->relationship('educationalStage', 'name'),
+
+                Tables\Filters\SelectFilter::make('group_id')
+                    ->label('المجموعة المستهدفة')
+                    ->relationship('group', 'name'),
 
                 Tables\Filters\SelectFilter::make('subject_id')
                     ->label('المادة الدراسية')

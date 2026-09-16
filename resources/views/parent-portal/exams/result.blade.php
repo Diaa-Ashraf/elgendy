@@ -66,7 +66,14 @@
         {{-- 1. بطاقة النتيجة --}}
         <div class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-9 shadow-sm text-center space-y-5">
             <div>
-                <h1 class="text-xl sm:text-2xl font-heading font-black text-brand-slate">{{ $exam->title }}</h1>
+                <div class="flex items-center justify-center gap-2">
+                    <h1 class="text-xl sm:text-2xl font-heading font-black text-brand-slate">{{ $exam->title }}</h1>
+                    @if(!empty($attempt->exam_model))
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-brand-teal/10 text-brand-teal border border-brand-teal/20">
+                            النموذج: ({{ $attempt->exam_model }})
+                        </span>
+                    @endif
+                </div>
                 <p class="text-xs font-semibold text-brand-muted mt-1">تاريخ التسليم: {{ $attempt->submitted_at?->format('Y-m-d h:i A') }}</p>
             </div>
 
