@@ -93,10 +93,10 @@ class ExamResource extends Resource
                             ->default(false),
 
                         Forms\Components\TextInput::make('duration_minutes')
-                            ->label('مدة الامتحان (بالدقائق)')
+                            ->label('مدة الامتحان للطالب (بالدقائق)')
                             ->numeric()
-                            ->placeholder('مثال: 30')
-                            ->helperText('اتركه فارغاً إذا كان الاختبار مفتوح بدون وقت محدد.')
+                            ->placeholder('مثال: 10 أو 30')
+                            ->helperText('الوقت المتاح للطالب بمجرد البدء. إذا تركته فارغاً فسيتم احتسابه تلقائياً من فترة فتح وإغلاق الامتحان.')
                             ->visible(fn ($get) => (bool) $get('is_online')),
 
                         Forms\Components\TextInput::make('pass_percentage')
@@ -113,6 +113,18 @@ class ExamResource extends Resource
                             ->seconds(false)
                             ->placeholder('اختر تاريخ ووقت البدء (ص / م)')
                             ->visible(fn ($get) => (bool) $get('is_online'))
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, $get, $set) {
+                                if ($state && $get('ends_at') && blank($get('duration_minutes'))) {
+                                    try {
+                                        $start = \Carbon\Carbon::parse($state);
+                                        $end = \Carbon\Carbon::parse($get('ends_at'));
+                                        if ($end->greaterThan($start)) {
+                                            $set('duration_minutes', (int) $start->diffInMinutes($end));
+                                        }
+                                    } catch (\Throwable $e) {}
+                                }
+                            })
                             ->native(false),
 
                         Forms\Components\DateTimePicker::make('ends_at')
@@ -121,6 +133,18 @@ class ExamResource extends Resource
                             ->seconds(false)
                             ->placeholder('اختر تاريخ ووقت الانتهاء (ص / م)')
                             ->visible(fn ($get) => (bool) $get('is_online'))
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, $get, $set) {
+                                if ($state && $get('starts_at') && blank($get('duration_minutes'))) {
+                                    try {
+                                        $start = \Carbon\Carbon::parse($get('starts_at'));
+                                        $end = \Carbon\Carbon::parse($state);
+                                        if ($end->greaterThan($start)) {
+                                            $set('duration_minutes', (int) $start->diffInMinutes($end));
+                                        }
+                                    } catch (\Throwable $e) {}
+                                }
+                            })
                             ->native(false),
 
                     ])

@@ -28,13 +28,22 @@ class OnlineExamService
                 return $existingAttempt;
             }
 
-            // إذا تخطت الوقت المسموح نقوم بإنهائها تلقائياً
-            if ($exam->duration_minutes) {
-                $endTime = $existingAttempt->started_at->copy()->addMinutes($exam->duration_minutes);
+            // فحص هل تخطت المحاولة الوقت المسموح (مدة الامتحان أو موعد إغلاق الامتحان العام)
+            $isExpired = false;
+            if ($exam->duration_minutes && $existingAttempt->started_at) {
+                $endTime = $existingAttempt->started_at->copy()->addMinutes((int) $exam->duration_minutes);
                 if (now()->greaterThan($endTime)) {
-                    $this->finalizeAttempt($existingAttempt, (array) ($existingAttempt->student_answers ?? []));
-                    return $existingAttempt->fresh();
+                    $isExpired = true;
                 }
+            }
+
+            if ($exam->ends_at && now()->greaterThan($exam->ends_at)) {
+                $isExpired = true;
+            }
+
+            if ($isExpired) {
+                $this->finalizeAttempt($existingAttempt, (array) ($existingAttempt->student_answers ?? []));
+                return $existingAttempt->fresh();
             }
 
             return $existingAttempt;
@@ -87,15 +96,18 @@ class OnlineExamService
             $questionId = (int) $question->id;
             $userAns = $submittedAnswers[$questionId] ?? null;
 
-            // تسوية الإجابات للمقارنة
-            $userAnsArray = is_array($userAns) ? $userAns : ($userAns !== null ? [$userAns] : []);
-            $correctAnswers = is_array($question->correct_answers) ? $question->correct_answers : [];
+            // تسوية الإجابات للمقارنة بدقة
+            $userAnsRaw = is_array($userAns) ? $userAns : ($userAns !== null && $userAns !== '' ? [$userAns] : []);
+            $userAnsArray = array_values(array_unique(array_filter(array_map(fn ($v) => trim((string) $v), $userAnsRaw))));
 
-            // ترتيب المصفوفات لضمان دقة المقارنة
+            $correctAnsRaw = is_array($question->correct_answers) ? $question->correct_answers : [];
+            $correctAnswers = array_values(array_unique(array_filter(array_map(fn ($v) => trim((string) $v), $correctAnsRaw))));
+
+            // ترتيب المصفوفات لضمان دقة المقارنة الحرفية
             sort($userAnsArray);
             sort($correctAnswers);
 
-            $isCorrect = ($userAnsArray === $correctAnswers && !empty($correctAnswers));
+            $isCorrect = (!empty($correctAnswers) && $userAnsArray === $correctAnswers);
             $earned = $isCorrect ? $qMarks : 0.0;
             $totalEarnedScore += $earned;
 

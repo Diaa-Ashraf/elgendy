@@ -99,6 +99,31 @@ class QuestionResource extends Resource
                             ->default('single_choice')
                             ->required()
                             ->reactive()
+                            ->afterStateUpdated(function ($state, $set) {
+                                if ($state === 'true_false') {
+                                    $set('options', [
+                                        ['key' => 'true', 'text' => 'صح ✔'],
+                                        ['key' => 'false', 'text' => 'خطأ ✖'],
+                                    ]);
+                                    $set('correct_answers', ['true']);
+                                } elseif ($state === 'multiple_choice') {
+                                    $set('options', [
+                                        ['key' => 'A', 'text' => ''],
+                                        ['key' => 'B', 'text' => ''],
+                                        ['key' => 'C', 'text' => ''],
+                                        ['key' => 'D', 'text' => ''],
+                                    ]);
+                                    $set('correct_answers', ['A', 'B']);
+                                } elseif ($state === 'single_choice') {
+                                    $set('options', [
+                                        ['key' => 'A', 'text' => ''],
+                                        ['key' => 'B', 'text' => ''],
+                                        ['key' => 'C', 'text' => ''],
+                                        ['key' => 'D', 'text' => ''],
+                                    ]);
+                                    $set('correct_answers', ['A']);
+                                }
+                            })
                             ->native(false),
 
                         Forms\Components\Repeater::make('options')
@@ -127,7 +152,12 @@ class QuestionResource extends Resource
                         Forms\Components\TagsInput::make('correct_answers')
                             ->label('رموز الإجابات الصحيحة (اكتب رمز الخيار واضغط Enter)')
                             ->placeholder('مثال: A أو A, B')
-                            ->helperText('يجب أن تتطابق الرموز تماماً مع رموز الخيارات المدخلة بالأعلى (مثلاً A أو B)')
+                            ->suggestions(fn ($get) => collect($get('options') ?? [])->pluck('key')->filter()->all())
+                            ->helperText(fn ($get) => match ($get('type')) {
+                                'multiple_choice' => 'سؤال متعدد الإجابات (اختيار إجابتين أو أكثر): أدخل رمزي الإجابتين الصحيحتين (مثال: A ثم B) - وسيتم إلزام الطالب باختيار نفس العدد بالضبط.',
+                                'true_false' => 'أدخل إما true أو false.',
+                                default => 'سؤال إجابة واحدة: أدخل رمز إجابة صحيحة واحدة فقط (مثال: A).',
+                            })
                             ->required(),
 
                         Forms\Components\Textarea::make('explanation')

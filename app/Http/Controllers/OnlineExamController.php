@@ -72,18 +72,53 @@ class OnlineExamController extends Controller
             return back()->with('error', 'عذراً، لم يتم إضافة أسئلة لهذا الاختبار بعد.');
         }
 
+        // إذا تخطى موعد إغلاق الامتحان العام أصلاً
+        if ($exam->ends_at && now()->greaterThan($exam->ends_at)) {
+            $existingAttempt = OnlineExamAttempt::where('exam_id', $exam->id)
+                ->where('student_id', $student->id)
+                ->first();
+
+            if ($existingAttempt) {
+                if ($existingAttempt->status === 'in_progress') {
+                    $examService->submitAttempt($existingAttempt, (array) ($existingAttempt->student_answers ?? []));
+                }
+                return redirect()->route('parent.exams.result', ['id' => $exam->id])
+                    ->with('info', 'انتهت الفترة المحددة للاختبار وتم اعتماد النتيجة.');
+            }
+
+            return redirect()->route('parent.exams.show', ['id' => $exam->id])
+                ->with('error', 'عذراً، انتهت الفترة المحددة لأداء هذا الاختبار ولا يمكن البدء فيه.');
+        }
+
         $attempt = $examService->startAttempt($student, $exam);
 
-        if ($attempt->status === 'completed') {
+        if ($attempt->status !== 'in_progress') {
             return redirect()->route('parent.exams.result', ['id' => $exam->id]);
         }
 
-        // حساب الوقت المتبقي بالثواني
+        // حساب الوقت المتبقي بالثواني بدقة (الحد الأدنى بين مدة محاولة الطالب وموعد إغلاق الامتحان العام)
         $remainingSeconds = null;
-        if ($exam->duration_minutes) {
-            $totalDurationSeconds = $exam->duration_minutes * 60;
-            $elapsedSeconds = now()->diffInSeconds($attempt->started_at);
-            $remainingSeconds = max(0, $totalDurationSeconds - $elapsedSeconds);
+        $possibleEndTimes = [];
+
+        if ($exam->duration_minutes && $attempt->started_at) {
+            $possibleEndTimes[] = $attempt->started_at->copy()->addMinutes((int) $exam->duration_minutes);
+        }
+
+        if ($exam->ends_at) {
+            $possibleEndTimes[] = $exam->ends_at;
+        }
+
+        if (! empty($possibleEndTimes)) {
+            $earliestEndTime = collect($possibleEndTimes)->min();
+            $diffInSeconds = now()->diffInSeconds($earliestEndTime, false);
+            $remainingSeconds = (int) round($diffInSeconds);
+
+            // إذا انتهى الوقت المسموح فور الدخول، يتم قفل الامتحان وعرض النتيجة فوراً
+            if ($remainingSeconds <= 0) {
+                $examService->submitAttempt($attempt, (array) ($attempt->student_answers ?? []));
+                return redirect()->route('parent.exams.result', ['id' => $exam->id])
+                    ->with('info', 'انتهى الوقت المحدد للاختبار وتم اعتماد النتيجة تلقائياً.');
+            }
         }
 
         return view('parent-portal.exams.take', [
@@ -112,12 +147,17 @@ class OnlineExamController extends Controller
             ->where('student_id', $student->id)
             ->firstOrFail();
 
+        // إذا تم تسليم الامتحان مسبقاً، تحويل مباشر لصفحة النتيجة
+        if ($attempt->status !== 'in_progress') {
+            return redirect()->route('parent.exams.result', ['id' => $exam->id]);
+        }
+
         $submittedAnswers = $request->input('answers', []);
 
         $gradedAttempt = $examService->submitAttempt($attempt, (array) $submittedAnswers);
 
         return redirect()->route('parent.exams.result', ['id' => $exam->id])
-            ->with('success', 'تم تسليم الامتحان وتصحيحه تلقائياً بنجاح! ');
+            ->with('success', 'تم تسليم الامتحان وتصحيحه تلقائياً بنجاح!');
     }
 
     /**
